@@ -18,4 +18,17 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-Version = "0.1a"
+
+from boto.sdb.db.model import Model
+from boto.sdb.db import property
+
+from boto.web.resources.user import User
+
+class Post(Model):
+    """
+    Representation of a blog post
+    """
+    title = property.StringProperty(verbose_name="Title")
+    date = property.DateTimeProperty()
+    author = property.ReferenceProperty(User, collection_name="posts")
+    contents = property.S3KeyProperty(verbose_name="Entry")

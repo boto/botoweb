@@ -1,7 +1,8 @@
 # Author: Chris Moyer
 import os, os.path
 import yaml
-from boto.web import Config
+from boto.web.config import Config
+from pkg_resources import get_provider, ResourceManager
 
 import logging
 log = logging.getLogger("boto.web")
@@ -11,19 +12,22 @@ class Environment(object):
     boto.web Environment
     """
 
-    def __init__(self, base_path, env="prod"):
-        self.base_path = base_path
+    def __init__(self, module, env="prod"):
+        self.module = module
         self.env = env
 
         # Config setup
         self.conf = Config()
         self.config = self.conf._sections
 
-        if os.path.exists(os.path.join(self.base_path, "conf")):
+        self.dist = get_provider(self.module)
+        self.mgr = ResourceManager()
+
+        if self.dist.has_resource("conf"):
             self.config.update(self.get_config("conf"))
-            if os.path.exists(os.path.join(self.base_path, "conf/env/%s.yaml" % self.env)):
+            if self.dist.has_resource("conf/env/%s.yaml" % self.env):
                 log.info("Loading environment: %s" % self.env)
-                self.config.update(yaml.load(open(os.path.join(self.base_path, "conf/env/%s.yaml" % self.env), "rb")))
+                self.config.update(yaml.load(self.dist.get_resource_stream(self.mgr,"conf/env/%s.yaml" % self.env)))
 
         # Set up the DB shortcuts
         if not self.config.has_key("DB"):
@@ -41,9 +45,9 @@ class Environment(object):
 
     def get_config(self, path):
         config = {}
-        for cf in os.listdir(os.path.join(self.base_path, path)):
+        for cf in self.dist.resource_listdir(path):
             if cf.endswith(".yaml"):
-                config[cf[:-5]] = yaml.load(open(os.path.join(self.base_path, os.path.join(path, cf)), "rb"))
+                config[cf[:-5]] = yaml.load(self.dist.get_resource_stream(self.mgr, os.path.join(path, cf)))
             elif not cf.startswith("."):
-                config[cf] = self.get_config(os.path.join(self.base_path, os.path.join(path, cf)) )
+                config[cf] = self.get_config(os.path.join(path, cf))
         return config

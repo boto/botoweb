@@ -25,8 +25,10 @@ ez_setup.use_setuptools()
 
 from setuptools import setup, find_packages
 
+from boto.web import Version
+
 setup(name = "boto.web",
-      version = "0.1a",
+      version = Version,
       namespace_packages = ["boto"], 
       description = "Boto based webapp framework",
       long_description="Python Enterprise level 3-Tier distributed webapp framework for use within the Amazon Web Services environment.",
@@ -43,4 +45,10 @@ setup(name = "boto.web",
                       'Operating System :: OS Independent',
                       'Topic :: Internet',
                       ],
+        dependency_links = [
+            "http://code.google.com/p/boto/downloads/list",
+        ],
+        install_requires = [
+            "boto>=1.6b",
+        ],
       )
