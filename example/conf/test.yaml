@@ -1,0 +1,6 @@
+test_bool: True
+test_string: a string
+test_list:
+   - 1
+   - 2
+   - 3

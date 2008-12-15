@@ -49,6 +49,7 @@ setup(name = "boto.web",
             "http://code.google.com/p/boto/downloads/list",
         ],
         install_requires = [
+            "pyyaml",
             "boto>=1.6b",
         ],
       )
