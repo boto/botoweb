@@ -1,15 +1,15 @@
 # Author: Chris Moyer
 import os, os.path
 import yaml
-from boto.web.config import Config
+from boto_web.config import Config
 from pkg_resources import get_provider, ResourceManager
 
 import logging
-log = logging.getLogger("boto.web")
+log = logging.getLogger("boto_web")
 
 class Environment(object):
     """
-    boto.web Environment
+    boto_web Environment
     """
 
     def __init__(self, module, env="prod"):

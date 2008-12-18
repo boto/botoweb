@@ -25,11 +25,10 @@ ez_setup.use_setuptools()
 
 from setuptools import setup, find_packages
 
-from boto.web import Version
+from boto_web import Version
 
-setup(name = "boto.web",
+setup(name = "boto_web",
       version = Version,
-      namespace_packages = ["boto"], 
       description = "Boto based webapp framework",
       long_description="Python Enterprise level 3-Tier distributed webapp framework for use within the Amazon Web Services environment.",
       author = "Chris Moyer",
@@ -50,6 +49,6 @@ setup(name = "boto.web",
         ],
         install_requires = [
             "pyyaml",
-            "boto>=1.6b",
+            "boto",
         ],
       )

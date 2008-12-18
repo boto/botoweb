@@ -4,7 +4,7 @@
 
 from pkg_resources import resource_exists, resource_stream
 import yaml
-from boto.web.environment import Environment
+from boto_web.environment import Environment
 
 class TestEnvironment:
     """

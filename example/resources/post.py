@@ -22,7 +22,7 @@
 from boto.sdb.db.model import Model
 from boto.sdb.db import property
 
-from boto.web.resources.user import User
+from boto_web.resources.user import User
 
 class Post(Model):
     """
