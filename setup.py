@@ -49,6 +49,8 @@ setup(name = "boto_web",
         ],
         install_requires = [
             "pyyaml",
+            "webob",
+            "paste",
             "boto",
         ],
       )
