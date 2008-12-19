@@ -16,6 +16,20 @@ class HTTPException(Exception):
     def __str__(self):
         return "%s %s" % code
 
+    def to_xml(self):
+        """
+        Turn this into an XML
+        document
+        """
+        return """
+        <Exception>
+            <type>%s</type>
+            <code>%s</code>
+            <message>%s</message>
+            <description>%s</description>
+        </Exception>
+        """ % (self.__class__.__name__, self.code, self.message, self.description)
+
 # 3xx Redirection
 class HTTPRedirect(HTTPException):
     """
@@ -47,7 +61,10 @@ class Forbidden(HTTPException):
         HTTPException.__init__(self, status.HTTP_FORBIDDEN, message, description)
 
 class NotFound(HTTPException):
-    def __init__(self, message=status.message[status.HTTP_NOT_FOUND], description= status.description[status.HTTP_NOT_FOUND]):
+    def __init__(self, message=status.message[status.HTTP_NOT_FOUND], description= status.description[status.HTTP_NOT_FOUND], url=None):
+        if url:
+            description = "URL Not Found: %s" % url
+        self.url = url
         HTTPException.__init__(self, status.HTTP_NOT_FOUND, message,description)
 
 class MethodNotAllowed(HTTPException):

@@ -31,8 +31,17 @@ class URLMapper(object):
         request = Request(environ)
         log.info("%s: %s" % (request.method, request.path_info))
 
-        (handler, obj_id) = self.parse_path(request)
         response = Response()
+        content = self.handle(request, response)
+        return response.wsgi_write(environ, start_response)
+
+    def handle(self, request, response):
+        """
+        Do the handling of the request
+        and response.
+        We split this out so it's easier to test
+        """
+        (handler, obj_id) = self.parse_path(request.path)
         try:
             if handler:
                 try:
@@ -57,22 +66,22 @@ class URLMapper(object):
                     response.clear()
                     response.set_status(e.code)
                     response.headers['Location'] = str(url)
-                    content = self.error(e.code, str(e))
+                    content = e
                 except HTTPException, e:
                     response.clear()
                     response.set_status(e.code)
-                    content = self.error(e.code, str(e))
+                    content = e
                 except Exception, e:
-                    content = self.error(500, str(e))
+                    content = e
                     log.critical(traceback.format_exc())
             else:
-                content = self.error(404, "Not Found: %s" % request.path)
+                content = NotFound(url=request.path)
                 log.error("Not Found: %s" % request.path)
         except Exception, e:
             log.critical(traceback.format_exc())
-            content = self.error(500, str(e))
+            content = e
 
-        return response.wsgi_write(environ, start_response)
+        return content
 
     def parse_path(self, path):
         """
@@ -108,18 +117,3 @@ class URLMapper(object):
                 if handler:
                     return (handler, obj_id)
         return None
-    
-    def error(self, code, details=None):
-        """
-        Format an error to be displayed to the user
-        """
-        if details is None:
-            details = status.description[code]
-        log.error("[%s] %s %s" % (code, request.url, status.message[code]))
-        err_details = {
-            "error_code": code,
-            "error_message": status.message[code],
-            "error_description": details,
-            "stack_trace": traceback.format_exc().strip(),
-        }
-        return err_details
