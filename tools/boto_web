@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright (c) 2008 Chris Moyer http://coredumped.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,16 +20,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from boto.sdb.db.model import Model
-from boto.sdb.db import property
+def get_function(session, f_name):
+	"""
+	Get function f_name (starting point of session)
+	"""
+	cmd_list = f_name.split(".")
+	func = session[cmd_list.pop(0)]
+	for cmd in cmd_list:
+		func = getattr(func, cmd)
+	return func
 
-from boto_web.resources.user import User
+if __name__ == "__main__":
+	import readline
+	from paste import httpserver
+	import boto_web
+	import boto_web.appserver
+	import sys
+	sys.ps1 = "\x01\x1b[34m\x1b[1m\x02>>> \x01\x1b[0m\x02"
+	sys.ps2 = "... "
+	import code
+	session = {}
+	session['appserver'] = boto_web.appserver
+	session['help'] = "boto_web Version %s" % boto_web.Version
 
-class Post(Model):
-    """
-    Representation of a blog post
-    """
-    title = property.StringProperty(verbose_name="Title")
-    date = property.DateTimeProperty(auto_now_add=True)
-    author = property.ReferenceProperty(User, collection_name="posts")
-    contents = property.S3KeyProperty(verbose_name="Entry")
+	if len(sys.argv) > 1:
+		cmd = get_function(session, sys.argv[1])
+		args = []
+		if len(sys.argv) > 2:
+			args = sys.argv[2:]
+		cmd(*args)
+	else:
+		code.interact(banner=session['help'], local=session)

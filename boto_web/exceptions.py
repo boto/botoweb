@@ -1,6 +1,7 @@
 # Author: Chris Moyer
 # Exception classes
 from marajo.appengine.ext.webapp import status
+from xml.dom.minidom import getDOMImplementation
 
 class HTTPException(Exception):
     """
@@ -14,21 +15,39 @@ class HTTPException(Exception):
         Exception.__init__(self)
 
     def __str__(self):
-        return "%s %s" % code
+        return "%s %s" % (self.message, self.code)
 
     def to_xml(self):
         """
         Turn this into an XML
         document
         """
-        return """
-        <Exception>
-            <type>%s</type>
-            <code>%s</code>
-            <message>%s</message>
-            <description>%s</description>
-        </Exception>
-        """ % (self.__class__.__name__, self.code, self.message, self.description)
+        impl = getDOMImplementation()
+        doc = impl.createDocument(None, 'Exception', None)
+
+        rootNode = doc.documentElement
+
+        type_node = doc.createElement("type")
+        text_node = doc.createTextNode(self.__class__.__name__)
+        type_node.appendChild(text_node)
+        rootNode.appendChild(type_node)
+
+        type_node = doc.createElement("code")
+        text_node = doc.createTextNode(str(self.code))
+        type_node.appendChild(text_node)
+        rootNode.appendChild(type_node)
+
+        type_node = doc.createElement("message")
+        text_node = doc.createTextNode(self.message)
+        type_node.appendChild(text_node)
+        rootNode.appendChild(type_node)
+
+        type_node = doc.createElement("description")
+        text_node = doc.createTextNode(self.description)
+        type_node.appendChild(text_node)
+        rootNode.appendChild(type_node)
+
+        return doc
 
 # 3xx Redirection
 class HTTPRedirect(HTTPException):

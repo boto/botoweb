@@ -1,5 +1,5 @@
 # Author: Chris Moyer
-from boto_web.exceptions import NotFound, Unauthorized
+from boto_web.exceptions import NotFound, Unauthorized, BadRequest
 from boto_web.appserver.handlers import RequestHandler
 
 import boto
@@ -91,9 +91,11 @@ class DBHandler(RequestHandler):
         @param params: The Terms to search for
         @type params: Dictionary
         """
-        objects = []
         query = self.db_class.find()
+        properties = [p.name for p in self.db_class.properties(hidden=False)]
         for filter in set(params.keys()):
+            if not filter in properties:
+                raise BadRequest("Property not found: '%s'" % filter)
             filter_value = params[filter]
             filter_args = filter.split(".")
             if len(filter_args) > 1:
@@ -105,9 +107,7 @@ class DBHandler(RequestHandler):
                 filter_value = filter_value[0]
             if filter_value:
                 query.filter("%s %s " % (filter, filter_cmp), filter_value)
-        for obj in query:
-            objects.append(obj)
-        return objects
+        return query
 
     def create(self, params):
         """

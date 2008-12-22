@@ -9,6 +9,7 @@ import mimetypes
 from boto.utils import find_class
 from boto_web.appserver.handlers import Request, Response, RequestHandler
 from boto_web import status
+from boto_web.exceptions import *
 
 log = logging.getLogger("boto_web.url_mapper")
 
@@ -33,6 +34,8 @@ class URLMapper(object):
 
         response = Response()
         content = self.handle(request, response)
+        response.content_type = "text/xml"
+        content.to_xml().writexml(response)
         return response.wsgi_write(environ, start_response)
 
     def handle(self, request, response):
@@ -72,14 +75,17 @@ class URLMapper(object):
                     response.set_status(e.code)
                     content = e
                 except Exception, e:
-                    content = e
+                    content = InternalServerError(message=e.message)
+                    response.set_status(content.code)
                     log.critical(traceback.format_exc())
             else:
                 content = NotFound(url=request.path)
                 log.error("Not Found: %s" % request.path)
+                response.set_status(content.code)
         except Exception, e:
             log.critical(traceback.format_exc())
-            content = e
+            content = InternalServerError(message=e.message)
+            response.set_status(content.code)
 
         return content
 
@@ -106,7 +112,8 @@ class URLMapper(object):
                     handler = self.handlers.get(handler_config['url'])
                 else:
                     if handler_config.has_key("handler"):
-                        handler_class = find_class(handler_config['handler'])
+                        class_name = handler_config['handler']
+                        handler_class = find_class(class_name)
                         conf = self.boto_web_env.config.copy()
                         conf.update(handler_config)
                         handler = handler_class(conf)
@@ -116,4 +123,4 @@ class URLMapper(object):
 
                 if handler:
                     return (handler, obj_id)
-        return None
+        return (None, None)
