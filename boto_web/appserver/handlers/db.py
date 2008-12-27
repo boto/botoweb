@@ -128,6 +128,8 @@ class DBHandler(RequestHandler):
             obj = self.db_class.get_by_ids(id)
         except:
             raise NotFound()
+        if not obj:
+            raise NotFound()
         return obj
 
     def update(self, obj, params):

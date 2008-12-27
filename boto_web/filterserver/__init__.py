@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (c) 2008 Chris Moyer http://coredumped.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,38 +19,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-def get_function(session, f_name):
-	"""
-	Get function f_name (starting point of session)
-	"""
-	cmd_list = f_name.split(".")
-	func = session[cmd_list.pop(0)]
-	for cmd in cmd_list:
-		func = getattr(func, cmd)
-	return func
-
-if __name__ == "__main__":
-	import readline
-	from paste import httpserver
-	import boto_web
-	import boto_web.appserver
-	import boto_web.filterserver
-	import sys
-	sys.ps1 = "\x01\x1b[34m\x1b[1m\x02>>> \x01\x1b[0m\x02"
-	sys.ps2 = "... "
-	import code
-	session = {}
-	session['appserver'] = boto_web.appserver
-	session['filterserver'] = boto_web.filterserver
-	from boto_web.resources.user import User
-	session['User'] = User
-	session['help'] = "boto_web Version %s" % boto_web.Version
-
-	if len(sys.argv) > 1:
-		cmd = get_function(session, sys.argv[1])
-		args = []
-		if len(sys.argv) > 2:
-			args = sys.argv[2:]
-		cmd(*args)
-	else:
-		code.interact(banner=session['help'], local=session)
+def start(proxy_host="localhost", proxy_port="8080", port=9080, hostname="localhost"):
+    """
+    Start up a filter server hosting a given mapping
+    stored in SDB
+    """
+    from paste import httpserver
+    from boto_web.filterserver.url_mapper import URLMapper
+    mapper = URLMapper(proxy_host=proxy_host, proxy_port=proxy_port,  bucket=None)
+    httpserver.serve(mapper, host=hostname, port=int(port))
