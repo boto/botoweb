@@ -2,7 +2,9 @@
 # directory of an svn checkout using py.test
 
 from boto_web.appserver.url_mapper import URLMapper
-from boto_web.appserver.handlers import RequestHandler, Request, Response
+from boto_web.appserver.handlers import RequestHandler
+from boto_web.request import Request
+from boto_web.response import Response
 from boto_web.environment import Environment
 
 

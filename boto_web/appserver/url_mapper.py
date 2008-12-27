@@ -7,7 +7,9 @@ import traceback
 import boto_web
 import mimetypes
 from boto.utils import find_class
-from boto_web.appserver.handlers import Request, Response, RequestHandler
+from boto_web.appserver.handlers import RequestHandler
+from boto_web.request import Request
+from boto_web.response import Response
 from boto_web import status
 from boto_web.exceptions import *
 
