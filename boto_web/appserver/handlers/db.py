@@ -49,7 +49,6 @@ class DBHandler(RequestHandler):
         """
         Create an object
         """
-        print request.body
         obj = self.xmlmanager.unmarshal_object(request.body_file)
         obj.put()
         return obj
@@ -85,22 +84,41 @@ class DBHandler(RequestHandler):
         @param params: The Terms to search for
         @type params: Dictionary
         """
+        query_str = params.get("query", None)
         query = self.db_class.find()
-        properties = [p.name for p in self.db_class.properties(hidden=False)]
-        for filter in set(params.keys()):
-            if not filter in properties:
-                raise BadRequest("Property not found: '%s'" % filter)
-            filter_value = params[filter]
-            filter_args = filter.split(".")
-            if len(filter_args) > 1:
-                filter_cmp = filter_args[1]
-            else:
-                filter_cmp = "="
-            filter = filter_args[0]
-            if len(filter_value) == 1:
-                filter_value = filter_value[0]
-            if filter_value:
-                query.filter("%s %s " % (filter, filter_cmp), filter_value)
+        if query_str:
+            parts = query_str.split(" intersection ")
+            for part in parts:
+                matches = re.match("^\[(.*)\]$", part)
+                if matches:
+                    match = matches.group(1)
+                    filters = match.split(" OR ")
+                    filter_name = None
+                    filter_cmp = None
+                    values = []
+                    for filter in filters:
+                        m = re.match("^\'(.*)\' (=|>=|<=|<|>|starts-with|ends-with) \'(.*)\'$", filter)
+                        if m:
+                            values.append(m.group(3))
+                            filter_name = m.group(1)
+                            filter_cmp = m.group(2)
+                    query.filter("%s %s" % (filter_name, filter_cmp), values)
+        else:
+            properties = [p.name for p in self.db_class.properties(hidden=False)]
+            for filter in set(params.keys()):
+                if not filter in properties:
+                    raise BadRequest("Property not found: '%s'" % filter)
+                filter_value = params[filter]
+                filter_args = filter.split(".")
+                if len(filter_args) > 1:
+                    filter_cmp = filter_args[1]
+                else:
+                    filter_cmp = "="
+                filter = filter_args[0]
+                if len(filter_value) == 1:
+                    filter_value = filter_value[0]
+                if filter_value:
+                    query.filter("%s %s " % (filter, filter_cmp), filter_value)
         return query
 
     def create(self, params):

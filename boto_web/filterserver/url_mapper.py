@@ -80,7 +80,7 @@ class URLMapper(object):
         conn = httplib.HTTPConnection(self.proxy_host, self.proxy_port)
         headers = req.headers
         del(headers['Authorization'])
-        conn.request(req.method, req.path, req.body, headers)
+        conn.request(req.method, req.path_qs, req.body, headers)
         resp = conn.getresponse()
 
         resp_body = resp.read()
