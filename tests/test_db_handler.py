@@ -22,8 +22,7 @@ class TestDBHandler:
         """
         Setup this class
         """
-        cls.handler = DBHandler(config=boto.config)
-        cls.handler.db_class = SimpleObject
+        cls.handler = DBHandler(config={"db_class": "%s.SimpleObject" % SimpleObject.__module__})
 
     def teardown_class(cls):
         """

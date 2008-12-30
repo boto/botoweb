@@ -27,6 +27,7 @@ import boto
 from boto_web.request import Request
 from boto_web.response import Response
 from boto_web.resources.user import User
+from boto_web.resources.filter_rule import FilterRule
 from boto_web.exceptions import *
 
 import traceback
@@ -39,8 +40,7 @@ class URLMapper(object):
     """
 
 
-    def __init__(self, proxy_host, proxy_port, bucket):
-        self.bucket = bucket
+    def __init__(self, proxy_host, proxy_port):
         self.filters = {}
         self.proxy_host = proxy_host
         self.proxy_port = proxy_port
@@ -78,12 +78,23 @@ class URLMapper(object):
             raise Unauthorized()
         response = Response()
         conn = httplib.HTTPConnection(self.proxy_host, self.proxy_port)
-        conn.request(req.method, req.path)
+        headers = req.headers
+        del(headers['Authorization'])
+        conn.request(req.method, req.path, req.body, headers)
         resp = conn.getresponse()
 
-        response.write(resp.read())
+        resp_body = resp.read()
         response.set_status(resp.status)
-        response.content_type = resp.getheader('Content-type', 'text/html')
+        if resp.status == 200:
+            response.content_type = "text/xml"
+            stylesheet = self.get_stylesheet(req.path, user)
+            if stylesheet:
+                response.write(self.filter(stylesheet, resp_body))
+            else:
+                response.write(resp_body)
+        else:
+            response.write(resp_body)
+            response.content_type = resp.getheader('Content-type', 'text/html')
 
         return response
 
@@ -100,21 +111,45 @@ class URLMapper(object):
             if auth_type.lower() == "basic":
                 unencoded_info = encoded_info.decode('base64')
                 username, password = unencoded_info.split(':', 1)
-                user = User.find(username=username).next()
+                try:
+                    user = User.find(username=username).next()
+                except:
+                    user = None
                 if user and user.password == password:
                     return user
         return None
 
-    def filter(self, stylesheet, input):
+    def get_stylesheet(self, path, user):
+        """
+        Get the stylesheet for this URL and
+        User
+        """
+        log.info("Get Stylesheet: %s %s" % (path, user))
+        styledoc = None
+        query = FilterRule.find()
+        #query.filter("user =", [user, None])
+        query.filter("path =", [path, "*"])
+        try:
+            filter = query.next()
+        except:
+            return None
+        if filter:
+            log.info("Applying stylesheet: %s" % filter)
+            stylesheet = filter.output_filter
+            if stylesheet:
+                styledoc = libxml2.parseDoc(stylesheet.read())
+        return styledoc
+
+    def filter(self, styledoc, input):
         """
         Do the actual filtering
         """
-        styledoc = libxml2.parseFile(stylesheet)
         style = libxslt.parseStylesheetDoc(styledoc)
-        doc = libxml2.parseFile(input)
+        doc = libxml2.parseDoc(input)
         result = style.applyStylesheet(doc, None)
-        style.saveResultToFilename("foo", result, 0)
+        output = style.saveResultToString(result)
         style.freeStylesheet()
         doc.freeDoc()
         result.freeDoc()
+        return output
 

@@ -34,6 +34,7 @@ class DBHandler(RequestHandler):
         db_class_name = self.config.get('db_class', None)
         if db_class_name:
             self.db_class = find_class(db_class_name)
+        self.xmlmanager = self.db_class.get_xmlmanager()
 
     def get(self, request, id=None ):
         """
@@ -44,22 +45,15 @@ class DBHandler(RequestHandler):
         else:
             return self.search(params=request.GET.mixed())
 
-    def post(self):
+    def put(self, request, id=None):
         """
-        Save or update object to the DB
+        Create an object
         """
-        if not self.user:
-            raise Unauthorized()
-        obj = self.read()
-        if obj:
-            log.info("===== %s Update %s =====" % (self.user.username, self.db_class.__class__.__name__))
-            obj = self.update(obj, self.request.POST)
-            log.info("========================")
-        else:
-            log.info("===== %s Create %s =====" % (self.user.username, self.db_class.__class__.__name__))
-            obj = self.create(self.request.POST)
-            log.info("========================")
-        return self.redirect("%s/%s" % (self.request.script_name, obj.id))
+        print request.body
+        obj = self.xmlmanager.unmarshal_object(request.body_file)
+        obj.put()
+        return obj
+
 
     def decode(self, type, value):
         """

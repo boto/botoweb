@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<title>Example Webapp</title>
+		<link rel="stylesheet" href="style/base.css" type='text/css'/>
+		<link rel="stylesheet" href="style/menu.css" type='text/css'/>
+	</head>
+	<body>
+		<script src="javascript/jquery.min.js" type="text/javascript"></script>
+		<!-- Menu -->
+		<div id="topmenu">
+			<ul class="left">
+				<!-- 
+					<li><a href="">Home</a></li>
+					<li><a href="#blog">Blog</a></li>
+				-->
+			</ul>
+			<ul class="right">
+				<li id="login">username</li>
+			</ul>
+			<br style="clear: both;"/>
+		</div>
+		<!-- End Menu -->
+
+		<h1>Example app</h1>
+		<div class="box">
+			<table id="blog">
+				<thead>
+					<tr>
+						<th>Author</th>
+						<th>Title</th>
+						<th>Date</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Loading.....</td>
+						<td>Loading.....</td>
+						<td>Loading.....</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<script>
+			function load_blog(){
+				$.get("data/blog", function(data){
+					$("table#blog tbody").empty();
+					$(data).find("object").each(function(){
+						row = document.createElement("tr");
+
+						author_cell = document.createElement("td");
+						author_cell.innerHTML = $(this).find("property[@name='author']").text();
+						row.appendChild(author_cell);
+
+						title_cell = document.createElement("td");
+						title_cell.innerHTML = $(this).find("property[@name='title']").text();
+						row.appendChild(title_cell);
+
+						date_cell = document.createElement("td");
+						date_cell.innerHTML = $(this).find("property[@name='date']").text();
+						row.appendChild(date_cell);
+
+						$("table#blog tbody").append(row);
+					});
+				});
+			}
+			$(document).ready(function(){
+				load_blog();
+			});
+		</script>
+	</body>
+</html>

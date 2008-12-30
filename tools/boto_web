@@ -45,6 +45,8 @@ if __name__ == "__main__":
 	session['filterserver'] = boto_web.filterserver
 	from boto_web.resources.user import User
 	session['User'] = User
+	from boto_web.resources.filter_rule import FilterRule
+	session['FilterRule'] = FilterRule
 	session['help'] = "boto_web Version %s" % boto_web.Version
 
 	if len(sys.argv) > 1:

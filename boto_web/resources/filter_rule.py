@@ -18,15 +18,18 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from boto.sdb.db.model import Model
+from boto.sdb.db import property
+from boto_web.resources.user import User
 
-def start(proxy_host="localhost", proxy_port="8080", port=9080, hostname="localhost"):
+class FilterRule(Model):
     """
-    Start up a filter server hosting a given mapping
-    stored in SDB
+    Filter Rule
     """
-    from paste import httpserver
-    from boto_web.filterserver.url_mapper import URLMapper
-    import boto
-    s3 = boto.connect_s3()
-    mapper = URLMapper(proxy_host=proxy_host, proxy_port=proxy_port)
-    httpserver.serve(mapper, host=hostname, port=int(port))
+    user = property.ReferenceProperty(User)
+    path = property.StringProperty()
+
+    weight = property.IntegerProperty()
+
+    input_filter = property.S3KeyProperty()
+    output_filter = property.S3KeyProperty()

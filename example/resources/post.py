@@ -31,4 +31,4 @@ class Post(Model):
     title = property.StringProperty(verbose_name="Title")
     date = property.DateTimeProperty(auto_now_add=True)
     author = property.ReferenceProperty(User, collection_name="posts")
-    contents = property.S3KeyProperty(verbose_name="Entry")
+    contents = property.BlobProperty(verbose_name="Entry")
