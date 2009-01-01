@@ -113,3 +113,31 @@ class Config(ConfigParser.SafeConfigParser):
                 return self._sections[match.group(1)][match.group(2)][name]
 
         return default
+
+    # Descriptors for direct dictionary-like access
+    def __len__(self):
+        return len(self._sections)
+        
+    def __getitem__(self, key):
+        return self._sections[key]
+
+    def __setitem__(self, key, value):
+        self._sections[key] = value
+
+    def __delitem__(self, key):
+        del(self._sections[key])
+
+    def __reversed__(self):
+        return reversed(self._sections)
+    
+    def __contains__(self, key):
+        return (key in self._sections)
+
+    def update(self, vals):
+        return self._sections.update(vals)
+
+    def has_key(self, key):
+        return self._sections.has_key(key)
+
+    def copy(self):
+        return self._sections.copy()
