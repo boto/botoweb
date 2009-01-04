@@ -18,9 +18,6 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import libxml2
-import libxslt
-
 import httplib
 
 import boto
@@ -33,6 +30,9 @@ from boto_web.exceptions import *
 import traceback
 import logging
 log = logging.getLogger("boto_web.url_mapper")
+
+from Ft.Xml.Xslt import Processor
+from Ft.Xml import InputSource
 
 class URLMapper(object):
     """
@@ -73,23 +73,40 @@ class URLMapper(object):
         return response.wsgi_write(environ, start_response)
 
     def handle(self, req):
+        variables = {}
         user = self.get_user(req)
         if not user:
             raise Unauthorized()
         response = Response()
+        headers = {}
+        for key in req.headers:
+            if not key.lower() in ["content-length", "authorization"]:
+                headers[key] = req.headers[key]
+
         conn = httplib.HTTPConnection(self.proxy_host, self.proxy_port)
-        headers = req.headers
-        del(headers['Authorization'])
-        conn.request(req.method, req.path_qs, req.body, headers)
+
+        variables[u'user_id'] = user.id
+        variables[u'user_name'] = user.username
+
+        filter = self.get_filter(req.path,req.method, user)
+
+        stylesheet = None
+        if filter[0]:
+            body = filter[0].run(InputSource.DefaultFactory.fromString(req.body, None), topLevelParams=variables)
+        else:
+            body = req.body
+
+        conn.request(req.method, req.path_qs, body, headers)
         resp = conn.getresponse()
+
 
         resp_body = resp.read()
         response.set_status(resp.status)
         if resp.status == 200:
             response.content_type = "text/xml"
-            stylesheet = self.get_stylesheet(req.path, user)
-            if stylesheet:
-                response.write(self.filter(stylesheet, resp_body))
+
+            if filter[1]:
+                response.write(filter[1].run(InputSource.DefaultFactory.fromString(resp_body, None), topLevelParams=variables))
             else:
                 response.write(resp_body)
         else:
@@ -119,37 +136,32 @@ class URLMapper(object):
                     return user
         return None
 
-    def get_stylesheet(self, path, user):
+    def get_filter(self, path, method, user):
         """
-        Get the stylesheet for this URL and
+        Get the filter for this URL and
         User
+
+        @return: [input_filter, output_filter], either filter may also be None
+        @rtype: list
         """
+        path = path.split('/')[1]
         log.info("Get Stylesheet: %s %s" % (path, user))
         styledoc = None
         query = FilterRule.find()
         #query.filter("user =", [user, None])
         query.filter("path =", [path, "*"])
+        query.filter("method =", [method, "*"])
         try:
             filter = query.next()
         except:
-            return None
-        if filter:
-            log.info("Applying stylesheet: %s" % filter)
-            stylesheet = filter.output_filter
-            if stylesheet:
-                styledoc = libxml2.parseDoc(stylesheet.read())
-        return styledoc
+            return [None, None]
 
-    def filter(self, styledoc, input):
-        """
-        Do the actual filtering
-        """
-        style = libxslt.parseStylesheetDoc(styledoc)
-        doc = libxml2.parseDoc(input)
-        result = style.applyStylesheet(doc, None)
-        output = style.saveResultToString(result)
-        style.freeStylesheet()
-        doc.freeDoc()
-        result.freeDoc()
-        return output
+        return [self._build_proc(filter.input_filter), self._build_proc(filter.output_filter)]
 
+    def _build_proc(self, transform):
+        proc = None
+        if transform and str(transform):
+            proc = Processor.Processor()
+            style = InputSource.DefaultFactory.fromString(str(transform), None)
+            proc.appendStylesheet(style)
+        return proc

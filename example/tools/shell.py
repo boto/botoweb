@@ -11,14 +11,18 @@ boto.config.set("DB", "db_user", raw_input("Username: "))
 boto.config.set("DB", "db_passwd", getpass())
 
 
-boto.config.add_section("DB_Post")
-boto.config.set("DB_Post", "db_name", "blog")
-
-boto.config.set("DB_User", "db_name", "users")
-
 import readline
 import code
 session = {}
 from example.resources.post import Post
+Post._manager.db_name = "blog"
+from boto_web.resources.filter_rule import FilterRule
+FilterRule._manager.db_name = "rules"
+from boto_web.resources.user import User
+User._manager.db_name = "user"
+
 session['Post'] = Post
+session['Rule'] = FilterRule
+session['User'] = User
+
 code.interact(local=session)
