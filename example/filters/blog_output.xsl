@@ -12,6 +12,7 @@
 			<object class="boto_web.resources.user.User">
 				<xsl:attribute name="id"><xsl:value-of select="object/@id"/></xsl:attribute>
 			</object>
+			<foo/>
 		</xsl:copy>
 	</xsl:template>
 </xsl:stylesheet>

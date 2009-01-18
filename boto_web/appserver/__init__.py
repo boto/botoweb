@@ -29,5 +29,7 @@ def start(app, env=None, port=8080, hostname="localhost"):
     e = Environment(app, env)
     from paste import httpserver
     from boto_web.appserver.url_mapper import URLMapper
-    mapper = URLMapper(e)
+    from boto_web.appserver.filter_mapper import FilterMapper
+    mapper = FilterMapper(app=URLMapper(e), env=e)
+    
     httpserver.serve(mapper, host=hostname, port=int(port))
