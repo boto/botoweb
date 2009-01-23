@@ -37,6 +37,7 @@ if __name__ == "__main__":
 	import boto_web.appserver
 	import boto_web.filterserver
 	import sys
+	sys.path.append(".")
 	sys.ps1 = "\x01\x1b[34m\x1b[1m\x02>>> \x01\x1b[0m\x02"
 	sys.ps2 = "... "
 	import code

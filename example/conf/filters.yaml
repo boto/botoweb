@@ -1,3 +1,4 @@
 - url: /blog*
   filters:
     output: python://example/filters/blog_output.xsl
+    input: python://example/filters/blog_input.xsl

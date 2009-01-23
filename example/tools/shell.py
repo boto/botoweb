@@ -6,7 +6,7 @@ from getpass import getpass
 boto.config.set("DB", "db_type", "XML")
 boto.config.set("DB", "db_host", "localhost")
 boto.config.set("DB", "enable_ssl", "False")
-boto.config.set("DB", "db_port", "9080")
+boto.config.set("DB", "db_port", "8080")
 boto.config.set("DB", "db_user", raw_input("Username: "))
 boto.config.set("DB", "db_passwd", getpass())
 

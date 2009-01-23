@@ -93,7 +93,7 @@ class FilterMapper(object):
         filter = self.get_filter(req.path,req.method, user)
 
         stylesheet = None
-        if filter[0]:
+        if filter[0] and req.body:
             req.body = filter[0].run(self.factory.fromString(req.body, None), topLevelParams=variables)
 
         response = req.get_response(self.app)
@@ -154,7 +154,6 @@ class FilterMapper(object):
         input_filter = None
         output_filter = None
         if match:
-            print "Matched Filter: %s" % rule
             if rule['filters'].has_key("input"):
                 input_filter = self._build_proc(rule['filters']['input'])
             if rule['filters'].has_key("output"):

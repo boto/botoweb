@@ -1,13 +1,8 @@
 <xsl:stylesheet version='1.0' 
  xmlns:xsl='http://www.w3.org/1999/XSL/Transform' >
-
+	<xsl:include href="base.xsl"/>
 	<xsl:param name="user_id" select="'unknown'"/>
 
-	<xsl:template match="@*|node()">
-		<xsl:copy>
-			<xsl:apply-templates select="@*|node()"/>
-		</xsl:copy>
-	</xsl:template>
 	<xsl:template match="property[@name='author']">
 		<xsl:copy>
 			<xsl:apply-templates select="@*"/>
