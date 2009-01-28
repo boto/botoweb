@@ -51,19 +51,19 @@ class URLMapper(object):
             if handler:
                 try:
                     if request.method == "GET":
-                        content = handler.get(request, obj_id)
+                        content = handler._get(request, obj_id)
                     elif request.method == "POST":
-                        content = handler.post(request, obj_id)
+                        content = handler._post(request, obj_id)
                     elif request.method == "HEAD":
-                        content = handler.head(request, obj_id)
+                        content = handler._head(request, obj_id)
                     elif request.method == "OPTIONS":
-                        content = handler.options(request, obj_id)
+                        content = handler._options(request, obj_id)
                     elif request.method == "PUT":
-                        content = handler.put(request, obj_id)
+                        content = handler._put(request, obj_id)
                     elif request.method == "DELETE":
-                        content = handler.delete(request, obj_id)
+                        content = handler._delete(request, obj_id)
                     elif request.method == "TRACE":
-                        content = handler.trace(request, obj_id)
+                        content = handler._trace(request, obj_id)
                     else:
                         raise BadRequest(description="Unknown Method: %s" % request.method)
 

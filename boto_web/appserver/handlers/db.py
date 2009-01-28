@@ -36,23 +36,32 @@ class DBHandler(RequestHandler):
             self.db_class = find_class(db_class_name)
         self.xmlmanager = self.db_class.get_xmlmanager()
 
-    def get(self, request, id=None ):
+    def _get(self, request, id=None ):
         """
         Get an object, or search for a list of objects
         """
         if id:
-            return self.read(id=id)
+            return self.read(id=id, user=request.user)
         else:
-            return self.search(params=request.GET.mixed())
+            return self.search(params=request.GET.mixed(), user=request.user)
 
-    def put(self, request, id=None):
+    def _put(self, request, id=None):
         """
         Create an object
         """
-        obj = self.xmlmanager.unmarshal_object(request.body_file)
-        obj.put()
-        return obj
+        new_obj = self.xmlmanager.unmarshal_object(request.body_file)
+        if id:
+            return self.update(self.db_class.get_by_ids(id), new_obj, request.user)
+        else:
+            return self.create(new_obj, request.user)
 
+
+    def _delete(self, request=None, id=None):
+        """
+        Delete a given object
+        """
+        obj = self.read(id=id, user=request.user);
+        return self.delete(obj,user=request.user)
 
     def decode(self, type, value):
         """
@@ -78,11 +87,14 @@ class DBHandler(RequestHandler):
     # The CRUD interface, this is
     # all you should override if you need to
     ##
-    def search(self, params):
+    def search(self, params, user):
         """
         Search for given objects
         @param params: The Terms to search for
         @type params: Dictionary
+
+        @param user: the user that is searching
+        @type user: User
         """
         query_str = params.get("query", None)
         query = self.db_class.find()
@@ -121,16 +133,18 @@ class DBHandler(RequestHandler):
                     query.filter("%s %s " % (filter, filter_cmp), filter_value)
         return query
 
-    def create(self, params):
+    def create(self, obj, user):
         """
         Create an object in the DB
-        @param params: Dictionary of params to set on this object
-        @type params: dict
+        @param obj: The object to create
+        @type obj: self.db_class
+        @param user: The user doing the creation
+        @type user: User
         """
-        obj = self.db_class()
-        return self.update(obj, params)
+        obj.put()
+        return obj
 
-    def read(self, id):
+    def read(self, id, user):
         """
         Get the object that this URI points to, or None if they don't point to one
         If we point to a URI that doesn't exist, we toss a NotFound error
@@ -144,41 +158,27 @@ class DBHandler(RequestHandler):
             raise NotFound()
         return obj
 
-    def update(self, obj, params):
+    def update(self, obj, new_obj, user):
         """
         Update our object
-        @param params: Dictionary of params to set on this object
-        @type params: dict
+
+        @param obj: Object to update
+        @type obj: self.db_class
+
+        @param new_obj: The new object to replace it with
+        @type new_obj: self.db_class
+
+        @param user: The user making these changes
+        @type user: User
         """
-        props = {}
-        for p in obj.properties():
-            props[p.name] = p
-        for param in params.keys():
-            if props.has_key(param):
-                prop = props[param]
-                if prop.data_type == list:
-                    p_list = params.get(param)
-                    if len(p_list) <= 1:
-                        p_list = p_list[0].split("\r\n")
-                    val = []
-                    for v in p_list:
-                        if v:
-                            val.append(self.decode(prop.item_type, v))
-                elif prop.data_type == Key:
-                    val = self.decode(prop.reference_class, params.get(param))
-                else:
-                    val = self.decode(prop.data_type, params.get(param))
-                if val:
-                    log.info("%s: %s" % (param, str(val)))
-                    setattr(obj, param, val)
-        obj.save()
+        new_obj.id = obj.id
+        new_obj.put()
         return obj
 
-    def delete(self, request=None, id=None):
+    def delete(self, obj, user):
         """
-        Delete a given object
+        Delete the object
         """
-        obj = self.read(id=id);
-        obj.delete()
         log.info("Deleted object %s" % (obj.id))
+        obj.delete()
         return obj

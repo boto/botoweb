@@ -49,28 +49,28 @@ class RequestHandler(object):
             self.response.set_status(303)
         self.response.headers['Location'] = str(url)
 
-    def get(self, request, id=None):
-        self.any(request, id)
+    def _get(self, request, id=None):
+        self._any(request, id)
 
-    def post(self, request, id=None):
-        self.any(request, id)
+    def _post(self, request, id=None):
+        self._any(request, id)
     
-    def head(self, request, id=None):
-        self.any(request, id)
+    def _head(self, request, id=None):
+        self._any(request, id)
 
-    def options(self, request, id=None):
-        self.any(request, id)
+    def _options(self, request, id=None):
+        self._any(request, id)
 
-    def put(self, request, id=None):
-        self.any(request, id)
+    def _put(self, request, id=None):
+        self._any(request, id)
 
-    def delete(self, request, id=None):
-        self.any(request, id)
+    def _delete(self, request, id=None):
+        self._any(request, id)
 
-    def trace(self, request, id=None):
-        self.any(request, id)
+    def _trace(self, request, id=None):
+        self._any(request, id)
 
-    def any(self, request, id=None):
+    def _any(self, request, id=None):
         """
         Default handler for any request not specifically defined
         """

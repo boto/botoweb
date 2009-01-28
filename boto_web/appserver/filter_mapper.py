@@ -64,7 +64,7 @@ class FilterMapper(object):
         except Unauthorized, e:
             response = Response()
             response.set_status(e.code)
-            response.headers.add("WWW-Authenticate", 'Basic realm="%s"' % boto.config.get("boto_web", "application", "Boto Web"))
+            response.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
         except HTTPException, e:
             response = Response()
             response.set_status(e.code)
@@ -78,7 +78,7 @@ class FilterMapper(object):
 
     def handle(self, req):
         variables = {}
-        user = self.get_user(req)
+        user = req.user
         if not user:
             raise Unauthorized()
         headers = {}
@@ -102,27 +102,6 @@ class FilterMapper(object):
             response.body = filter[1].run(self.factory.fromString(response.body, None), topLevelParams=variables)
 
         return response
-
-
-    def get_user(self, req):
-        """
-        Get the user from this request object
-        @return: User object, or None
-        @rtype: User or None
-        """
-        auth_header =  req.environ.get("HTTP_AUTHORIZATION")
-        if auth_header:
-            auth_type, encoded_info = auth_header.split(None, 1)
-            if auth_type.lower() == "basic":
-                unencoded_info = encoded_info.decode('base64')
-                username, password = unencoded_info.split(':', 1)
-                try:
-                    user = User.find(username=username).next()
-                except:
-                    user = None
-                if user and user.password == password:
-                    return user
-        return None
 
     def get_filter(self, path, method, user):
         """
@@ -153,7 +132,7 @@ class FilterMapper(object):
 
         input_filter = None
         output_filter = None
-        if match:
+        if match and rule.has_key('filters'):
             if rule['filters'].has_key("input"):
                 input_filter = self._build_proc(rule['filters']['input'])
             if rule['filters'].has_key("output"):

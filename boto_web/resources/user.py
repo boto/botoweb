@@ -67,3 +67,6 @@ class User(Model):
         server.sendmail(from_string, self.email, msgRoot.as_string())
         server.quit()
 
+
+    def has_auth_group(self, group):
+        return (group in self.auth_groups)

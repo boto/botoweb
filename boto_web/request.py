@@ -1,4 +1,7 @@
 import webob
+from boto_web.resources.user import User
+import logging
+log = logging.getLogger("vermouth.request")
 
 class Request(webob.Request):
     """
@@ -8,6 +11,7 @@ class Request(webob.Request):
     file_extension = "html"
 
     def __init__(self, environ):
+        self._user = None
         charset = webob.NoDefault
         if environ.get('CONTENT_TYPE', '').find('charset') == -1:
             charset = 'utf-8'
@@ -49,3 +53,27 @@ class Request(webob.Request):
             for k in self.POST:
                 vals[k] = self.POST[k]
         return vals
+
+    def getUser(self):
+        """
+        Get the user from this request object
+        @return: User object, or None
+        @rtype: User or None
+        """
+        if not self._user:
+            auth_header =  self.environ.get("HTTP_AUTHORIZATION")
+            if auth_header:
+                auth_type, encoded_info = auth_header.split(None, 1)
+                if auth_type.lower() == "basic":
+                    unencoded_info = encoded_info.decode('base64')
+                    username, password = unencoded_info.split(':', 1)
+                    log.info("Looking up user: %s" % username)
+                    try:
+                        user = User.find(username=username).next()
+                    except:
+                        user = None
+                    if user and user.password == password:
+                        self._user = user
+        return self._user
+
+    user = property(getUser, None, None)
