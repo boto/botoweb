@@ -98,6 +98,7 @@ class DBHandler(RequestHandler):
         """
         query_str = params.get("query", None)
         query = self.db_class.find()
+        sort_by = params.get("sort_by", None)
         if query_str:
             parts = query_str.split(" intersection ")
             for part in parts:
@@ -118,6 +119,8 @@ class DBHandler(RequestHandler):
         else:
             properties = [p.name for p in self.db_class.properties(hidden=False)]
             for filter in set(params.keys()):
+                if filter == "sort_by":
+                    continue
                 if not filter in properties:
                     raise BadRequest("Property not found: '%s'" % filter)
                 filter_value = params[filter]
@@ -131,6 +134,8 @@ class DBHandler(RequestHandler):
                     filter_value = filter_value[0]
                 if filter_value:
                     query.filter("%s %s " % (filter, filter_cmp), filter_value)
+        if sort_by:
+            query.order(sort_by)
         return query
 
     def create(self, obj, user):
