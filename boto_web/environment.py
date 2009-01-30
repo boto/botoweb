@@ -32,8 +32,8 @@ class Environment(object):
         if not self.config.has_key("DB"):
             self.config['DB'] = {
                                     "db_type": self.config.get("db_type", "SimpleDB"),
-                                    "db_user": self.conf.get("Credentials", "aws_access_key_id"),
-                                    "db_passwd": self.conf.get("Credentials", "aws_secret_access_key")
+                                    "db_user": self.config.get("Credentials", "aws_access_key_id"),
+                                    "db_passwd": self.config.get("Credentials", "aws_secret_access_key")
                                 }
         if self.config.has_key("auth_db"):
             self.config['DB']['User'] = {"db_name": self.config['auth_db']}
