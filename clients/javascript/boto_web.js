@@ -28,17 +28,23 @@ var boto_web = {
 	// Get all items at this url
 	// 
 	all: function(url, fnc){
-		return boto_web.find(url, fnc, null);
+		return boto_web.find(url, null, fnc);
 	},
 	
 	//
 	// Find items at this URL using optional filters
 	// @param url: The URL to search at
+	// @param filters: The Filters to apply (or null for none), this should be of the form {name: value, name2: value2}
 	// @param fnc: The function to call back to
-	// @param filters: The Filters to apply (or null for none)
 	//
-	find: function(url, fnc, filters){
-		// TODO: Apply the filters
+	find: function(url, filters, fnc){
+		// Apply the filters
+		url += "?";
+		for (filter in filters){
+			url += filter + "=" + filters[filter] + "&";
+		}
+
+
 		return $.get(url, function(xml){
 			var data = [];
 			$(xml).find("object").each(function(){
