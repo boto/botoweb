@@ -44,24 +44,61 @@ var boto_web = {
 			url += filter + "=" + filters[filter] + "&";
 		}
 
-
 		return $.get(url, function(xml){
 			var data = [];
 			$(xml).find("object").each(function(){
-				var obj = {};
-                obj.length = 0;
-				$(this).find("property").each(function(){
-					// TODO: Support references
-					// TODO: Support Lists
-					obj[$(this).attr('name')] = $(this).text();
-                    obj.length++;
-				});
-                if(obj.length > 0){
-                    data.push(obj);
-                }
+				var obj = boto_web.parseObject(this);
+				if(obj.length > 0){
+					data.push(obj);
+				}
 			});
 			fnc(data);
 		});
-	}
+	},
+
+	//
+	// Function: parseObject
+	// Parse this XML into an object
+	//
+	parseObject: function(data){
+		var obj = {};
+		obj.length = 0;
+
+		$(data).find("property").each(function(){
+			var value = null
+			if($(this).attr("type") == "Reference"){
+				value = {
+					className: $(this).find("object").attr("class"),
+					id: $(this).find("object").attr("id"),
+					fetch: function(url, fnc){
+						boto_web.get_by_id(url, this.id, fnc);
+					}
+				};
+			} else if ($(this).attr("type") == "List"){
+				value = [];
+				$(this).find("items/item").each(function(){
+					// TODO: Make this work with references
+					value.push($(this).text());
+				});
+			} else {
+				value = $(this).text();
+			}
+			obj[$(this).attr('name')] = value;
+			obj.length++;
+		});
+		return obj;
+	},
+
+	//
+	// Function: get_by_id
+	// Find a specific object by ID
+	//
+	get_by_id: function(url, id, fnc){
+		$.get(url + "/" + id, function(data){
+			$(data).find("object").each(function(){
+				fnc(boto_web.parseObject(this));
+			});
+		});
+	},
 
 };
