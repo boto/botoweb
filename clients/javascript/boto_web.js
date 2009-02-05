@@ -63,6 +63,7 @@ var boto_web = {
 	parseObject: function(data){
 		var obj = {};
 		obj.length = 0;
+        obj.id = $(data).attr('id');
 
 		$(data).find("property").each(function(){
 			var value = null
@@ -96,7 +97,10 @@ var boto_web = {
 	get_by_id: function(url, id, fnc){
 		$.get(url + "/" + id, function(data){
 			$(data).find("object").each(function(){
-				fnc(boto_web.parseObject(this));
+				var curobj = boto_web.parseObject(this);
+                if(curobj.length > 0){
+                    fnc(curobj);
+                }
 			});
 		});
 	},
