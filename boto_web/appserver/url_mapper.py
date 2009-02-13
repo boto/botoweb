@@ -8,6 +8,7 @@ import boto_web
 import mimetypes
 from boto.utils import find_class
 from boto_web.appserver.handlers import RequestHandler
+from boto_web.appserver.handlers.index import IndexHandler
 from boto_web.request import Request
 from boto_web.response import Response
 from boto_web import status
@@ -26,6 +27,7 @@ class URLMapper(object):
         Set up the environment for this system
         """
         self.boto_web_env = boto_web_env
+        self.index_handler = IndexHandler(boto_web_env.config)
 
     def __call__(self, environ, start_response):
         """
@@ -99,6 +101,8 @@ class URLMapper(object):
         @return: (Handler, obj_id)
         @rtype: tuple
         """
+        if path == "/":
+            return (self.index_handler, None)
         handler = None
         obj_id = None
         for handler_config in self.boto_web_env.config['handlers']:
