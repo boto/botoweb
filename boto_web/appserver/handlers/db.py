@@ -49,7 +49,7 @@ class DBHandler(RequestHandler):
         """
         Create an object
         """
-        new_obj = self.xmlmanager.unmarshal_object(request.body_file)
+        new_obj = self.xmlmanager.unmarshal_object(request.body_file, cls=self.db_class)
         if id:
             return self.update(self.db_class.get_by_ids(id), new_obj, request.user)
         else:
