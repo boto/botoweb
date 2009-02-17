@@ -114,11 +114,12 @@ var boto_web = {
 	//
 	save: function(url, data){
 		//TODO: Support more then just strings
-		var doc = document.createElement("objects");
-		var obj = document.createElement("object");
-		doc.appendChild(obj);
+		var doc = document.implementation.createDocument("","objects",null);
+		var obj = doc.createElement("object");
+        alert(doc);
+		doc.documentElement.appendChild(obj);
 		for(pname in data){
-			var prop = document.createElement("property");
+			var prop = doc.createElement("property");
 			$(prop).attr("name", pname);
 			$(prop).text(data[pname]);
 			obj.appendChild(prop);
@@ -126,7 +127,7 @@ var boto_web = {
 		$.ajax({
 			type: "PUT",
 			url: url,
-			processData: false,
+            processData: false,
 			data: doc
 		});
 	}
