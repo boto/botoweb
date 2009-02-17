@@ -105,4 +105,30 @@ var boto_web = {
 		});
 	},
 
+	//
+	// Functin: save
+	// Save this ticket, or create a new one
+	// the Data string is a simple class mapping
+	// which is then converted into the proper XML document
+	// to be sent to the server
+	//
+	save: function(url, data){
+		//TODO: Support more then just strings
+		var doc = document.createElement("objects");
+		var obj = document.createElement("object");
+		doc.appendChild(obj);
+		for(pname in data){
+			var prop = document.createElement("property");
+			$(prop).attr("name", pname);
+			$(prop).text(data[pname]);
+			obj.appendChild(prop);
+		}
+		$.ajax({
+			type: "PUT",
+			url: url,
+			processData: false,
+			data: doc
+		});
+	}
+
 };
