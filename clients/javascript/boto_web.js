@@ -113,15 +113,25 @@ var boto_web = {
 	// to be sent to the server
 	//
 	save: function(url, data){
-		//TODO: Support more then just strings
+		//TODO: Support Lists
 		var doc = document.implementation.createDocument("","objects",null);
 		var obj = doc.createElement("object");
-        alert(doc);
 		doc.documentElement.appendChild(obj);
 		for(pname in data){
 			var prop = doc.createElement("property");
 			$(prop).attr("name", pname);
-			$(prop).text(data[pname]);
+            var pval = data[pname];
+            if(pval.id){
+                var prop_obj = doc.createElement("object");
+                $(prop_obj).attr("id", pval.id);
+                if(pval.className){
+                    $(prop_obj).attr("class", pval.className);
+                }
+                prop.appendChild(prop_obj);
+                $(prop).attr("type", "Reference");
+            } else {
+                $(prop).text(data[pname]);
+            }
 			obj.appendChild(prop);
 		}
 		$.ajax({
