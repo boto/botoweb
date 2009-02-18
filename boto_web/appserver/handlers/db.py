@@ -176,8 +176,16 @@ class DBHandler(RequestHandler):
         @param user: The user making these changes
         @type user: User
         """
-        new_obj.id = obj.id
-        new_obj.put()
+        boto.log.debug("===========================")
+        boto.log.debug("Update %s" % obj.__class__.__name__)
+        for prop in new_obj.properties():
+            if prop.name:
+                pval = getattr(new_obj, prop.name)
+                if pval:
+                    boto.log.debug("%s = %s" % (prop.name, pval))
+                    setattr(obj, prop.name, pval)
+        boto.log.debug("===========================")
+        obj.put()
         return obj
 
     def delete(self, obj, user):
