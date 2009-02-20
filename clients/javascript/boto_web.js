@@ -150,7 +150,7 @@ var boto_web = {
 				prop_item.appendChild(boto_web.encode_prop(item, doc));
 				ret.appendChild(prop_item);
 			}
-		} else if (prop.constructor.toString().indexOf("Class") != -1){
+		} else if (prop.constructor.toString().indexOf("Object") != -1){
 			ret = doc.createElement("object");
 			$(ret).attr("id", prop.id);
 			if(prop.className){
