@@ -170,5 +170,17 @@ var boto_web = {
 			ret = doc.createTextNode(prop.toString());
 		}
 		return ret;
+	},
+
+	//
+	// Function: del
+	// Delete this object
+	//
+	del: function(url, fnc){
+		$.ajax({
+			type: "DELETE",
+			url: url,
+			success: fnc
+		});
 	}
 };
