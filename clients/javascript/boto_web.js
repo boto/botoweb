@@ -77,9 +77,19 @@ var boto_web = {
 				};
 			} else if ($(this).attr("type") == "List"){
 				value = [];
-				$(this).find("items/item").each(function(){
-					// TODO: Make this work with references
-					value.push($(this).text());
+				$(this).find("item").each(function(){
+					var val_obj = $(this).find("object")[0];
+					if(val_obj){
+						value.push({
+							className: $(val_obj).attr("class"),
+							id: $(val_obj).attr("id"),
+							fetch: function(url, fnc){
+								boto_web.get_by_id(url, this.id, fnc);
+							}
+						});
+					} else {
+						value.push($(this).text());
+					}
 				});
 			} else {
 				value = $(this).text();
