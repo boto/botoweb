@@ -30,7 +30,7 @@ var boto_web = {
 	all: function(url, fnc){
 		return boto_web.find(url, null, fnc);
 	},
-	
+
 	//
 	// Find items at this URL using optional filters
 	// @param url: The URL to search at
@@ -63,7 +63,7 @@ var boto_web = {
 	parseObject: function(data){
 		var obj = {};
 		obj.length = 0;
-        obj.id = $(data).attr('id');
+		obj.id = $(data).attr('id');
 
 		$(data).find("property").each(function(){
 			var value = null
@@ -98,48 +98,67 @@ var boto_web = {
 		$.get(url + "/" + id, function(data){
 			$(data).find("object").each(function(){
 				var curobj = boto_web.parseObject(this);
-                if(curobj.length > 0){
-                    fnc(curobj);
-                }
+				if(curobj.length > 0){
+					fnc(curobj);
+				}
 			});
 		});
 	},
 
 	//
-	// Functin: save
+	// Functon: save
 	// Save this ticket, or create a new one
 	// the Data string is a simple class mapping
 	// which is then converted into the proper XML document
 	// to be sent to the server
 	//
 	save: function(url, data){
-		//TODO: Support Lists
 		var doc = document.implementation.createDocument("","objects",null);
 		var obj = doc.createElement("object");
 		doc.documentElement.appendChild(obj);
 		for(pname in data){
 			var prop = doc.createElement("property");
 			$(prop).attr("name", pname);
-            var pval = data[pname];
-            if(pval.id){
-                var prop_obj = doc.createElement("object");
-                $(prop_obj).attr("id", pval.id);
-                if(pval.className){
-                    $(prop_obj).attr("class", pval.className);
-                }
-                prop.appendChild(prop_obj);
-                $(prop).attr("type", "Reference");
-            } else {
-                $(prop).text(data[pname]);
-            }
+			var pval = data[pname];
+			prop.appendChild(boto_web.encode_prop(pval, doc));
+			if(pval.constructor.toString().indexOf("Array") != -1){
+				$(prop).attr("type", "List");
+			} else if (pval.constructor.toString().indexOf("Class") != -1){
+				$(prop).attr("type", "Reference");
+			}
 			obj.appendChild(prop);
 		}
 		$.ajax({
 			type: "PUT",
 			url: url,
-            processData: false,
+			processData: false,
 			data: doc
 		});
-	}
+	},
 
+	//
+	// Function: encode_prop
+	// Encode the property into an XML document object
+	//
+	encode_prop: function(prop, doc){
+		var ret = null;
+		if(prop.constructor.toString().indexOf("Array") != -1){
+			ret = doc.createElement("items");
+			for(var x=0; x < prop.length; x++){
+				item = prop[x];
+				var prop_item = doc.createElement("item");
+				prop_item.appendChild(boto_web.encode_prop(item, doc));
+				ret.appendChild(prop_item);
+			}
+		} else if (prop.constructor.toString().indexOf("Class") != -1){
+			ret = doc.createElement("object");
+			$(ret).attr("id", prop.id);
+			if(prop.className){
+				$(ret).attr("class", prop.className);
+			}
+		} else {
+			ret = doc.createTextNode(prop.toString());
+		}
+		return ret;
+	}
 };
