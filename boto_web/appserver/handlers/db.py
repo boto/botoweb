@@ -36,32 +36,41 @@ class DBHandler(RequestHandler):
             self.db_class = find_class(db_class_name)
         self.xmlmanager = self.db_class.get_xmlmanager()
 
-    def _get(self, request, id=None ):
+    def _get(self, request, response, id=None ):
         """
         Get an object, or search for a list of objects
         """
         if id:
-            return self.read(id=id, user=request.user)
+            content = self.read(id=id, user=request.user)
         else:
-            return self.search(params=request.GET.mixed(), user=request.user)
+            content = self.search(params=request.GET.mixed(), user=request.user)
+        response.content_type = "text/xml"
+        content.to_xml().writexml(response)
+        return response
 
-    def _put(self, request, id=None):
+    def _put(self, request, response, id=None):
         """
         Create an object
         """
         new_obj = self.xmlmanager.unmarshal_object(request.body_file, cls=self.db_class)
         if id:
-            return self.update(self.db_class.get_by_ids(id), new_obj, request.user)
+            content =  self.update(self.db_class.get_by_ids(id), new_obj, request.user)
         else:
-            return self.create(new_obj, request.user)
+            content =  self.create(new_obj, request.user)
+        response.content_type = "text/xml"
+        content.to_xml().writexml(response)
+        return response
 
 
-    def _delete(self, request=None, id=None):
+    def _delete(self, request, response, id=None):
         """
         Delete a given object
         """
         obj = self.read(id=id, user=request.user);
-        return self.delete(obj,user=request.user)
+        content = self.delete(obj,user=request.user)
+        response.content_type = "text/xml"
+        content.to_xml().writexml(response)
+        return response
 
     def decode(self, type, value):
         """

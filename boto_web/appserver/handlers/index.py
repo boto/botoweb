@@ -67,10 +67,12 @@ class IndexHandler(RequestHandler):
         RequestHandler.__init__(self,config)
         self._index = None
 
-    def _get(self, request, id=None):
+    def _get(self, request, response, id=None):
         """
         List all our routes
         """
         if not self._index:
             self._index = Index(self.config["handlers"])
-        return self._index
+        response.content_type = 'text/xml'
+        self._index.to_xml().writexml(response)
+        return response

@@ -34,64 +34,19 @@ class URLMapper(object):
         This needs to be callable as a function
         """
         request = Request(environ)
-        log.info("%s: %s" % (request.method, request.path_info))
-
         response = Response()
-        content = self.handle(request, response)
-        response.content_type = "text/xml"
-        content.to_xml().writexml(response)
+        log.info("%s: %s" % (request.method, request.path_info))
+        (handler, obj_id) = self.parse_path(request.path)
+        if handler:
+            response =  handler(request, response, obj_id)
+        else:
+            content = NotFound(url=request.path)
+            log.error("Not Found: %s" % request.path)
+            response.set_status(content.code)
+            response.content_type = "text/xml"
+            content.to_xml().writexml(response)
         return response.wsgi_write(environ, start_response)
 
-    def handle(self, request, response):
-        """
-        Do the handling of the request
-        and response.
-        We split this out so it's easier to test
-        """
-        (handler, obj_id) = self.parse_path(request.path)
-        try:
-            if handler:
-                try:
-                    if request.method == "GET":
-                        content = handler._get(request, obj_id)
-                    elif request.method == "POST":
-                        content = handler._post(request, obj_id)
-                    elif request.method == "HEAD":
-                        content = handler._head(request, obj_id)
-                    elif request.method == "OPTIONS":
-                        content = handler._options(request, obj_id)
-                    elif request.method == "PUT":
-                        content = handler._put(request, obj_id)
-                    elif request.method == "DELETE":
-                        content = handler._delete(request, obj_id)
-                    elif request.method == "TRACE":
-                        content = handler._trace(request, obj_id)
-                    else:
-                        raise BadRequest(description="Unknown Method: %s" % request.method)
-
-                except HTTPRedirect, e:
-                    response.clear()
-                    response.set_status(e.code)
-                    response.headers['Location'] = str(url)
-                    content = e
-                except HTTPException, e:
-                    response.clear()
-                    response.set_status(e.code)
-                    content = e
-                except Exception, e:
-                    content = InternalServerError(message=e.message)
-                    response.set_status(content.code)
-                    log.critical(traceback.format_exc())
-            else:
-                content = NotFound(url=request.path)
-                log.error("Not Found: %s" % request.path)
-                response.set_status(content.code)
-        except Exception, e:
-            log.critical(traceback.format_exc())
-            content = InternalServerError(message=e.message)
-            response.set_status(content.code)
-
-        return content
 
     def parse_path(self, path):
         """

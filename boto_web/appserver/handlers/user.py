@@ -63,6 +63,8 @@ class UserHandler(DBHandler):
                 if propname:
                     value = getattr(new_obj, propname)
                     if value:
+                        print "%s: %s" % (propname, value)
                         setattr(obj, propname, value)
+        obj.put()
         return obj
 

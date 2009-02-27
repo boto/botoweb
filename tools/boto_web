@@ -31,30 +31,27 @@ def get_function(session, f_name):
 	return func
 
 if __name__ == "__main__":
-	import readline
-	from paste import httpserver
-	import boto_web
-	import boto_web.appserver
-	import boto_web.filterserver
 	import sys
 	sys.path.append(".")
-	sys.ps1 = "\x01\x1b[34m\x1b[1m\x02>>> \x01\x1b[0m\x02"
-	sys.ps2 = "... "
-	import code
-	session = {}
-	session['appserver'] = boto_web.appserver
-	session['filterserver'] = boto_web.filterserver
-	from boto_web.resources.user import User
-	session['User'] = User
-	from boto_web.resources.filter_rule import FilterRule
-	session['FilterRule'] = FilterRule
-	session['help'] = "boto_web Version %s" % boto_web.Version
+	from optparse import OptionParser
+	from paste import httpserver
+	import boto_web
+	from boto_web.environment import Environment
 
-	if len(sys.argv) > 1:
-		cmd = get_function(session, sys.argv[1])
-		args = []
-		if len(sys.argv) > 2:
-			args = sys.argv[2:]
-		cmd(*args)
-	else:
-		code.interact(banner=session['help'], local=session)
+	parser = OptionParser(usage="usage: %prog [options] application")
+	parser.add_option("-e", "--environment", dest="env", default=None, help="Environment file to use")
+	parser.add_option("-p", "--port", dest="port", default="8080", help="Port to run on (default 8080)")
+	parser.add_option("--host", dest="hostname", default="localhost", help="Hostname to run on (default localhost)")
+	parser.add_option("-v", action="count", dest="verbose", default=0)
+	(options, args) = parser.parse_args()
+
+	e = Environment(args[0], options.env)
+	import boto
+	boto.config = e.config
+
+	from paste import httpserver
+	from boto_web.appserver.url_mapper import URLMapper
+	from boto_web.appserver.filter_mapper import FilterMapper
+	mapper = FilterMapper(app=URLMapper(e), env=e)
+	
+	httpserver.serve(mapper, host=options.hostname, port=int(options.port))

@@ -36,41 +36,81 @@ class RequestHandler(object):
         """
         self.config = config
 
-    def redirect(self, url, perminate=False):
+    def __call__(self, request, response, obj_id):
         """
-        HTTP Redirect
-        @param perminate: Send a 301 (Perminate Redirect) instead of a 303 (Temporary Redirect) Default False
-        @type perminate: boolean
+        Execute this handler based on the request passed in
         """
-        self.response.clear()
-        if perminate:
-            self.response.set_status(301)
-        else:
-            self.response.set_status(303)
-        self.response.headers['Location'] = str(url)
+        try:
+            try:
+                if request.method == "GET":
+                    response = self._get(request, response, obj_id)
+                elif request.method == "POST":
+                    response = self._post(request, response, obj_id)
+                elif request.method == "HEAD":
+                    response = self._head(request, response, obj_id)
+                elif request.method == "OPTIONS":
+                    response = self._options(request, response, obj_id)
+                elif request.method == "PUT":
+                    response = self._put(request, response, obj_id)
+                elif request.method == "DELETE":
+                    response = self._delete(request, response, obj_id)
+                elif request.method == "TRACE":
+                    response = self._trace(request, response, obj_id)
+                else:
+                    raise BadRequest(description="Unknown Method: %s" % request.method)
 
-    def _get(self, request, id=None):
-        self._any(request, id)
+            except HTTPRedirect, e:
+                response.clear()
+                response.set_status(e.code)
+                response.headers['Location'] = str(url)
+                content = e
+                response.content_type = "text/xml"
+                content.to_xml().writexml(response)
+            except HTTPException, e:
+                response.clear()
+                response.set_status(e.code)
+                content = e
+                response.content_type = "text/xml"
+                content.to_xml().writexml(response)
+            except Exception, e:
+                response.clear()
+                content = InternalServerError(message=e.message)
+                response.set_status(content.code)
+                log.critical(traceback.format_exc())
+                response.content_type = "text/xml"
+                content.to_xml().writexml(response)
+        except Exception, e:
+            content = InternalServerError(message=e.message)
+            response.clear()
+            response.set_status(content.code)
+            log.critical(traceback.format_exc())
+            response.content_type = "text/xml"
+            content.to_xml().writexml(response)
 
-    def _post(self, request, id=None):
-        self._any(request, id)
+        return response
+
+    def _get(self, request, response, id=None):
+        return self._any(request, response, id)
+
+    def _post(self, request, response, id=None):
+        return self._any(request, response, id)
     
-    def _head(self, request, id=None):
-        self._any(request, id)
+    def _head(self, request, response, id=None):
+        return self._any(request, response, id)
 
-    def _options(self, request, id=None):
-        self._any(request, id)
+    def _options(self, request, response, id=None):
+        return self._any(request, response, id)
 
-    def _put(self, request, id=None):
-        self._any(request, id)
+    def _put(self, request, response, id=None):
+        return self._any(request, response, id)
 
-    def _delete(self, request, id=None):
-        self._any(request, id)
+    def _delete(self, request, response, id=None):
+        return self._any(request, response, id)
 
-    def _trace(self, request, id=None):
-        self._any(request, id)
+    def _trace(self, request, response, id=None):
+        return self._any(request, response, id)
 
-    def _any(self, request, id=None):
+    def _any(self, request, response, id=None):
         """
         Default handler for any request not specifically defined
         """

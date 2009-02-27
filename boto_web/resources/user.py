@@ -26,14 +26,13 @@ class User(Model):
     Simple user object
     """
     username = property.StringProperty(verbose_name="Username", unique=True)
-    first_name = property.StringProperty(verbose_name="First Name")
-    last_name = property.StringProperty(verbose_name="Last Name")
+    name = property.StringProperty(verbose_name="Name")
     email = property.StringProperty(verbose_name="Email Adress")
     auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
     password = property.PasswordProperty()
 
     def __str__(self):
-        return "%s %s" % (self.first_name, self.last_name)
+        return self.name
 
     def notify(self, subject, body=''):
         """

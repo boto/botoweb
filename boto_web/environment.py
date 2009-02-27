@@ -12,7 +12,7 @@ class Environment(object):
     boto_web Environment
     """
 
-    def __init__(self, module, env="prod"):
+    def __init__(self, module, env=None):
         self.module = module
         self.env = env
 
@@ -24,9 +24,10 @@ class Environment(object):
 
         if self.dist.has_resource("conf"):
             self.config.update(self.get_config("conf"))
-            if self.dist.has_resource("conf/env/%s.yaml" % self.env):
-                log.info("Loading environment: %s" % self.env)
-                self.config.update(yaml.load(self.dist.get_resource_stream(self.mgr,"conf/env/%s.yaml" % self.env)))
+
+        if env and os.path.exists(self.env):
+            log.info("Loading environment: %s" % self.env)
+            self.config.update(yaml.load(open(self.env, "r")))
 
         # Set up the DB shortcuts
         if not self.config.has_key("DB"):
