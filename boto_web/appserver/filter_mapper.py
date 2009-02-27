@@ -114,6 +114,8 @@ class FilterMapper(object):
         log.info("Get Stylesheet: %s %s" % (path, user))
         styledoc = None
         match = None
+        if not self.env.config['filters']:
+            return (None, None)
         for rule in self.env.config['filters']:
             if rule.has_key("url"):
                 if not re.match(rule['url'], path):
