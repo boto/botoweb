@@ -52,10 +52,14 @@ class DBHandler(RequestHandler):
         """
         Create an object
         """
+        #print request.body
         new_obj = self.xmlmanager.unmarshal_object(request.body_file, cls=self.db_class)
+        content = None
         if id:
-            content =  self.update(self.db_class.get_by_ids(id), new_obj, request.user)
-        else:
+            obj = self.db_class.get_by_ids(id)
+            if obj:
+                content =  self.update(obj, new_obj, request.user)
+        if not content:
             content =  self.create(new_obj, request.user)
         response.content_type = "text/xml"
         content.to_xml().writexml(response)
