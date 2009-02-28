@@ -1,6 +1,6 @@
 # Author: Chris Moyer
 # Exception classes
-from marajo.appengine.ext.webapp import status
+from boto_web import status
 from xml.dom.minidom import getDOMImplementation
 
 class HTTPException(Exception):
