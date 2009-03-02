@@ -19,6 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
+
 //
 // Javascript API for boto_web searching
 //
@@ -182,5 +183,51 @@ var boto_web = {
 			url: url,
 			success: fnc
 		});
-	}
+	},
+
+	//
+	// Class: Environment
+	// This is the Environment class, intended to be instantiated
+	// i.e: env = new boto_web.Environment("data");
+	// Note that the loading of the routes and users happens asynchronously,
+	// so if you need to make sure everything is loaded before you use it,
+	// pass in a callback:
+	// new boto_web.Environment("data", function(env){
+	//     alert(env.user.username);
+	// });
+	//
+	// @param base_url: The base URL that we are operating on
+	// @param fnc: Optional callback function to call after we finish loading
+	//
+	Environment: function(base_url, fnc){
+		// This is to support some weird things that 
+		// jQuery does while doing ajax processing, if
+		// we ever need to refer to the Environment
+		// object, we use "self"
+		self = this;
+		self.base_url = base_url;
+		self.user = null;
+		self.routes = [];
+
+
+		// __init__ object
+		// Get our route info
+		$.get(self.base_url, function(xml){
+			// Set our routes
+			$(xml).find("route").each(function(){
+				var obj = boto_web.parseObject(this);
+				if(obj.length > 0){
+					self.routes.push(obj);
+				}
+			});
+			// Set our user object
+			$(xml).find("object[@class='boto_web.resources.user.User']").each(function(){
+				var obj = boto_web.parseObject(this);
+				if(obj.length > 0){
+					self.user = obj;
+				}
+			});
+			if(fnc){ fnc(self); }
+		});
+	},
 };

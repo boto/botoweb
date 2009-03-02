@@ -20,6 +20,7 @@
 # IN THE SOFTWARE.
 from boto_web.appserver.handlers import RequestHandler
 from xml.dom.minidom import getDOMImplementation, Node
+import copy
 
 import logging
 log = logging.getLogger("boto_web.handlers.db")
@@ -74,5 +75,8 @@ class IndexHandler(RequestHandler):
         if not self._index:
             self._index = Index(self.config["handlers"])
         response.content_type = 'text/xml'
-        self._index.to_xml().writexml(response)
+        doc = copy.deepcopy(self._index.to_xml())
+        request.user.to_xml(doc)
+
+        doc.writexml(response)
         return response
