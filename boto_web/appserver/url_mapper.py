@@ -45,7 +45,7 @@ class URLMapper(object):
             response.set_status(content.code)
             response.content_type = "text/xml"
             content.to_xml().writexml(response)
-        return response.wsgi_write(environ, start_response)
+        return response(environ, start_response)
 
 
     def parse_path(self, path):

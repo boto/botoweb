@@ -53,5 +53,11 @@ if __name__ == "__main__":
 	from boto_web.appserver.url_mapper import URLMapper
 	from boto_web.appserver.filter_mapper import FilterMapper
 	mapper = FilterMapper(app=URLMapper(e), env=e)
-	
-	httpserver.serve(mapper, host=options.hostname, port=int(options.port))
+
+	httpserver.serve(mapper, 
+		host=options.hostname, 
+		port=int(options.port), 
+		daemon_threads=True,
+		socket_timeout=60,
+	)
+

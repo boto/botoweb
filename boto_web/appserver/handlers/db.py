@@ -125,8 +125,9 @@ class DBHandler(RequestHandler):
                     for filter in filters:
                         m = re.match("^\'(.*)\' (=|>=|<=|<|>|starts-with|ends-with) \'(.*)\'$", filter)
                         if m:
-                            values.append(m.group(3))
                             filter_name = m.group(1)
+                            prop = self.db_class.find_property(filter_name)
+                            values.append(self.db_class._manager.decode_value(prop, m.group(3)))
                             filter_cmp = m.group(2)
                     query.filter("%s %s" % (filter_name, filter_cmp), values)
         else:
