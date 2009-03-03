@@ -10,4 +10,6 @@ class ProfilerHandler(RequestHandler):
         self.thread_watcher = WatchThreads(allow_kill=config.get('allow_kill', False))
 
     def _any(self, request, response, id=None):
+        if not request.user.has_auth_group("admin"):
+            raise Unauthorized()
         return request.get_response(self.thread_watcher)
