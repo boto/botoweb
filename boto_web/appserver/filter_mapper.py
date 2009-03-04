@@ -48,6 +48,10 @@ class FilterMapper(object):
         self.env = env
         self.resolver = FilterResolver()
         self.factory = InputSourceFactory(resolver=self.resolver)
+        try:
+            self.external_functions = self.env.config['xsltfunctions']
+        except:
+            self.external_functions = []
 
     def __call__(self, environ, start_response):
         """
@@ -148,4 +152,5 @@ class FilterMapper(object):
             proc = Processor.Processor()
             style = self.factory.fromUri(uri)
             proc.appendStylesheet(style)
+            proc.registerExtensionModules(self.external_functions)
         return proc
