@@ -44,6 +44,7 @@ if __name__ == "__main__":
 	parser.add_option("--host", dest="hostname", default="localhost", help="Hostname to run on (default localhost)")
 	parser.add_option("--init", dest="init", action="store_true", default=False, help="Initialize the Databases (Currently only works with SDB)")
 	parser.add_option("--add-user", dest="add_user", action="store_true", default=False, help="Add a user")
+	parser.add_option("--shell", dest="shell", action="store_true", default=False, help="Run the interactive command-line shell")
 	parser.add_option("-v", action="count", dest="verbose", default=0)
 	(options, args) = parser.parse_args()
 
@@ -53,7 +54,13 @@ if __name__ == "__main__":
 
 	if (options.init == True):
 		print "Initializing Databases"
-		sdb = boto.connect_sdb(e.config['DB']['db_user'], e.config['DB']['db_passwd'], port=e.config['DB'].get("db_port", None), host=e.config['DB'].get("db_host", "sdb.amazonaws.com"))
+		sdb = boto.connect_sdb(
+			e.config['DB']['db_user'], 
+			e.config['DB']['db_passwd'], 
+			port=e.config['DB'].get("db_port", None), 
+			host=e.config['DB'].get("db_host", "sdb.amazonaws.com"),
+			is_secure=e.config['DB'].get("enable_ssl", True)
+			)
 		print "Creating domain: %s" % e.config['DB']['db_name']
 		sdb.create_domain(e.config['DB'].get("db_name"))
 		for db in e.config['DB'].values():
@@ -70,6 +77,15 @@ if __name__ == "__main__":
 		u.password = raw_input("Password: ")
 		u.put()
 		print "Done"
+		exit(0)
+
+	if (options.shell == True):
+		import code
+		import readline
+		code.interact(local={
+			"env": e,
+			"boto": boto
+		})
 		exit(0)
 
 	from paste import httpserver
