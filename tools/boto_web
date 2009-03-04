@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
 	if (options.init == True):
 		print "Initializing Databases"
-		sdb = boto.connect_sdb(e.config['DB']['db_user'], e.config['DB']['db_passwd'])
+		sdb = boto.connect_sdb(e.config['DB']['db_user'], e.config['DB']['db_passwd'], port=e.config['DB'].get("db_port", None), host=e.config['DB'].get("db_host", "sdb.amazonaws.com"))
 		print "Creating domain: %s" % e.config['DB']['db_name']
 		sdb.create_domain(e.config['DB'].get("db_name"))
 		for db in e.config['DB'].values():
