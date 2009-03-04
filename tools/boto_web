@@ -42,12 +42,35 @@ if __name__ == "__main__":
 	parser.add_option("-e", "--environment", dest="env", default=None, help="Environment file to use")
 	parser.add_option("-p", "--port", dest="port", default="8080", help="Port to run on (default 8080)")
 	parser.add_option("--host", dest="hostname", default="localhost", help="Hostname to run on (default localhost)")
+	parser.add_option("--init", dest="init", action="store_true", default=False, help="Initialize the Databases (Currently only works with SDB)")
+	parser.add_option("--add-user", dest="add_user", action="store_true", default=False, help="Add a user")
 	parser.add_option("-v", action="count", dest="verbose", default=0)
 	(options, args) = parser.parse_args()
 
 	e = Environment(args[0], options.env)
 	import boto
 	boto.config = e.config
+
+	if (options.init == True):
+		print "Initializing Databases"
+		sdb = boto.connect_sdb(e.config['DB']['db_user'], e.config['DB']['db_passwd'])
+		print "Creating domain: %s" % e.config['DB']['db_name']
+		sdb.create_domain(e.config['DB'].get("db_name"))
+		for db in e.config['DB'].values():
+			if isinstance(db, dict) and db.get("db_name", None) != None:
+				print "Creating domain: %s" % db.get("db_name")
+				sdb.create_domain(db['db_name'])
+		print "Done"
+		exit(0)
+
+	if (options.add_user == True):
+		from boto_web.resources.user import User
+		u = User()
+		u.username = raw_input("Username: ")
+		u.password = raw_input("Password: ")
+		u.put()
+		print "Done"
+		exit(0)
 
 	from paste import httpserver
 	from boto_web.appserver.url_mapper import URLMapper
