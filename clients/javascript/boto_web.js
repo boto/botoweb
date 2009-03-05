@@ -208,6 +208,7 @@ var boto_web = {
 		self.base_url = base_url;
 		self.user = null;
 		self.routes = [];
+		self.models = {};
 
 
 		// __init__ object
@@ -215,10 +216,15 @@ var boto_web = {
 		$.get(self.base_url, function(xml){
 			// Set our routes
 			$(xml).find("route").each(function(){
-				var obj = boto_web.parseObject(this);
-				if(obj.length > 0){
-					self.routes.push(obj);
-				}
+				var model =  $(this).find("db_class").text().split('.');
+				var route = {
+					href: $(this).attr("href"),
+					obj: model[model.length-1],
+				};
+				self.routes.push(route);
+				// Init this model object
+				route_obj = new boto_web.ModelMeta(self.base_url + route.href);
+				eval("self.models." + route.obj + " = route_obj");
 			});
 			// Set our user object
 			$(xml).find("object[@class='boto_web.resources.user.User']").each(function(){
@@ -229,5 +235,38 @@ var boto_web = {
 			});
 			if(fnc){ fnc(self); }
 		});
+	},
+
+	//
+	// Base model object
+	// This shouldn't ever be called directly
+	//
+	ModelMeta: function(href){
+		mm = this;
+		this.href = href;
+		this.find = function(filters, fnc){
+			boto_web.find(this.href, filters, function(data){
+				if(fnc){
+					var objects = [];
+					for(var x=0; x < data.length; x++){
+						objects[x] = new boto_web.Model(mm.href, data[x]);
+					}
+					fnc(objects);
+				}
+			});
+		}
+
+	},
+
+	//
+	// Model Base Object
+	// 
+	Model: function(href, props){
+		this.href = href;
+		this.props = props;
+
+		this.put = function(){
+			alert("save this object!");
+		}
 	},
 };
