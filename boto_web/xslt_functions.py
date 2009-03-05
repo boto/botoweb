@@ -11,19 +11,19 @@ def getObj(ctx, nodes):
     """
     Get this object and return it's XML format
     """
-    obj = nodes[0]
-    myDoc = obj.ownerDocument
-    id = obj.getAttributeNS(None, "id")
-    cls_name = obj.getAttributeNS(None, "class")
-    cls = find_class(cls_name)
-    obj_new = cls.get_by_ids(id)
+    for obj in nodes:
+        myDoc = obj.ownerDocument
+        id = obj.getAttributeNS(None, "id")
+        cls_name = obj.getAttributeNS(None, "class")
+        cls = find_class(cls_name)
+        obj_new = cls.get_by_ids(id)
 
-    for prop in obj_new.properties():
-        if prop.name:
-            prop_node = myDoc.createElementNS(None, "property")
-            prop_node.setAttributeNS(None, "name", prop.name)
-            prop_node.appendChild(myDoc.createTextNode(str(getattr(obj_new, prop.name))))
-            obj.appendChild(prop_node)
+        for prop in obj_new.properties():
+            if prop.name:
+                prop_node = myDoc.createElementNS(None, "property")
+                prop_node.setAttributeNS(None, "name", prop.name)
+                prop_node.appendChild(myDoc.createTextNode(str(getattr(obj_new, prop.name))))
+                obj.appendChild(prop_node)
 
     return nodes
 
