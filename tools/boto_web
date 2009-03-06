@@ -91,7 +91,8 @@ if __name__ == "__main__":
 	from paste import httpserver
 	from boto_web.appserver.url_mapper import URLMapper
 	from boto_web.appserver.filter_mapper import FilterMapper
-	mapper = FilterMapper(app=URLMapper(e), env=e)
+	from boto_web.appserver.cache_layer import CacheLayer
+	mapper = FilterMapper(app=CacheLayer(app=URLMapper(e), env=e), env=e)
 
 	httpserver.serve(mapper, 
 		host=options.hostname, 

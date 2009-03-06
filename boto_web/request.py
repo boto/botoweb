@@ -2,6 +2,7 @@ import webob
 from boto_web.resources.user import User
 import logging
 log = logging.getLogger("vermouth.request")
+from boto_web.response import Response
 
 class Request(webob.Request):
     """
@@ -9,6 +10,7 @@ class Request(webob.Request):
     all session information must be stored in the database.
     """
     file_extension = "html"
+    ResponseClass = Response
 
     def __init__(self, environ):
         self._user = None

@@ -11,12 +11,20 @@ def getObj(ctx, nodes):
     """
     Get this object and return it's XML format
     """
+    if not hasattr(ctx, "objects"):
+        ctx.objects = {}
+
     for obj in nodes:
         myDoc = obj.ownerDocument
         id = obj.getAttributeNS(None, "id")
-        cls_name = obj.getAttributeNS(None, "class")
-        cls = find_class(cls_name)
-        obj_new = cls.get_by_ids(id)
+
+        # Some internal caching
+        obj_new = ctx.objects.get(id, None)
+        if not obj_new:
+            cls_name = obj.getAttributeNS(None, "class")
+            cls = find_class(cls_name)
+            obj_new = cls.get_by_ids(id)
+            ctx.objects[id] = obj_new
 
         for prop in obj_new.properties():
             if prop.name:

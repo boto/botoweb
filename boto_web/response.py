@@ -4,11 +4,16 @@ from boto_web import status
 class Response(webob.Response):
     """
     Simple Adapter class for a WSGI response object
-    to support GAE
+    This object is pickleable
     """
 
-    def __init__(self, body="", **params):
-        webob.Response.__init__(self, body=body, **params)
+    def __init__(self, body=None, **params):
+        if body:
+            webob.Response.__init__(self, body=body, **params)
+        elif params:
+            webob.Response.__init__(self, **params)
+        else:
+            webob.Response.__init__(self, body="")
 
     def set_status(self, code, message=None):
         """
@@ -27,4 +32,12 @@ class Response(webob.Response):
     def wsgi_write(self, environ, start_response):
         return self.__call__(environ, start_response)
 
+    # Pickle functions
+    def __getstate__(self):
+        return {"body": self.body, "headers": self.headers, "status": self.status}
 
+    def __setstate__(self, state):
+        self.__init__(body=state['body'])
+        self.headers = state['headers']
+        self.status = state['status']
+        return True
