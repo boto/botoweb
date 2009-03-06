@@ -91,6 +91,7 @@ class FilterMapper(object):
                 headers[key] = req.headers[key]
 
 
+        variables[u'user'] = user
         variables[u'user_id'] = user.id
         variables[u'user_name'] = user.username
 

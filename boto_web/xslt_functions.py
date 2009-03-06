@@ -27,7 +27,20 @@ def getObj(ctx, nodes):
 
     return nodes
 
+def hasGroup(ctx, group):
+    """
+    Return True if the current user has this
+    authorization group.
+    Requires the line:
+        <xsl:param name="user" select="'unknown'"/>
+    in your XSLT document root
+    """
+    user = ctx.varBindings[(None, u'user')]
+    group = Conversions.StringValue(group)
+    return user.has_auth_group(group)
+
 
 ExtFunctions = {
     (u'python://boto_web/xslt_functions', u'getObj'): getObj,
+    (u'python://boto_web/xslt_functions', u'hasGroup'): hasGroup,
 }
