@@ -255,15 +255,35 @@ var boto_web = {
 				}
 			});
 		}
+		this.all = function(fnc){
+			return this.find([], fnc);
+		}
+
+		this.get = function(id, fnc){
+			boto_web.get_by_id(this.href, id, function(obj){
+				if(obj){
+					fnc(new boto_web.Model(this.href, obj));
+				}
+			});
+		}
+
+		this.save = function(data){
+			return boto_web.save(this.href, data);
+		}
 
 	},
 
 	//
 	// Model Base Object
 	// 
-	Model: function(href, props){
+	Model: function(href, props, id){
 		this.href = href;
 		this.props = props;
+		if(id){
+			this.id = id;
+		} else {
+			this.id = props.id;
+		}
 
 		this.put = function(){
 			alert("save this object!");
