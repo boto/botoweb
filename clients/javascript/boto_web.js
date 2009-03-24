@@ -58,6 +58,47 @@ var boto_web = {
 	},
 
 	//
+	// Advanced query searching
+	// @param url: The URL to search at
+	// @param query: The Query to use, this must be an array of tuples [name, op, value]
+	// 		if "value" is a list, this is treated as an "or" and results in ["name" op "value" or "name" op "value"]
+	// 		"op" must be one of the following: (=|>=|<=|!=|<|>|starts-with|ends-with|like)
+	// @param fnc: The callback function
+	//
+	query: function(url, query, fnc){
+		// Build the query string
+		parts = [];
+		for (query_num in query){
+			query_part = query[query_num];
+			name = query_part[0];
+			op = query_part[1];
+			value = query_part[2];
+
+			if(value.constructor.toString().indexOf("Array") != -1){
+				filter_parts = [];
+				for(val in value){
+					filter_parts.push("'" + name + "' " + op + " '" + value + "'");
+				}
+				parts.push("[" + filter_parts.join(" OR ") + "]");
+			} else {
+				parts.push("['" + name + "' " + op + " '" + value + "']");
+			}
+		}
+
+		url += "?query=" + escape(parts.join(" intersection "));
+		return $.get(url, function(xml){
+			var data = [];
+			$(xml).find("object").each(function(){
+				var obj = boto_web.parseObject(this);
+				if(obj.length > 0){
+					data.push(obj);
+				}
+			});
+			fnc(data);
+		});
+	},
+
+	//
 	// Function: parseObject
 	// Parse this XML into an object
 	//
@@ -246,6 +287,18 @@ var boto_web = {
 		this.href = href;
 		this.find = function(filters, fnc){
 			boto_web.find(this.href, filters, function(data){
+				if(fnc){
+					var objects = [];
+					for(var x=0; x < data.length; x++){
+						objects[x] = new boto_web.Model(mm.href, data[x]);
+					}
+					fnc(objects);
+				}
+			});
+		}
+
+		this.query = function(query, fnc){
+			boto_web.query(this.href, query, function(data){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){

@@ -123,7 +123,7 @@ class DBHandler(RequestHandler):
                     filter_cmp = None
                     values = []
                     for filter in filters:
-                        m = re.match("^\'(.*)\' (=|>=|<=|<|>|starts-with|ends-with) \'(.*)\'$", filter)
+                        m = re.match("^\'(.*)\' (=|>=|<=|<|>|!=|starts-with|ends-with|like) \'(.*)\'$", filter)
                         if m:
                             filter_name = m.group(1)
                             prop = self.db_class.find_property(filter_name)
