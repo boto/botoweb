@@ -69,21 +69,13 @@ function setPage(page_args){
 		page_name = page_args.shift();
 		if(page_name != currentPage){
 			$(".page").hide();
-			$(".page#"+page_name).show();
-			var page = $(".page#"+page_name)[0];
-			if(page && page.loader){
-				page.loader();
-			}
+			$(".page#"+page_name).show().trigger("load");
 			currentPage = page_name;
 		}
 		// Load the sub page, if present
 		sub_page_name = page_args.shift();
 		$(".content").hide();
-		$(".content#"+page_name + "_" + sub_page_name).show();
-		var content = $(".content#"+page_name + "_" + sub_page_name)[0];
-		if(content && content.loader){
-			content.loader(page_args);
-		}
+		$(".content#"+page_name + "_" + sub_page_name).show().trigger("load", page_args);
 	}
 }
 
@@ -97,7 +89,3 @@ $(window.location).bind(
 		setPage(objData.currentHash);
 	}
 );
-
-$(document).ready(function(){
-	setPage(window.location.hash);
-});
