@@ -82,9 +82,11 @@ if __name__ == "__main__":
 	if (options.shell == True):
 		import code
 		import readline
+		from boto_web.resources.user import User
 		code.interact(local={
 			"env": e,
-			"boto": boto
+			"boto": boto,
+			"User": User
 		})
 		exit(0)
 
