@@ -55,7 +55,7 @@ class FilterMapper(object):
 
     def __call__(self, environ, start_response):
         """
-        Map to the correct filters
+        Wrapper so we can be called as WSGI
         """
         try:
             req = Request(environ)
@@ -81,6 +81,9 @@ class FilterMapper(object):
         return response(environ, start_response)
 
     def handle(self, req):
+        """
+        Map to the correct filters
+        """
         variables = {}
         user = req.user
         if not user:
