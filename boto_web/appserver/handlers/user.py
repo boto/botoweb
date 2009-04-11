@@ -36,35 +36,24 @@ class UserHandler(DBHandler):
             raise Unauthorized()
         return DBHandler.create(self, params, user)
 
-    def update(self, obj, new_obj, user):
+    def update(self, obj, props, user):
         """
         you can only update this object if it is you or you are an admin, 
         Only admins can modify auth_groups
         """
         if not user.has_auth_group("admin"):
             if user.id == obj.id:
-                for prop in new_obj.properties():
-                    try:
-                        propname = prop.name
-                    except AttributeError:
-                        propname = None
-                    if propname and prop.name != "auth_groups":
-                        value = getattr(new_obj, propname)
-                        if value:
-                            setattr(obj, propname, value)
+                for prop_name in props:
+                    prop_val = props[prop_name]
+                    if prop_name and prop_name in ("name", "password"):
+                        setattr(obj, prop_name, prop_val)
             else:
                 raise Unauthorized()
         else:
-            for prop in new_obj.properties():
-                try:
-                    propname = prop.name
-                except AttributeError:
-                    propname = None
-                if propname:
-                    value = getattr(new_obj, propname)
-                    if value:
-                        print "%s: %s" % (propname, value)
-                        setattr(obj, propname, value)
+            for prop_name in props:
+                prop_val = props[prop_name]
+                #print "%s: %s" % (prop_name, prop_val)
+                setattr(obj, prop_name, prop_val)
         obj.put()
         return obj
 

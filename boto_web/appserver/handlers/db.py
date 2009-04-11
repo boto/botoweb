@@ -50,17 +50,21 @@ class DBHandler(RequestHandler):
 
     def _put(self, request, response, id=None):
         """
-        Create an object
+        Create/Update an object
         """
         #print request.body
-        new_obj = self.xmlmanager.unmarshal_object(request.body_file, cls=self.db_class)
         content = None
+        obj = None
         if id:
             obj = self.db_class.get_by_ids(id)
-            if obj:
-                content =  self.update(obj, new_obj, request.user)
-        if not content:
+
+        if obj:
+            (cls, props, id) = self.xmlmanager.unmarshal_props(request.body_file, cls=self.db_class)
+            content =  self.update(obj, props, request.user)
+        else:
+            new_obj = self.xmlmanager.unmarshal_object(request.body_file, cls=self.db_class)
             content =  self.create(new_obj, request.user)
+
         response.content_type = "text/xml"
         content.to_xml().writexml(response)
         return response
@@ -177,27 +181,25 @@ class DBHandler(RequestHandler):
             raise NotFound()
         return obj
 
-    def update(self, obj, new_obj, user):
+    def update(self, obj, props, user):
         """
         Update our object
 
         @param obj: Object to update
         @type obj: self.db_class
 
-        @param new_obj: The new object to replace it with
-        @type new_obj: self.db_class
+        @param props: A has of properties to update
+        @type props: hash
 
         @param user: The user making these changes
         @type user: User
         """
         boto.log.debug("===========================")
         boto.log.debug("Update %s" % obj.__class__.__name__)
-        for prop in new_obj.properties():
-            if prop.name:
-                pval = getattr(new_obj, prop.name)
-                if pval:
-                    boto.log.debug("%s = %s" % (prop.name, pval))
-                    setattr(obj, prop.name, pval)
+        for prop_name in props:
+            prop_val = props[prop_name]
+            boto.log.debug("%s = %s" % (prop_name, prop_val))
+            setattr(obj, prop_name, prop_val)
         boto.log.debug("===========================")
         obj.put()
         return obj
