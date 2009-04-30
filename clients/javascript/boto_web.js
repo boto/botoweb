@@ -321,7 +321,12 @@ var boto_web = {
 		}
 
 		this.save = function(data){
-			return boto_web.save(this.href, data);
+			ref = this.href;
+			if("id" in data){
+				ref += ("/" + data['id']);
+				delete(data['id']);
+			}
+			return boto_web.save(ref, data);
 		}
 
 	},
