@@ -95,7 +95,12 @@ if __name__ == "__main__":
 	from boto_web.appserver.filter_mapper import FilterMapper
 	from boto_web.appserver.cache_layer import CacheLayer
 	from boto_web.appserver.auth_layer import AuthLayer
-	mapper = AuthLayer(app=FilterMapper(app=CacheLayer(app=URLMapper(e), env=e), env=e), env=e)
+	mapper = AuthLayer(
+					app=FilterMapper(
+						app=CacheLayer(
+							app=URLMapper(e), env=e), 
+						env=e), 
+					env=e)
 
 	httpserver.serve(mapper, 
 		host=options.hostname, 
