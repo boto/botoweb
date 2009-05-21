@@ -36,16 +36,19 @@ from boto_web.appserver.filter_resolver import FilterResolver
 
 import re
 
-class FilterMapper(object):
+from boto_web.appserver.wsgi_layer import WSGILayer
+class FilterMapper(WSGILayer):
     """
     Filter URL Mapper
     """
 
 
-    def __init__(self, app, env):
-        self.filters = {}
-        self.app = app
+    def update(self, env):
+        """
+        On update, we have to re-build our entire filter list
+        """
         self.env = env
+        self.filters = {}
         self.resolver = FilterResolver()
         self.factory = InputSourceFactory(resolver=self.resolver)
         try:
@@ -53,34 +56,7 @@ class FilterMapper(object):
         except:
             self.external_functions = []
 
-    def __call__(self, environ, start_response):
-        """
-        Wrapper so we can be called as WSGI
-        """
-        try:
-            req = Request(environ)
-            response = self.handle(req)
-        except HTTPRedirect, e:
-            response = Response()
-            response.set_status(e.code)
-            response.headers['Location'] = str(url)
-            content = e
-        except Unauthorized, e:
-            response = Response()
-            response.set_status(e.code)
-            response.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
-        except HTTPException, e:
-            response = Response()
-            response.set_status(e.code)
-            response.write(e.message)
-        except Exception, e:
-            response = Response()
-            content = InternalServerError(message=e.message)
-            response.set_status(content.code)
-            log.critical(traceback.format_exc())
-        return response(environ, start_response)
-
-    def handle(self, req):
+    def handle(self, req, response):
         """
         Map to the correct filters
         """
@@ -104,7 +80,8 @@ class FilterMapper(object):
         if filter[0] and req.body:
             req.body = filter[0].run(self.factory.fromString(req.body, None), topLevelParams=variables)
 
-        response = req.get_response(self.app)
+        if self.app:
+            response = self.app.handle(req, response)
 
         if filter[1]:
             response.body = filter[1].run(self.factory.fromString(response.body, None), topLevelParams=variables)

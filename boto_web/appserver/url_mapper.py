@@ -16,36 +16,31 @@ from boto_web.exceptions import *
 
 log = logging.getLogger("boto_web.url_mapper")
 
-class URLMapper(object):
+from boto_web.appserver.wsgi_layer import WSGILayer
+class URLMapper(WSGILayer):
     """
     Simple URL mapper
     """
     handlers = {}
+    index_handler = None
 
-    def __init__(self, boto_web_env):
+    def update(self, env):
         """
-        Set up the environment for this system
+        On an update, we have to remove all of our handlers and re-build 
+        our index handler
         """
-        self.boto_web_env = boto_web_env
         self.index_handler = IndexHandler(boto_web_env.config)
+        self.handlers = {}
 
-    def __call__(self, environ, start_response):
+    def handle(self, req, response):
         """
-        This needs to be callable as a function
+        Basic URL mapper
         """
-        request = Request(environ)
-        response = Response()
-        log.info("%s: %s" % (request.method, request.path_info))
-        (handler, obj_id) = self.parse_path(request.path)
-        if handler:
-            response =  handler(request, response, obj_id)
-        else:
-            content = NotFound(url=request.path)
-            log.error("Not Found: %s" % request.path)
-            response.set_status(content.code)
-            response.content_type = "text/xml"
-            content.to_xml().writexml(response)
-        return response(environ, start_response)
+        log.info("%s: %s" % (req.method, req.path_info))
+        (handler, obj_id) = self.parse_path(req.path)
+        if not handler:
+            raise NotFound(url=req.path)
+        return handler(req, response, obj_id)
 
 
     def parse_path(self, path):

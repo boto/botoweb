@@ -32,7 +32,8 @@ log = logging.getLogger("boto_web.cache_layer")
 
 import re
 
-class CacheLayer(object):
+from boto_web.appserver.wsgi_layer import WSGILayer
+class CacheLayer(WSGILayer):
     """
     Memcached layer on top of boto_web, this helps to 
     speed up frequent querys
@@ -60,8 +61,11 @@ class CacheLayer(object):
     """
 
 
-    def __init__(self, app, env):
-        self.app = app
+    def update(self, env):
+        """
+        When updating our environment, we're essentially re-creating our
+        entire server pool
+        """
         self.env = env
         servers = []
         if env.config.has_section("cache"):
@@ -72,24 +76,18 @@ class CacheLayer(object):
         else:
             self.memc = None
 
-    def __call__(self, environ, start_response):
+    def handle(self, req, response):
         """
         Cache layer with timeouts
         """
-        req = Request(environ)
         path_key = req.path_qs
         if req.method == "GET" and self.memc:
             response = self.memc.get(path_key)
         else:
             response = None
         if not response:
-            try:
-                response = req.get_response(self.app)
-            except Exception, e:
-                response = Response()
-                content = InternalServerError(message=e.message)
-                response.set_status(content.code)
-                log.critical(traceback.format_exc())
+            if self.app:
+                response = self.app.handle(req, response)
             if req.method == "GET" and self.memc:
                 cache_time = 60
                 if self.env.config['cache'].has_key("urls"):
@@ -99,4 +97,4 @@ class CacheLayer(object):
                             break
                 if cache_time > 0:
                     self.memc.set(path_key, response, cache_time)
-        return response(environ, start_response)
+        return response

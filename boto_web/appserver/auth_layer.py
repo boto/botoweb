@@ -32,7 +32,8 @@ log = logging.getLogger("boto_web.auth_layer")
 
 import re
 
-class AuthLayer(object):
+from boto_web.appserver.wsgi_layer import WSGILayer
+class AuthLayer(WSGILayer):
     """
     Authentication/Authorization layer
     This only handles authorization on a macro level, it 
@@ -41,39 +42,7 @@ class AuthLayer(object):
     in to get to it.
     """
 
-    def __init__(self, app, env):
-        self.app = app
-        self.env = env
-
-    def __call__(self, environ, start_response):
-        """
-        Based on the authorization file, require
-        users to be logged in per path.
-        """
-        try:
-            req = Request(environ)
-            response = self.handle(req)
-        except HTTPRedirect, e:
-            response = Response()
-            response.set_status(e.code)
-            response.headers['Location'] = str(url)
-            content = e
-        except Unauthorized, e:
-            response = Response()
-            response.set_status(e.code)
-            response.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
-        except HTTPException, e:
-            response = Response()
-            response.set_status(e.code)
-            response.write(e.message)
-        except Exception, e:
-            response = Response()
-            content = InternalServerError(message=e.message)
-            response.set_status(content.code)
-            log.critical(traceback.format_exc())
-        return response(environ, start_response)
-
-    def handle(self, req):
+    def handle(self, req, response):
         auth = self.get_auth_config(req.path)
         if auth:
             log.info("Checking auth: %s" % auth)
@@ -81,7 +50,9 @@ class AuthLayer(object):
                 raise Unauthorized()
             elif auth.has_key("group") and not req.user.has_auth_group(auth['group']):
                 raise Unauthorized()
-        return self.app.handle(req)
+        if self.app:
+            response = self.app.handle(req, response)
+        return response
 
     def get_auth_config(self, path):
         """

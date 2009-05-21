@@ -39,6 +39,7 @@ class Index(object):
         self.config = config
         self.impl = getDOMImplementation()
         self.doc = self.impl.createDocument(None, 'Index', None)
+        self.doc.documentElement.setAttribute("name", self.config.get("app", "name", "boto_web application"))
         self.doc = self.to_xml(self.doc)
 
 
@@ -47,7 +48,7 @@ class Index(object):
             return self.doc
         else:
             # Populate the document
-            for route in self.config:
+            for route in self.config['handlers']:
                 route_node = self.doc.createElement("route")
                 route_node.setAttribute("href", route['url'])
                 for k in route.keys():
@@ -73,7 +74,7 @@ class IndexHandler(RequestHandler):
         List all our routes
         """
         if not self._index:
-            self._index = Index(self.config["handlers"])
+            self._index = Index(self.config)
         response.content_type = 'text/xml'
         doc = copy.deepcopy(self._index.to_xml())
         request.user.to_xml(doc)
