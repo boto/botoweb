@@ -82,10 +82,10 @@ class CacheLayer(WSGILayer):
         """
         path_key = req.path_qs
         if req.method == "GET" and self.memc:
-            response = self.memc.get(path_key)
+            cached_response = self.memc.get(path_key)
         else:
-            response = None
-        if not response:
+            cached_response = None
+        if not cached_response:
             if self.app:
                 response = self.app.handle(req, response)
             if req.method == "GET" and self.memc:
@@ -97,4 +97,6 @@ class CacheLayer(WSGILayer):
                             break
                 if cache_time > 0:
                     self.memc.set(path_key, response, cache_time)
+        else:
+            response = cached_response
         return response

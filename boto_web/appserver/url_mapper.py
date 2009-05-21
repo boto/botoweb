@@ -29,7 +29,8 @@ class URLMapper(WSGILayer):
         On an update, we have to remove all of our handlers and re-build 
         our index handler
         """
-        self.index_handler = IndexHandler(boto_web_env.config)
+        self.env = env
+        self.index_handler = IndexHandler(self.env.config)
         self.handlers = {}
 
     def handle(self, req, response):
@@ -55,7 +56,7 @@ class URLMapper(WSGILayer):
             return (self.index_handler, None)
         handler = None
         obj_id = None
-        for handler_config in self.boto_web_env.config['handlers']:
+        for handler_config in self.env.config['handlers']:
             match = re.match("^%s(\/(.*))?$" % handler_config['url'], path)
 
             if match:
@@ -70,7 +71,7 @@ class URLMapper(WSGILayer):
                     if handler_config.has_key("handler"):
                         class_name = handler_config['handler']
                         handler_class = find_class(class_name)
-                        conf = self.boto_web_env.config.copy()
+                        conf = self.env.config.copy()
                         conf.update(handler_config)
                         handler = handler_class(conf)
 
