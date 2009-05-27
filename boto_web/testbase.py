@@ -59,15 +59,15 @@ class TestBase(object):
         for (k, v) in params:
             query_params.append("%s=%s" % (k, urllib.quote_plus(v)))
 
-        if method == "GET":
-            if query_params:
-                resource = "%s?%s" % (resource, "&".join(query_params))
-            req = Request.blank(resource)
-        elif method == "POST":
+        if method == "POST":
             req = Request.blank(resource)
             if query_params:
                 body = "&".join(query_params)
                 req.environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+        else:
+            if query_params:
+                resource = "%s?%s" % (resource, "&".join(query_params))
+            req = Request.blank(resource)
 
         if body:
             req.body = body

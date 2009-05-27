@@ -64,6 +64,7 @@ class DBHandler(RequestHandler):
         else:
             new_obj = self.xmlmanager.unmarshal_object(request.body_file, cls=self.db_class)
             content =  self.create(new_obj, request.user)
+            response.set_status(201)
 
         response.content_type = "text/xml"
         content.to_xml().writexml(response)

@@ -62,17 +62,16 @@ class FilterMapper(WSGILayer):
         """
         variables = {}
         user = req.user
-        if not user:
-            raise Unauthorized()
         headers = {}
         for key in req.headers:
             if not key.lower() in ["content-length", "authorization"]:
                 headers[key] = req.headers[key]
 
 
-        variables[u'user'] = user
-        variables[u'user_id'] = user.id
-        variables[u'user_name'] = user.username
+        if user:
+            variables[u'user'] = user
+            variables[u'user_id'] = user.id
+            variables[u'user_name'] = user.username
 
         filter = self.get_filter(req.path,req.method, user)
 
@@ -99,7 +98,7 @@ class FilterMapper(WSGILayer):
         log.info("Get Stylesheet: %s %s" % (path, user))
         styledoc = None
         match = None
-        if not self.env.config['filters']:
+        if not self.env.config.has_section('filters'):
             return (None, None)
         for rule in self.env.config['filters']:
             if rule.has_key("url"):
@@ -109,10 +108,10 @@ class FilterMapper(WSGILayer):
                 if rule['method'] != method:
                     continue
             if rule.has_key("user"):
-                if rule['user'] != user.username:
+                if not user or rule['user'] != user.username:
                     continue
             if rule.has_key("group"):
-                if not rule['group'] in user.groups:
+                if not user or not rule['group'] in user.groups:
                     continue
             match = rule
             break
