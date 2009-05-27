@@ -40,53 +40,22 @@ class RequestHandler(object):
         """
         Execute this handler based on the request passed in
         """
-        try:
-            try:
-                if request.method == "GET":
-                    response = self._get(request, response, obj_id)
-                elif request.method == "POST":
-                    response = self._post(request, response, obj_id)
-                elif request.method == "HEAD":
-                    response = self._head(request, response, obj_id)
-                elif request.method == "OPTIONS":
-                    response = self._options(request, response, obj_id)
-                elif request.method == "PUT":
-                    response = self._put(request, response, obj_id)
-                elif request.method == "DELETE":
-                    response = self._delete(request, response, obj_id)
-                elif request.method == "TRACE":
-                    response = self._trace(request, response, obj_id)
-                else:
-                    raise BadRequest(description="Unknown Method: %s" % request.method)
-
-            except HTTPRedirect, e:
-                response.clear()
-                response.set_status(e.code)
-                response.headers['Location'] = str(url)
-                content = e
-                response.content_type = "text/xml"
-                content.to_xml().writexml(response)
-            except HTTPException, e:
-                response.clear()
-                response.set_status(e.code)
-                content = e
-                response.content_type = "text/xml"
-                content.to_xml().writexml(response)
-            except Exception, e:
-                response.clear()
-                content = InternalServerError(message=e.message)
-                response.set_status(content.code)
-                log.critical(traceback.format_exc())
-                response.content_type = "text/xml"
-                content.to_xml().writexml(response)
-        except Exception, e:
-            content = InternalServerError(message=e.message)
-            response.clear()
-            response.set_status(content.code)
-            log.critical(traceback.format_exc())
-            response.content_type = "text/xml"
-            content.to_xml().writexml(response)
-
+        if request.method == "GET":
+            response = self._get(request, response, obj_id)
+        elif request.method == "POST":
+            response = self._post(request, response, obj_id)
+        elif request.method == "HEAD":
+            response = self._head(request, response, obj_id)
+        elif request.method == "OPTIONS":
+            response = self._options(request, response, obj_id)
+        elif request.method == "PUT":
+            response = self._put(request, response, obj_id)
+        elif request.method == "DELETE":
+            response = self._delete(request, response, obj_id)
+        elif request.method == "TRACE":
+            response = self._trace(request, response, obj_id)
+        else:
+            raise BadRequest(description="Unknown Method: %s" % request.method)
         return response
 
     def _get(self, request, response, id=None):

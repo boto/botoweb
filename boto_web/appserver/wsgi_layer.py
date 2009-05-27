@@ -65,18 +65,28 @@ class WSGILayer(object):
         except HTTPRedirect, e:
             resp.set_status(e.code)
             resp.headers['Location'] = str(url)
-            content = e
+            resp = self.format_exception(e, resp)
         except Unauthorized, e:
             resp.set_status(e.code)
             resp.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
+            resp = self.format_exception(e, resp)
         except HTTPException, e:
             resp.set_status(e.code)
-            resp.write(e.message)
+            resp = self.format_exception(e, resp)
         except Exception, e:
             content = InternalServerError(message=e.message)
             resp.set_status(content.code)
             log.critical(traceback.format_exc())
+            resp = self.format_exception(content, resp)
+
         return resp(environ, start_response)
+
+    def format_exception(self, e, resp):
+        resp.clear()
+        resp.set_status(e.code)
+        resp.content_type = "text/xml"
+        e.to_xml().writexml(resp)
+        return resp
 
     def update(self, env):
         """
