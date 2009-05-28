@@ -32,7 +32,7 @@ class UserHandler(DBHandler):
         """
         Admin only function
         """
-        if not user.has_auth_group("admin"):
+        if not user or not user.has_auth_group("admin"):
             raise Unauthorized()
         return DBHandler.create(self, params, user)
 
@@ -41,6 +41,8 @@ class UserHandler(DBHandler):
         you can only update this object if it is you or you are an admin, 
         Only admins can modify auth_groups
         """
+        if not user:
+            raise Unauthorized()
         if not user.has_auth_group("admin"):
             if user.id == obj.id:
                 for prop_name in props:

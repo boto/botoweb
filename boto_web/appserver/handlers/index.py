@@ -77,7 +77,8 @@ class IndexHandler(RequestHandler):
             self._index = Index(self.config)
         response.content_type = 'text/xml'
         doc = copy.deepcopy(self._index.to_xml())
-        request.user.to_xml(doc)
+        if request.user:
+            request.user.to_xml(doc)
 
         doc.writexml(response)
         return response
