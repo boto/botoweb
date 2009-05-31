@@ -26,7 +26,7 @@ class TestBase(object):
 
         from boto_web.environment import Environment
         e = Environment(cls.application)
-
+        cls.env = e
         cls.mapper = AuthLayer( app=FilterMapper( app=URLMapper(e), env=e), env=e)
 
     def teardown_class(cls):
