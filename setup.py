@@ -53,5 +53,6 @@ setup(name = "boto_web",
             "webob",
             "paste",
             "boto",
+            "lxml",
         ],
       )
