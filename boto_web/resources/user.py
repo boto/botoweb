@@ -69,3 +69,6 @@ class User(Model):
 
     def has_auth_group(self, group):
         return (group in self.auth_groups)
+
+    def has_auth_group_ctx(self, ctx, group):
+        return (group in self.auth_groups)

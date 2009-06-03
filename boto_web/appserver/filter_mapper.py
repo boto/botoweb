@@ -21,6 +21,7 @@
 import httplib
 
 import boto
+from boto.utils import find_class
 from boto_web.request import Request
 from boto_web.response import Response
 from boto_web.resources.user import User
@@ -30,11 +31,11 @@ import traceback
 import logging
 log = logging.getLogger("boto_web.filter_mapper")
 
-from Ft.Xml.Xslt import Processor
-from Ft.Xml.InputSource import InputSourceFactory
-from boto_web.appserver.filter_resolver import FilterResolver
+from lxml import etree
+from boto_web.appserver.filter_resolver import S3FilterResolver, PythonFilterResolver
 
 import re
+from StringIO import StringIO
 
 from boto_web.appserver.wsgi_layer import WSGILayer
 class FilterMapper(WSGILayer):
@@ -49,12 +50,17 @@ class FilterMapper(WSGILayer):
         """
         self.env = env
         self.filters = {}
-        self.resolver = FilterResolver()
-        self.factory = InputSourceFactory(resolver=self.resolver)
-        try:
-            self.external_functions = self.env.config['xsltfunctions']
-        except:
-            self.external_functions = []
+        self.parser = etree.XMLParser()
+        self.parser.resolvers.add(S3FilterResolver())
+        self.parser.resolvers.add(PythonFilterResolver())
+        self.external_functions = []
+        if self.env.config.has_key("xsltfunctions"):
+            for func_path in self.env.config['xsltfunctions']:
+                __import__(func_path)
+                funcset = find_class(func_path)
+                ns = etree.FunctionNamespace(funcset.uri)
+                for fname in funcset.functions:
+                    ns[fname] = funcset.functions[fname]
 
     def handle(self, req, response):
         """
@@ -69,21 +75,20 @@ class FilterMapper(WSGILayer):
 
 
         if user:
-            variables[u'user'] = user
-            variables[u'user_id'] = user.id
-            variables[u'user_name'] = user.username
+            variables['user_id'] = etree.XSLT.strparam(str(user.id))
+            variables['user_name'] = etree.XSLT.strparam(str(user.username))
 
         filter = self.get_filter(req.path,req.method, user)
 
         stylesheet = None
         if filter[0] and req.body:
-            req.body = filter[0].run(self.factory.fromString(req.body, None), topLevelParams=variables)
+            req.body = str(filter[0](etree.parse(StringIO(req.body), self.parser), **variables))
 
         if self.app:
             response = self.app.handle(req, response)
 
         if filter[1]:
-            response.body = filter[1].run(self.factory.fromString(response.body, None), topLevelParams=variables)
+            response.body = str(filter[1](etree.parse(StringIO(response.body), self.parser), **variables))
 
         return response
 
@@ -120,17 +125,19 @@ class FilterMapper(WSGILayer):
         output_filter = None
         if match and rule.has_key('filters'):
             if rule['filters'].has_key("input"):
-                input_filter = self._build_proc(rule['filters']['input'])
+                input_filter = self._build_proc(rule['filters']['input'], user)
             if rule['filters'].has_key("output"):
-                output_filter = self._build_proc(rule['filters']['output'])
+                output_filter = self._build_proc(rule['filters']['output'], user)
 
         return (input_filter, output_filter)
 
-    def _build_proc(self, uri):
+    def _build_proc(self, uri, user):
         proc = None
         if uri:
-            proc = Processor.Processor()
-            style = self.factory.fromUri(uri)
-            proc.appendStylesheet(style)
-            proc.registerExtensionModules(self.external_functions)
+            extensions = {}
+            if user:
+                extensions = {
+                    ("python://boto_web/xslt_functions", "hasGroup"):  user.has_auth_group_ctx
+                }
+            proc = etree.XSLT(etree.parse(uri, self.parser), extensions=extensions)
         return proc

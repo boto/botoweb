@@ -18,50 +18,46 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from Ft.Lib.Uri import FtUriResolver, Absolutize
-from Ft.Lib import UriException
+from lxml import etree
 from cStringIO import StringIO
 from pkg_resources import resource_string
 import re
 import boto
 
-class FilterResolver (FtUriResolver):
+class S3FilterResolver (etree.Resolver):
     """
-        This resolver extends the standard URI resolver
-        and adds the following URLs
-
-        s3://bucket_name/key_name
-        python://module.name/file.name
-
-        This resolver also caches files locally once it has been initialized
+    Resolves the follwing URIs
+    s3://bucket_name/key_name
+    This resolver also caches files locally once it has been initialized
     """
+    prefix = "s3"
 
     def __init__(self):
         self.files = {}
-        FtUriResolver.__init__(self)
+        etree.Resolver.__init__(self)
 
-    def normalize(self, uriRef, baseUri):
-        return Absolutize(uriRef, baseUri)
+    def resolve(self, url, pubid, context):
+        if not self.files.has_key(url):
+            match = re.match("^s3:\/\/([^\/]*)\/(.*)$", url)
+            if match:
+                s3 = boto.connect_s3()
+                b = s3.get_bucket(match.group(1))
+                k = b.get_key(match.group(2))
+                if k:
+                    self.files[url] = k.read()
+        if self.files.has_key(url):
+            return self.resolve_string(self.file[url], context)
 
-    def resolve(self, uri):
-        if not self.files.has_key(uri):
-            if uri.startswith("s3://"):
-                match = re.match("^s3:\/\/([^\/]*)\/(.*)$", uri)
-                if match:
-                    s3 = boto.connect_s3()
-                    b = s3.get_bucket(match.group(1))
-                    k = b.get_key(match.group(2))
-                    if k:
-                        self.files[uri] = k.read()
-            elif uri.startswith("python://"):
-                match = re.match("^python:\/\/([^\/]*)\/(.*)$", uri)
-                if match:
-                    module = match.group(1)
-                    name = match.group(2)
-                    self.files[uri] = resource_string(module, name)
-            else:
-                file =  FtUriResolver.resolve(self, uri)
-                self.files[uri] = file.read()
-        if not self.files.has_key(uri):
-            raise UriException(UriException.RESOURCE_ERROR, loc=uri, msg="not found, sorry")
-        return StringIO(self.files[uri])
+class PythonFilterResolver(etree.Resolver):
+    """
+    Resolves the follwing URIs
+    python://module.name/file.name
+    """
+    prefix = "python"
+
+    def resolve(self, url, pubid, context):
+        match = re.match("^python:\/\/([^\/]*)\/(.*)$", url)
+        if match:
+            module = match.group(1)
+            name = match.group(2)
+            return self.resolve_string(resource_string(module, name), context)

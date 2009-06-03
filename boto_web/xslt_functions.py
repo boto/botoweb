@@ -1,54 +1,25 @@
 # Author: Chris Moyer
 # Extra XSLT functions that are farily common
-from Ft.Xml.XPath import Conversions
 from boto.utils import find_class
+from lxml import etree
 
-# TODO: Clean this up, perhaps we can 
-# re-use the to_xml functionality already in the
-# objects? if not we at least need to support 
-# more then just string-able properties
+# TODO: Clean this up, currently there's two 
+# different libraries doing XML creation which is
+# why we have one dump and then parse using the second
+# Perhaps this needs to be changed in boto.sdb.db?
 def getObj(ctx, nodes):
     """
     Get this object and return it's XML format
     """
-    if not hasattr(ctx, "objects"):
-        ctx.objects = {}
+    from StringIO import StringIO
+    node = nodes[0]
+    cls = find_class(node.get("class"))
+    obj = cls.get_by_id(node.get('id'))
+    doc = obj.to_xml().toxml()
+    doc = etree.parse(StringIO(doc))
+    return doc.getroot().getchildren()
 
-    for obj in nodes:
-        myDoc = obj.ownerDocument
-        id = obj.getAttributeNS(None, "id")
-
-        # Some internal caching
-        obj_new = ctx.objects.get(id, None)
-        if not obj_new:
-            cls_name = obj.getAttributeNS(None, "class")
-            cls = find_class(cls_name)
-            obj_new = cls.get_by_ids(id)
-            ctx.objects[id] = obj_new
-
-        for prop in obj_new.properties():
-            if prop.name:
-                prop_node = myDoc.createElementNS(None, "property")
-                prop_node.setAttributeNS(None, "name", prop.name)
-                prop_node.appendChild(myDoc.createTextNode(str(getattr(obj_new, prop.name))))
-                obj.appendChild(prop_node)
-
-    return nodes
-
-def hasGroup(ctx, group):
-    """
-    Return True if the current user has this
-    authorization group.
-    Requires the line:
-        <xsl:param name="user" select="'unknown'"/>
-    in your XSLT document root
-    """
-    user = ctx.varBindings[(None, u'user')]
-    group = Conversions.StringValue(group)
-    return user.has_auth_group(group)
-
-
-ExtFunctions = {
-    (u'python://boto_web/xslt_functions', u'getObj'): getObj,
-    (u'python://boto_web/xslt_functions', u'hasGroup'): hasGroup,
+uri = "python://boto_web/xslt_functions"
+functions = {
+    "getObj": getObj
 }
