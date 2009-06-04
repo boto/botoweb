@@ -74,6 +74,7 @@ class FilterMapper(WSGILayer):
                 headers[key] = req.headers[key]
 
 
+        variables['host_url'] = etree.XSLT.strparam(req.host_url)
         if user:
             variables['user_id'] = etree.XSLT.strparam(str(user.id))
             variables['user_name'] = etree.XSLT.strparam(str(user.username))

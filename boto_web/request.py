@@ -6,8 +6,7 @@ from boto_web.response import Response
 
 class Request(webob.Request):
     """
-    We like to add in session support here. Due to how the system must be distributable,
-    all session information must be stored in the database.
+    We add in a few special extra functions for us here.
     """
     file_extension = "html"
     ResponseClass = Response
