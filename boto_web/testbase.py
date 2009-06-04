@@ -4,6 +4,9 @@
 import sys
 sys.path.append(".")
 
+from lxml import etree
+from StringIO import StringIO
+
 class TestBase(object):
     """
     Testing base class, this provides some 
@@ -82,3 +85,17 @@ class TestBase(object):
         from pprint import pprint
         pprint(req.GET)
         return self.mapper.handle(req, Response())
+
+    def validate_schema(self, xml, schema):
+        """
+        Validate value against schema
+        @param xml: The XML document to verify
+        @type xml: str
+
+        @param schema: The Schema file to validate against
+        @type schema: file
+        """
+
+        xmlschema_doc = etree.parse(schema)
+        xmlschema = etree.XMLSchema(xmlschema_doc)
+        return xmlschema.assertValid(etree.parse(StringIO(xml)))
