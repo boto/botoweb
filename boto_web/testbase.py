@@ -15,6 +15,7 @@ class TestBase(object):
     running the HTTP server.
     """
     application="boto_web"
+    user = None
 
     def setup_class(cls):
         """
