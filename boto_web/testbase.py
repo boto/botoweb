@@ -39,7 +39,7 @@ class TestBase(object):
         """
 
 
-    def make_request(self, resource, method="GET", body=None, params={}):
+    def make_request(self, resource, method="GET", body=None, params={}, headers={}):
         """
         Make a request to a given resource
 
@@ -54,14 +54,17 @@ class TestBase(object):
 
         @param params: Optional additional GET/POST parameters to send (GET if GET, POST if POST)
         @type params: dict
+
+        @param headers: Optional extra headers to send
+        @type headers: dict
         """
         from boto_web.request import Request
         from boto_web.response import Response
         import urllib
 
         query_params = []
-        for (k, v) in params:
-            query_params.append("%s=%s" % (k, urllib.quote_plus(v)))
+        for k in params:
+            query_params.append("%s=%s" % (k, urllib.quote_plus(params[k])))
 
         if method == "POST":
             req = Request.blank(resource)
@@ -76,6 +79,9 @@ class TestBase(object):
         if body:
             req.body = body
             req.environ['CONTENT_LENGTH'] = str(len(req.body))
+
+        for k in headers:
+            req.headers[k] = headers[k]
 
         req.method = method
 
