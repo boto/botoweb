@@ -4,6 +4,7 @@ import yaml
 from boto_web.config import Config
 from pkg_resources import get_provider, ResourceManager
 
+import boto 
 import logging
 log = logging.getLogger("boto_web")
 
@@ -53,42 +54,49 @@ class Environment(object):
         return config
 
     # Add in the shortcuts that are normally in boto
-    def connect_sqs(aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
+    def connect_sqs(self, aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
         if aws_access_key_id == None:
             aws_access_key_id = self.config.get("Credentials", "aws_access_key_id")
         if aws_secret_access_key == None:
             aws_secret_access_key = self.config.get("Credentials", "aws_secret_access_key")
         return boto.connect_sqs(aws_access_key_id, aws_access_key_id, **kwargs)
 
-    def connect_s3(aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
+    def connect_s3(self, aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
         if aws_access_key_id == None:
             aws_access_key_id = self.config.get("Credentials", "aws_access_key_id")
         if aws_secret_access_key == None:
             aws_secret_access_key = self.config.get("Credentials", "aws_secret_access_key")
         return boto.connect_s3(aws_access_key_id, aws_access_key_id, **kwargs)
 
-    def connect_ec2(aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
+    def connect_ec2(self, aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
         if aws_access_key_id == None:
             aws_access_key_id = self.config.get("Credentials", "aws_access_key_id")
         if aws_secret_access_key == None:
             aws_secret_access_key = self.config.get("Credentials", "aws_secret_access_key")
         return boto.connect_ec2(aws_access_key_id, aws_access_key_id, **kwargs)
 
-    def connect_sdb(aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
+    def connect_sdb(self, aws_access_key_id=None, aws_secret_access_key=None, host=None, port=None, is_secure=None, **kwargs):
         if aws_access_key_id == None:
-            aws_access_key_id = self.config.get("Credentials", "aws_access_key_id")
+            aws_access_key_id = self.config.get("DB", "db_user")
         if aws_secret_access_key == None:
-            aws_secret_access_key = self.config.get("Credentials", "aws_secret_access_key")
-        return boto.connect_sdb(aws_access_key_id, aws_access_key_id, **kwargs)
+            aws_secret_access_key = self.config.get("DB", "db_passwd")
+        if host == None:
+            host = self.config.get("DB", "db_host")
+        if port == None:
+            port = self.config.get("DB", "db_port")
+        if is_secure == None:
+            is_secure = self.config.get("DB", "enable_ssl") != False
 
-    def connect_fps(aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
+        return boto.connect_sdb(aws_access_key_id, aws_access_key_id, host=host, port=port, is_secure=is_secure, **kwargs)
+
+    def connect_fps(self, aws_access_key_id=None, aws_secret_access_key=None,**kwargs):
         if aws_access_key_id == None:
             aws_access_key_id = self.config.get("Credentials", "aws_access_key_id")
         if aws_secret_access_key == None:
             aws_secret_access_key = self.config.get("Credentials", "aws_secret_access_key")
         return boto.connect_fps(aws_access_key_id, aws_access_key_id, **kwargs)
 
-    def connect_cloudfront(aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
+    def connect_cloudfront(self, aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
         if aws_access_key_id == None:
             aws_access_key_id = self.config.get("Credentials", "aws_access_key_id")
         if aws_secret_access_key == None:
