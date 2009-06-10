@@ -15,6 +15,8 @@ class Environment(object):
 
     def __init__(self, module, env=None):
         self.module = module
+        if not env:
+            env = os.environ.get("BOTO_WEB_ENV")
         self.env = env
 
         # Config setup

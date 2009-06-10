@@ -20,23 +20,22 @@ class TestBase(object):
     application="boto_web"
     user = None
 
-    def setup_class(cls):
+    def __init__(self):
         """
         Setup this class to handle testing
         """
+        import boto
+        from boto_web.environment import Environment
+        e = Environment(self.application)
+        self.env = e
+        boto.config = self.env.config
+
         from boto_web.appserver.url_mapper import URLMapper
         from boto_web.appserver.filter_mapper import FilterMapper
         from boto_web.appserver.auth_layer import AuthLayer
 
-        from boto_web.environment import Environment
-        e = Environment(cls.application)
-        cls.env = e
-        cls.mapper = AuthLayer( app=FilterMapper( app=URLMapper(e), env=e), env=e)
+        self.mapper = AuthLayer( app=FilterMapper( app=URLMapper(e), env=e), env=e)
 
-    def teardown_class(cls):
-        """
-        Cleanup after our tests
-        """
 
 
     def make_request(self, resource, method="GET", body=None, params={}, headers={}):
