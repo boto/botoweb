@@ -3,6 +3,7 @@ import logging
 import re
 import sys
 import traceback
+import urllib
 
 import boto_web
 import mimetypes
@@ -79,5 +80,7 @@ class URLMapper(WSGILayer):
                         self.handlers[handler_config['url']] = handler
 
                 if handler:
+                    if obj_id:
+                        obj_id = urllib.unquote(obj_id)
                     return (handler, obj_id)
         return (None, None)
