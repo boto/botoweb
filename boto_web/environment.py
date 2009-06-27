@@ -68,7 +68,7 @@ class Environment(object):
             aws_access_key_id = self.config.get("Credentials", "aws_access_key_id")
         if aws_secret_access_key == None:
             aws_secret_access_key = self.config.get("Credentials", "aws_secret_access_key")
-        return boto.connect_s3(aws_access_key_id, aws_access_key_id, **kwargs)
+        return boto.connect_s3(aws_access_key_id, aws_secret_access_key, **kwargs)
 
     def connect_ec2(self, aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
         if aws_access_key_id == None:

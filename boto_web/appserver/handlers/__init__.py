@@ -28,6 +28,7 @@ class RequestHandler(object):
     The request handler is created only 
     once so we can handle caching.
     """
+    allowed_methods = ['get', 'post', 'head', 'options', 'put', 'delete', 'trace']
 
     def __init__(self, config):
         """
@@ -40,23 +41,12 @@ class RequestHandler(object):
         """
         Execute this handler based on the request passed in
         """
-        if request.method == "GET":
-            response = self._get(request, response, obj_id)
-        elif request.method == "POST":
-            response = self._post(request, response, obj_id)
-        elif request.method == "HEAD":
-            response = self._head(request, response, obj_id)
-        elif request.method == "OPTIONS":
-            response = self._options(request, response, obj_id)
-        elif request.method == "PUT":
-            response = self._put(request, response, obj_id)
-        elif request.method == "DELETE":
-            response = self._delete(request, response, obj_id)
-        elif request.method == "TRACE":
-            response = self._trace(request, response, obj_id)
+        method = request.method.lower()
+        if method in self.allowed_methods:
+            method = getattr(self, "_%s" % method)
+            return method(request, response, obj_id)
         else:
             raise BadRequest(description="Unknown Method: %s" % request.method)
-        return response
 
     def _get(self, request, response, id=None):
         return self._any(request, response, id)

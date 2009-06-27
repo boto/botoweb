@@ -74,6 +74,7 @@ class URLMapper(WSGILayer):
                         handler_class = find_class(class_name)
                         conf = self.env.config.copy()
                         conf.update(handler_config)
+                        conf['env'] = self.env
                         handler = handler_class(conf)
 
                     if handler:
