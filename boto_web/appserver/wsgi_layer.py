@@ -64,7 +64,7 @@ class WSGILayer(object):
             resp = self.handle(req, resp)
         except HTTPRedirect, e:
             resp.set_status(e.code)
-            resp.headers['Location'] = str(url)
+            resp.headers['Location'] = str(e.url)
             resp = self.format_exception(e, resp)
         except Unauthorized, e:
             resp.set_status(e.code)
