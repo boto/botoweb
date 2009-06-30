@@ -39,13 +39,13 @@ class URLMapper(WSGILayer):
         Basic URL mapper
         """
         log.info("%s: %s" % (req.method, req.path_info))
-        (handler, obj_id) = self.parse_path(req.path)
+        (handler, obj_id) = self.parse_path(req)
         if not handler:
             raise NotFound(url=req.path)
         return handler(req, response, obj_id)
 
 
-    def parse_path(self, path):
+    def parse_path(self, req):
         """
         Get the handler and object id (if given) for this
         path request.
@@ -53,16 +53,15 @@ class URLMapper(WSGILayer):
         @return: (Handler, obj_id)
         @rtype: tuple
         """
-        if path == "/":
-            return (self.index_handler, None)
+        path = req.path
         handler = None
         obj_id = None
         for handler_config in self.env.config['handlers']:
-            match = re.match("^%s(\/(.*))?$" % handler_config['url'], path)
+            match = re.match("^(%s)(\/(.*))?$" % handler_config['url'], path)
 
             if match:
                 log.debug("URL Mapping: %s" % handler_config)
-                obj_id = match.group(2)
+                obj_id = match.group(3)
                 if obj_id == "":
                     obj_id = None
 
@@ -81,7 +80,11 @@ class URLMapper(WSGILayer):
                         self.handlers[handler_config['url']] = handler
 
                 if handler:
+                    req.script_name = match.group(1)
                     if obj_id:
                         obj_id = urllib.unquote(obj_id)
                     return (handler, obj_id)
-        return (None, None)
+        if path == "/":
+            return (self.index_handler, None)
+        else:
+            return (None, None)
