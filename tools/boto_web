@@ -90,7 +90,6 @@ if __name__ == "__main__":
 		})
 		exit(0)
 
-	from paste import httpserver
 	from boto_web.appserver.url_mapper import URLMapper
 	from boto_web.appserver.filter_mapper import FilterMapper
 	from boto_web.appserver.cache_layer import CacheLayer
@@ -102,10 +101,22 @@ if __name__ == "__main__":
 						env=e), 
 					env=e)
 
-	httpserver.serve(mapper, 
-		host=options.hostname, 
-		port=int(options.port), 
-		daemon_threads=True,
-		socket_timeout=60,
-	)
-
+	# Use CherryPy if available
+	try:
+		from cherrypy import wsgiserver
+		print "Using CherryPyWSGIServer"
+		s = wsgiserver.CherryPyWSGIServer((options.hostname, int(options.port)),mapper)
+		try:
+			s.start()
+		except KeyboardInterrupt:
+			s.stop()
+	except ImportError:
+		print "CherryPy not available, using paste.httpserver instead"
+		from paste import httpserver
+		httpserver.serve(mapper, 
+			host=options.hostname, 
+			port=int(options.port), 
+			daemon_threads=True,
+			socket_timeout=60,
+			protocol_version="HTTP/1.1",
+		)
