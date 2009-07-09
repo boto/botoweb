@@ -108,7 +108,7 @@ if __name__ == "__main__":
 		s = wsgiserver.CherryPyWSGIServer((options.hostname, int(options.port)),mapper)
 		try:
 			s.start()
-		except KeyboardInterrupt:
+		finally:
 			s.stop()
 	except ImportError:
 		print "CherryPy not available, using paste.httpserver instead"
