@@ -60,9 +60,9 @@ class AuthLayer(WSGILayer):
         """
         log.info("Get Auth Config: %s" % (path))
         match = None
-        if not self.env.config.has_key('auth'):
+        if not self.env.config.has_key('boto_web'):
             return None
-        for rule in self.env.config['auth']:
+        for rule in self.env.config.get("boto_web", "auth", []):
             if rule.has_key("url"):
                 if not re.match(rule['url'], path):
                     continue
