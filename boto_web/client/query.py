@@ -70,9 +70,7 @@ class Query(object):
         url = self.build_url()
         log.debug("Query: %s" % url)
         conn = self.env.connect_client()
-        headers = {}
-        conn.request("GET", url, "", headers)
-        resp = conn.getresponse()
+        resp = conn.request("GET", url)
         handler = ObjectHandler(self.model_class)
         parser = make_parser()
         parser.setContentHandler(handler)
