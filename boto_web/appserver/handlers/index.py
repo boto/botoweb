@@ -48,7 +48,7 @@ class Index(object):
             return self.doc
         else:
             # Populate the document
-            for route in self.config['handlers']:
+            for route in self.config.get("boto_web", "handlers"):
                 route_node = self.doc.createElement("route")
                 route_node.setAttribute("href", route['url'])
                 for k in route.keys():

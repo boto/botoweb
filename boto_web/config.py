@@ -134,7 +134,15 @@ class Config(ConfigParser.SafeConfigParser):
         return (key in self._sections)
 
     def update(self, vals):
-        return self._sections.update(vals)
+        """
+        Merge the sections, don't just replace them
+        """
+        for section in vals:
+            if self._sections.has_key(section):
+                self._sections[section].update(vals[section])
+            else:
+                self._sections[section] = vals[section]
+
 
     def has_key(self, key):
         return self._sections.has_key(key)

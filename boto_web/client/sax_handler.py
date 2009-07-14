@@ -1,0 +1,35 @@
+# 
+# Author: Chris Moyer
+#
+from xml.sax.handler import ContentHandler
+
+class ObjectHandler(ContentHandler):
+    """
+    Simple Object Sax handler
+    """
+
+    def __init__(self, model_class):
+        self.text = ""
+        self.current_obj = None
+        self.model_class = model_class
+        self.current_prop = None
+        self.objs = []
+
+    def characters(self, ch):
+        self.text += ch
+
+    def startElement(self, name, attrs):
+        self.text = ""
+        if name == "object":
+            id = attrs.get("id")
+            self.current_obj = self.model_class(id)
+            self.current_prop = None
+        elif name == "property":
+            self.current_prop = attrs.get('name')
+
+    def endElement(self, name):
+        if name == "object":
+            self.objs.append(self.current_obj)
+            self.current_obj = None
+        elif name == "property":
+            setattr(self.current_obj, self.current_prop, self.text)

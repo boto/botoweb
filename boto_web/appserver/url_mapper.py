@@ -56,7 +56,7 @@ class URLMapper(WSGILayer):
         path = req.path
         handler = None
         obj_id = None
-        for handler_config in self.env.config['handlers']:
+        for handler_config in self.env.config.get("boto_web", "handlers"):
             match = re.match("^(%s)(\/(.*))?$" % handler_config['url'], path)
 
             if match:

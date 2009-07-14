@@ -15,6 +15,7 @@ class Environment(object):
 
     def __init__(self, module, env=None):
         self.module = module
+        self._client_connection = None
         if not env:
             env = os.environ.get("BOTO_WEB_ENV")
         self.env = env
@@ -50,10 +51,37 @@ class Environment(object):
         config = {}
         for cf in self.dist.resource_listdir(path):
             if cf.endswith(".yaml"):
-                config[cf[:-5]] = yaml.load(self.dist.get_resource_stream(self.mgr, os.path.join(path, cf)))
+                section_name = cf[:-5]
+                section = yaml.load(self.dist.get_resource_stream(self.mgr, os.path.join(path, cf)))
+                if isinstance(section, dict):
+                    config[section_name] = section
+                else:
+                    if not config.has_key("boto_web"):
+                        config['boto_web'] = {}
+                    config['boto_web'][section_name] = section
             elif not cf.startswith("."):
                 config[cf] = self.get_config(os.path.join(path, cf))
         return config
+
+    def connect_client(self, host=None, port=None, enable_ssl=None):
+        """
+        Client Connection caching
+        """
+        if not self._client_connection and self.config.has_section("client"):
+            if not enable_ssl:
+                enable_ssl = bool(self.config.get("client", "enable_ssl", True))
+            if enable_ssl:
+                boto.log.debug("SSL Enabled")
+                from httplib import HTTPSConnection as Connection
+            else:
+                from httplib import HTTPConnection as Connection
+            if not host:
+                host = self.config.get("client", "host", "localhost")
+            if not port:
+                port = int(self.config.get("client", "port", 8080))
+            log.debug("Creating connection: %s:%s" % (host, port))
+            self._client_connection = Connection(host, port)
+        return self._client_connection
 
     # Add in the shortcuts that are normally in boto
     def connect_sqs(self, aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
