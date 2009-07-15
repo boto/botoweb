@@ -30,6 +30,7 @@ class Query(object):
     """
     Query object iterator
     """
+    ALLOWED_EXPRESSIONS = ["=", "!=", ">", ">=", "<", "<=", "like", "not like", "intersection", "between", "is null", "is not null"]
 
     def __init__(self, model_class, env, filters=[], limit=None, sort_by=None):
         self.model_class = model_class
@@ -46,6 +47,7 @@ class Query(object):
         @param op: Operator to use
         @param value: Value, or list of values, to filter on
         """
+        assert op in self.ALLOWED_EXPRESSIONS
         self.filters.append((key, op, value))
         return self
 
@@ -109,6 +111,8 @@ class Query(object):
             url += ("?"+query)
         return url
 
+    def encode_value(self, property, value):
+        return str(value)
 
     def next(self):
         return self.__iter__().next()
