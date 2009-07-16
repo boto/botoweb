@@ -70,17 +70,14 @@ class Environment(object):
         if not self._client_connection and self.config.has_section("client"):
             if not enable_ssl:
                 enable_ssl = bool(self.config.get("client", "enable_ssl", True))
-            if enable_ssl:
-                boto.log.debug("SSL Enabled")
-                from httplib import HTTPSConnection as Connection
-            else:
-                from httplib import HTTPConnection as Connection
             if not host:
                 host = self.config.get("client", "host", "localhost")
             if not port:
                 port = int(self.config.get("client", "port", 8080))
             log.debug("Creating connection: %s:%s" % (host, port))
-            self._client_connection = Connection(host, port)
+            from boto_web.client.connection import ClientConnection
+            self._client_connection = ClientConnection(host, port, enable_ssl)
+            self._client_connection.request("GET", "/")
         return self._client_connection
 
     # Add in the shortcuts that are normally in boto
