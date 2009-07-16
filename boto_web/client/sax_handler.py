@@ -8,10 +8,11 @@ class ObjectHandler(ContentHandler):
     Simple Object Sax handler
     """
 
-    def __init__(self, model_class):
+    def __init__(self, model_class, env):
         self.text = ""
         self.current_obj = None
         self.model_class = model_class
+        self.env = env
         self.current_prop = None
         self.objs = []
 
@@ -22,7 +23,7 @@ class ObjectHandler(ContentHandler):
         self.text = ""
         if name == "object":
             id = attrs.get("id")
-            self.current_obj = self.model_class(id)
+            self.current_obj = self.model_class(self.env, id)
             self.current_prop = None
         elif name == "property":
             self.current_prop = attrs.get('name')

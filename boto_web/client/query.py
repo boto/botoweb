@@ -73,13 +73,11 @@ class Query(object):
         log.debug("Query: %s" % url)
         conn = self.env.connect_client()
         resp = conn.request("GET", url)
-        handler = ObjectHandler(self.model_class)
+        handler = ObjectHandler(self.model_class, self.env)
+        assert resp.status == 200
         parser = make_parser()
         parser.setContentHandler(handler)
-        try:
-            parser.parse(resp)
-        except:
-            raise Exception("Error Parsing Response: %s" % resp.read())
+        parser.parse(resp)
         return iter(handler.objs)
 
     def build_url(self):
