@@ -76,7 +76,10 @@ class Query(object):
         handler = ObjectHandler(self.model_class)
         parser = make_parser()
         parser.setContentHandler(handler)
-        parser.parse(resp)
+        try:
+            parser.parse(resp)
+        except:
+            raise Exception("Error Parsing Response: %s" % resp.read())
         return iter(handler.objs)
 
     def build_url(self):
@@ -109,7 +112,8 @@ class Query(object):
         if len(params) > 0:
             query = urllib.urlencode(params)
             url += ("?"+query)
-        return url
+        base_path = self.env.config.get("client", "base_path", "")
+        return "%s%s" % (base_path, url)
 
     def encode_value(self, property, value):
         return str(value)
