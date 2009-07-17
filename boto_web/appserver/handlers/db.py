@@ -52,6 +52,7 @@ class DBHandler(RequestHandler):
         """
         Create/Update an object
         """
+        from StringIO import StringIO
         #print request.body
         content = None
         obj = None
@@ -59,10 +60,10 @@ class DBHandler(RequestHandler):
             obj = self.db_class.get_by_ids(id)
 
         if obj:
-            (cls, props, id) = self.xmlmanager.unmarshal_props(request.body_file, cls=self.db_class)
+            (cls, props, id) = self.xmlmanager.unmarshal_props(StringIO(request.body), cls=self.db_class)
             content =  self.update(obj, props, request.user)
         else:
-            new_obj = self.xmlmanager.unmarshal_object(request.body_file, cls=self.db_class)
+            new_obj = self.xmlmanager.unmarshal_object(StringIO(request.body), cls=self.db_class)
             content =  self.create(new_obj, request.user)
             response.set_status(201)
 

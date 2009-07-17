@@ -5,7 +5,7 @@ from xml.sax.handler import ContentHandler
 
 class ObjectHandler(ContentHandler):
     """
-    Simple Object Sax handler
+    Simple Object Sax handler, currently only handles string properties
     """
 
     def __init__(self, model_class, env):
@@ -33,4 +33,6 @@ class ObjectHandler(ContentHandler):
             self.objs.append(self.current_obj)
             self.current_obj = None
         elif name == "property":
-            setattr(self.current_obj, self.current_prop, self.text)
+            if not self.current_prop in self.current_obj.__class__._properties:
+                self.current_obj.__class__._properties.append(self.current_prop)
+            setattr(self.current_obj, self.current_prop, str(self.text))

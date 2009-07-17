@@ -12,8 +12,14 @@ class ClientConnection(object):
 
     def __init__(self, host, port, enable_ssl):
         """
-        @param conn: the httplib connection object
-        @type conn: httplib.Connection
+        @param host: The host to connect to
+        @type conn: str
+
+        @param port: The port on the host to connect to
+        @type port: int
+
+        @param enable_ssl: True if we should use HTTPS, otherwise False
+        @type enable_ssl: bool
         """
         if enable_ssl:
             from httplib import HTTPSConnection as Connection
@@ -53,13 +59,21 @@ class ClientConnection(object):
         @param body: Optional body text to send
         @type body: str
         """
+        print "Method: %s" % method
+        print "URL: %s" % path
+        print "Headers: %s" % headers
+        print body
         tries = 0
+        if body and not headers.has_key("Content-Length"):
+            headers['Content-Length'] = len(body)
         while tries < self.max_tries:
             tries += 1
             self.connect()
             if self.auth_header:
                 headers['Authorization'] = self.auth_header
+            print "Sending data"
             self.conn.request(method, path, body, headers)
+            print "Done"
             resp = self.conn.getresponse()
             if resp.status == 401:
                 self.close()
