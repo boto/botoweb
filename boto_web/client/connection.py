@@ -59,10 +59,6 @@ class ClientConnection(object):
         @param body: Optional body text to send
         @type body: str
         """
-        print "Method: %s" % method
-        print "URL: %s" % path
-        print "Headers: %s" % headers
-        print body
         tries = 0
         if body and not headers.has_key("Content-Length"):
             headers['Content-Length'] = len(body)
@@ -71,9 +67,7 @@ class ClientConnection(object):
             self.connect()
             if self.auth_header:
                 headers['Authorization'] = self.auth_header
-            print "Sending data"
             self.conn.request(method, path, body, headers)
-            print "Done"
             resp = self.conn.getresponse()
             if resp.status == 401:
                 self.close()
