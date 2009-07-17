@@ -65,8 +65,8 @@ class IndexHandler(RequestHandler):
     Simple Index Handler which helps to show what
     URLs we have and what objects they provide
     """
-    def __init__(self, config):
-        RequestHandler.__init__(self,config)
+    def __init__(self, env, config):
+        RequestHandler.__init__(self, env, config)
         self._index = None
 
     def _get(self, request, response, id=None):
@@ -74,7 +74,7 @@ class IndexHandler(RequestHandler):
         List all our routes
         """
         if not self._index:
-            self._index = Index(self.config)
+            self._index = Index(self.env.config)
         response.content_type = 'text/xml'
         doc = copy.deepcopy(self._index.to_xml())
         if request.user:

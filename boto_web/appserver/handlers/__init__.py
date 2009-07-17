@@ -28,13 +28,11 @@ class RequestHandler(object):
     The request handler is created only 
     once so we can handle caching.
     """
-    allowed_methods = ['get', 'post', 'head', 'options', 'put', 'delete', 'trace']
+    allowed_methods = ['get', 'post', 'head', 'options', 'put', 'delete']
 
-    def __init__(self, config):
-        """
-        Set up the global config for this
-        handler
-        """
+    def __init__(self, env, config={}):
+        """Set up the environment and local config"""
+        self.env = env
         self.config = config
 
     def __call__(self, request, response, obj_id):
@@ -48,29 +46,24 @@ class RequestHandler(object):
         else:
             raise BadRequest(description="Unknown Method: %s" % request.method)
 
+    def _options(self, request, response, id=None):
+        """OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header"""
+        response.headers['Allow'] = ", ".join(map(str.upper, self.allowed_methods))
+        response.content_length = 0
+        response.set_status(200)
+        return response
+
     def _get(self, request, response, id=None):
-        return self._any(request, response, id)
+        raise NotImplemented()
 
     def _post(self, request, response, id=None):
-        return self._any(request, response, id)
+        raise NotImplemented()
     
     def _head(self, request, response, id=None):
-        return self._any(request, response, id)
-
-    def _options(self, request, response, id=None):
-        return self._any(request, response, id)
+        raise NotImplemented()
 
     def _put(self, request, response, id=None):
-        return self._any(request, response, id)
+        raise NotImplemented()
 
     def _delete(self, request, response, id=None):
-        return self._any(request, response, id)
-
-    def _trace(self, request, response, id=None):
-        return self._any(request, response, id)
-
-    def _any(self, request, response, id=None):
-        """
-        Default handler for any request not specifically defined
-        """
-        raise MethodNotAllowed()
+        raise NotImplemented()

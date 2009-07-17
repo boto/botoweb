@@ -22,6 +22,7 @@ class Environment(object):
 
         # Config setup
         self.config = Config()
+        self.config.env = self
 
         self.dist = get_provider(self.module)
         self.mgr = ResourceManager()

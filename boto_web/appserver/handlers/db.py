@@ -29,8 +29,8 @@ class DBHandler(RequestHandler):
     """
     db_class = None
 
-    def __init__(self, config):
-        RequestHandler.__init__(self, config)
+    def __init__(self, env, config):
+        RequestHandler.__init__(self, env, config)
         db_class_name = self.config.get('db_class', None)
         if db_class_name:
             self.db_class = find_class(db_class_name)

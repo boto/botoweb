@@ -15,6 +15,7 @@ class Config(ConfigParser.SafeConfigParser):
     """
     Support a config defined by a YAML file
     """
+    env = None
     def __init__(self, path="app.yaml"):
         self._sections = {}
         self._defaults = boto.config._defaults
@@ -148,4 +149,7 @@ class Config(ConfigParser.SafeConfigParser):
         return self._sections.has_key(key)
 
     def copy(self):
-        return self._sections.copy()
+        conf = Config()
+        conf._sections = self._sections.copy()
+        conf.env = self.env
+        return conf
