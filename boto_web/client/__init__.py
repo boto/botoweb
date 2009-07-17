@@ -110,6 +110,11 @@ class ClientObject(object):
         params = {}
         return cls(env, id=id, **params)
 
+    def _get_url(self):
+        """Get the URL for this specific object"""
+        base_url = self.__class__._get_base_url(self._env)
+        return "%s/%s" % (base_url, self.id)
+
     def put(self):
         """
         PUT this object (save)
