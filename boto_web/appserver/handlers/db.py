@@ -48,24 +48,34 @@ class DBHandler(RequestHandler):
         content.to_xml().writexml(response)
         return response
 
+    def _post(self, request, response, id=None):
+        """Create a new resource"""
+        if id:
+            obj = self.db_class.get_by_ids(id)
+            if obj:
+                raise Conflict("Object %s already exists" % id)
+
+        new_obj = self.xmlmanager.unmarshal_object(StringIO(request.body), cls=self.db_class)
+        new_obj.id = id
+        obj = self.create(new_obj, request.user)
+        response.set_status(201)
+        respose.headers['Location'] = obj.id
+        return response
+
+
     def _put(self, request, response, id=None):
-        """
-        Create/Update an object
-        """
+        """Update an existing resource"""
         from StringIO import StringIO
-        #print request.body
         content = None
         obj = None
         if id:
             obj = self.db_class.get_by_ids(id)
 
-        if obj:
-            (cls, props, id) = self.xmlmanager.unmarshal_props(StringIO(request.body), cls=self.db_class)
-            content =  self.update(obj, props, request.user)
-        else:
-            new_obj = self.xmlmanager.unmarshal_object(StringIO(request.body), cls=self.db_class)
-            content =  self.create(new_obj, request.user)
-            response.set_status(201)
+        if not obj:
+            raise NotFound()
+
+        (cls, props, id) = self.xmlmanager.unmarshal_props(StringIO(request.body), cls=self.db_class)
+        content =  self.update(obj, props, request.user)
 
         response.content_type = "text/xml"
         content.to_xml().writexml(response)

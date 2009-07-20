@@ -19,6 +19,10 @@ class Request(webob.Request):
 
         webob.Request.__init__(self, environ, charset=charset,
             unicode_errors= 'ignore', decode_param_names=True)
+        if self.headers.has_key("X-Forwarded-Host"):
+            self.real_host_url = "%s://%s" % (self.headers.get("X-Forwarded-Proto", "http"), self.headers.get("X-Forwarded-Host"))
+        else:
+            self.real_host_url = self.host_url
 
     def get(self, argument_name, default_value='', allow_multiple=False):
         param_value = self.get_all(argument_name)
@@ -78,3 +82,7 @@ class Request(webob.Request):
         return self._user
 
     user = property(getUser, None, None)
+
+    def get_base_url(self):
+        return self.headers.get("X-Forwarded-URL", self.script_name)
+    base_url = property(get_base_url, None, None)
