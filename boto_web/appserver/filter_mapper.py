@@ -104,9 +104,7 @@ class FilterMapper(WSGILayer):
         log.info("Get Stylesheet: %s %s" % (path, user))
         styledoc = None
         match = None
-        if not self.env.config.has_section('filters'):
-            return (None, None)
-        for rule in self.env.config['filters']:
+        for rule in self.env.config.get("boto_web", "filters", []):
             if rule.has_key("url"):
                 if not re.match(rule['url'], path):
                     continue
