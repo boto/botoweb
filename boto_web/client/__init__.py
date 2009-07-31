@@ -154,8 +154,11 @@ class ClientObject(object):
         url = self._get_base_url(self._env)
         if self.id != None:
             url+= "/%s" % self.id
+            method = "PUT"
+        else:
+            method = "POST"
         log.debug("Putting object to URL: %s" % url)
         body = etree.tostring(self.to_xml(), xml_declaration=True, pretty_print=True, encoding="utf-8")
         url = self._get_url()
         conn = self._env.connect_client()
-        return conn.request("PUT", url, body=body, headers={"Content-Type": "text/xml"})
+        return conn.request(method, url, body=body, headers={"Content-Type": "text/xml"})
