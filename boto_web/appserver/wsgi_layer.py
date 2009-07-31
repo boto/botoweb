@@ -58,6 +58,14 @@ class WSGILayer(object):
         Handles basic one-time-only WSGI setup, and handles
         error catching.
         """
+        # This is a god aweful hack because HTTPlib is NOT threadsafe
+        # we essentially have to re-connect to SDB for every thread we're in
+        # which must be set up in each model object loaded
+        from boto.sdb.db.model import Model
+        from boto.sdb.db.manager import get_manager
+        for cls in Model.__sub_classes__:
+            cls._manager = get_manager(cls)
+
         resp = Response()
         try:
             req = Request(environ)
