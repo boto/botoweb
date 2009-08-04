@@ -13,6 +13,9 @@ from datetime import datetime
 import logging
 log = logging.getLogger("boto_web.handlers.db")
 
+from lxml import etree
+from boto_web import xmlize
+
 class DBHandler(RequestHandler):
     """
     DB Handler Base class
@@ -34,18 +37,19 @@ class DBHandler(RequestHandler):
         db_class_name = self.config.get('db_class', None)
         if db_class_name:
             self.db_class = find_class(db_class_name)
-        self.xmlmanager = self.db_class.get_xmlmanager()
 
     def _get(self, request, response, id=None ):
-        """
-        Get an object, or search for a list of objects
-        """
-        if id:
-            content = self.read(id=id, user=request.user)
-        else:
-            content = self.search(params=request.GET.mixed(), user=request.user)
+        """Get an object, or search for a list of objects"""
         response.content_type = "text/xml"
-        content.to_xml().writexml(response)
+        if id:
+            obj = self.read(id=id, user=request.user)
+            response.write(xmlize.dumps(obj))
+        else:
+            objs = self.search(params=request.GET.mixed(), user=request.user)
+            response.write("<%sList>" % self.db_class.__name__)
+            for obj in objs:
+                response.write(xmlize.dumps(obj))
+            response.write("</%sList>" % self.db_class.__name__)
         return response
 
     def _post(self, request, response, id=None):
@@ -55,7 +59,7 @@ class DBHandler(RequestHandler):
             if obj:
                 raise Conflict("Object %s already exists" % id)
 
-        new_obj = self.xmlmanager.unmarshal_object(StringIO(request.body), cls=self.db_class)
+        new_obj = self.unmarshal_object(request.body, cls=self.db_class)
         new_obj.id = id
         obj = self.create(new_obj, request.user)
         response.set_status(201)
@@ -65,7 +69,6 @@ class DBHandler(RequestHandler):
 
     def _put(self, request, response, id=None):
         """Update an existing resource"""
-        from StringIO import StringIO
         content = None
         obj = None
         if id:
@@ -74,7 +77,7 @@ class DBHandler(RequestHandler):
         if not obj:
             raise NotFound()
 
-        (cls, props, id) = self.xmlmanager.unmarshal_props(StringIO(request.body), cls=self.db_class)
+        (cls, props, id) = self.unmarshal_props(request.body, cls=self.db_class)
         content =  self.update(obj, props, request.user)
 
         response.content_type = "text/xml"
