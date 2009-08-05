@@ -19,66 +19,40 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from boto_web.appserver.handlers import RequestHandler
-from xml.dom.minidom import getDOMImplementation, Node
+from lxml import etree
 import copy
 
 import logging
 log = logging.getLogger("boto_web.handlers.db")
-
-class Index(object):
-    """
-    Index object which shows routes based on a config
-    and turns that into XML
-    """
-    
-    def __init__(self, config):
-        """
-        @param config: The routing config from this app
-        @type config: array of dicts
-        """
-        self.config = config
-        self.impl = getDOMImplementation()
-        self.doc = self.impl.createDocument(None, 'Index', None)
-        self.doc.documentElement.setAttribute("name", self.config.get("app", "name", "boto_web application"))
-        self.doc = self.to_xml(self.doc)
-
-
-    def to_xml(self, doc=None):
-        if not doc:
-            return self.doc
-        else:
-            # Populate the document
-            for route in self.config.get("boto_web", "handlers"):
-                route_node = self.doc.createElement("route")
-                route_node.setAttribute("href", route['url'])
-                for k in route.keys():
-                    if k != "url":
-                        attr_node = self.doc.createElement(k)
-                        attr_node.appendChild(self.doc.createTextNode(str(route[k])))
-                        route_node.appendChild(attr_node)
-                self.doc.documentElement.appendChild(route_node)
-            return doc
-
 
 class IndexHandler(RequestHandler):
     """
     Simple Index Handler which helps to show what
     URLs we have and what objects they provide
     """
+
     def __init__(self, env, config):
+        """Set up and fetch the routes for the first time"""
         RequestHandler.__init__(self, env, config)
-        self._index = None
 
     def _get(self, request, response, id=None):
-        """
-        List all our routes
-        """
-        if not self._index:
-            self._index = Index(self.env.config)
+        """List all our APIs"""
         response.content_type = 'text/xml'
-        doc = copy.deepcopy(self._index.to_xml())
+        doc = etree.Element("Index", name=self.env.config.get("app", "name", "boto_web application"))
         if request.user:
-            request.user.to_xml(doc)
+            user_node = etree.SubElement(doc, "User", id=request.user.id)
+            etree.SubElement(user_node, "href").text = str("users/%s" % request.user.id)
 
-        doc.writexml(response)
+        for route in self.env.config.get("boto_web", "handlers"):
+            if route.get("name"):
+                model_name = route.get("name")
+                href = route['url'].strip('/')
+                api_node = etree.SubElement(doc, "api", name=model_name)
+                etree.SubElement(api_node, "href").text = href
+                if route.get("description"):
+                    etree.SubElement(api_node, "description").text = route.get("description")
+
+
+
+        response.write(etree.tostring(doc, encoding="utf-8", pretty_print=True))
         return response

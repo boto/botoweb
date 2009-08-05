@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from boto_web.xmlize import *
+from boto_web import xmlize
 
 class ObjectTest(object):
     """Test Object to dump/load from XML"""
@@ -30,13 +30,13 @@ class TestXMLize(object):
 
     def test_str(self):
         """Test encoding a string"""
+        xmlize.register(ObjectTest)
         obj = ObjectTest()
         obj.foo = "bar"
         obj.name = "Bizzle"
         obj.id = "12345"
-        sr = dumps(obj)
-        print sr
-        obj2 = loads(sr)
+        sr = xmlize.dumps(obj)
+        obj2 = xmlize.loads(sr)
 
 
         assert obj2.foo == obj.foo

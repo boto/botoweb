@@ -20,6 +20,7 @@
 # IN THE SOFTWARE.
 
 BAD_CHARS = ['<', '>', '&'] # Illegal characters in XML that must be wrapped in a CDATA
+REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects into
 
 from datetime import datetime, tzinfo
 class LocalTimezone(tzinfo):
@@ -49,6 +50,7 @@ class LocalTimezone(tzinfo):
         return tt.tm_isdst > 0
 
 Local = LocalTimezone()
+from lxml import etree
 
 class XMLSerializer(object):
     """XML Serializer object"""
@@ -139,6 +141,51 @@ class XMLSerializer(object):
     def load(self):
         """Load from this file to an object or object list"""
         self.file.seek(0)
+        tree = etree.parse(self.file)
+        root = tree.getroot()
+        return self.decode(root)
+
+    def decode(self, node):
+        """Decode this node into an object or list of objects"""
+        if node.tag in REGISTERED_CLASSES.keys():
+            model_class = REGISTERED_CLASSES[node.tag]
+            obj = model_class()
+            obj.id = node.get("id")
+            props = {}
+            for prop in node:
+                if prop.get("type") == "string":
+                    value = self.decode_string(prop)
+                elif prop.get("type") == "complexType":
+                    # Dictionary
+                    pass
+                elif prop.get("type") == "dateTime":
+                    # Date Time
+                    value = self.decode_string(prop)
+                elif prop.get("type") == "bool":
+                    # Boolean
+                    value = (self.decode_string(prop).upper() == "TRUE")
+                else:
+                    # Probably an object
+                    pass
+                if not props.has_key(prop.tag):
+                    props[prop.tag] = []
+                props[prop.tag].append(value)
+            for prop_name in props:
+                val = props[prop_name]
+                if len(val) == 1:
+                    val = val[0]
+                setattr(obj, prop_name, val)
+                print "Setting %s = %s" % (prop_name, val)
+            return obj
+
+
+    def decode_string(self, node):
+        """Decode a simple string property"""
+        print node
+        return node.text
+
+
+
     
 def dump(obj, file=None):
     """Write an XML representation of *obj* to the open file object *file*
@@ -167,3 +214,17 @@ def loads(string):
     """
     from StringIO import StringIO
     return load(StringIO(string))
+
+def register(cls, name=None):
+    """Register a class to be deserializable
+
+    @param cls: Class to register
+    @type cls: class
+
+    @param name: An optional conanical name to use for this class, the default is to use 
+        just the name of the class
+    @type name: str
+    """
+    if name == None:
+        name = cls.__name__
+    REGISTERED_CLASSES[name] = cls
