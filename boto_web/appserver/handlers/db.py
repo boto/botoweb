@@ -50,8 +50,15 @@ class DBHandler(RequestHandler):
         """Get an object, or search for a list of objects"""
         response.content_type = "text/xml"
         if id:
+            vals = id.split("/",1)
+            property = None
+            if len(vals) > 1:
+                (id, property) = vals
             obj = self.read(id=id, user=request.user)
-            response.write(xmlize.dumps(obj))
+            if property:
+                return self.get_property(response, obj, property)
+            else:
+                response.write(xmlize.dumps(obj))
         else:
             objs = self.search(params=request.GET.mixed(), user=request.user)
             response.write("<%sList>" % self.db_class.__name__)
@@ -228,3 +235,14 @@ class DBHandler(RequestHandler):
         log.info("Deleted object %s" % (obj.id))
         obj.delete()
         return obj
+
+    def get_property(self, response, obj, property):
+        """Return just a single property"""
+        response.content_type = "text/plain"
+        val = getattr(obj, property)
+        if type(val) == list:
+            for v in val:
+                response.write(str(v))
+        else:
+            response.write(str(val))
+        return response
