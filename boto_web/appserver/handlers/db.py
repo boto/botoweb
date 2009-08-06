@@ -37,6 +37,7 @@ class DBHandler(RequestHandler):
         db_class_name = self.config.get('db_class', None)
         if db_class_name:
             self.db_class = find_class(db_class_name)
+        xmlize.register(self.db_class)
 
     def _get(self, request, response, id=None ):
         """Get an object, or search for a list of objects"""
@@ -59,11 +60,11 @@ class DBHandler(RequestHandler):
             if obj:
                 raise Conflict("Object %s already exists" % id)
 
-        new_obj = self.unmarshal_object(request.body, cls=self.db_class)
+        new_obj = xmlize.loads(request.body)
         new_obj.id = id
         obj = self.create(new_obj, request.user)
         response.set_status(201)
-        respose.headers['Location'] = obj.id
+        response.headers['Location'] = obj.id
         return response
 
 
@@ -77,7 +78,12 @@ class DBHandler(RequestHandler):
         if not obj:
             raise NotFound()
 
-        (cls, props, id) = self.unmarshal_props(request.body, cls=self.db_class)
+        new_obj = xmlize.loads(request.body)
+        props = {}
+        for prop in dir(new_obj):
+            prop_value = getattr(new_obj, prop)
+            if not prop.startswith("_") and not type(prop_value) == type(self._put):
+                props[prop] = prop_value
         content =  self.update(obj, props, request.user)
 
         response.content_type = "text/xml"

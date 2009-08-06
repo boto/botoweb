@@ -22,6 +22,11 @@
 BAD_CHARS = ['<', '>', '&'] # Illegal characters in XML that must be wrapped in a CDATA
 REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects into
 
+class DefaultObject(object):
+    """Default object for when re get something that we don't know about yet"""
+    id = None
+    __name__ = None
+
 from datetime import datetime, tzinfo
 class LocalTimezone(tzinfo):
     """Local Timezone info copied directly out of the python stdlib documentation"""
@@ -153,6 +158,7 @@ class XMLSerializer(object):
             obj.id = node.get("id")
             props = {}
             for prop in node:
+                value = None
                 if prop.get("type") == "string":
                     value = self.decode_string(prop)
                 elif prop.get("type") == "complexType":
@@ -164,9 +170,15 @@ class XMLSerializer(object):
                 elif prop.get("type") == "bool":
                     # Boolean
                     value = (self.decode_string(prop).upper() == "TRUE")
+                elif prop.get("type") in REGISTERED_CLASSES.keys():
+                    # Object
+                    value = REGISTERED_CLASSES[prop.get("type")]()
+                    value.id = prop.text
                 else:
-                    # Probably an object
-                    pass
+                    # An Object we don't know about yet, make it up
+                    value = DefaultObject()
+                    value.id = prop.text
+                    value.__name__ = prop.get("type")
                 if not props.has_key(prop.tag):
                     props[prop.tag] = []
                 props[prop.tag].append(value)
@@ -175,13 +187,13 @@ class XMLSerializer(object):
                 if len(val) == 1:
                     val = val[0]
                 setattr(obj, prop_name, val)
-                print "Setting %s = %s" % (prop_name, val)
             return obj
+        elif node.tag.endswith("List"):
+            return [self.decode(x) for x in node]
 
 
     def decode_string(self, node):
         """Decode a simple string property"""
-        print node
         return node.text
 
 
@@ -228,3 +240,8 @@ def register(cls, name=None):
     if name == None:
         name = cls.__name__
     REGISTERED_CLASSES[name] = cls
+
+def get_class(class_name):
+    """Get the class for this name"""
+    return REGISTERED_CLASSES.get(class_name)
+

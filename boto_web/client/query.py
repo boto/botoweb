@@ -30,7 +30,7 @@ class Query(object):
     """
     Query object iterator
     """
-    ALLOWED_EXPRESSIONS = ["=", "!=", ">", ">=", "<", "<=", "like", "not like", "intersection", "between", "is null", "is not null"]
+    ALLOWED_EXPRESSIONS = ["=", "!=", ">", ">=", "<", "<=", "like", "not like", "between", "is null", "is not null"]
 
     def __init__(self, model_class, env, filters=[], limit=None, sort_by=None):
         self.model_class = model_class
@@ -69,52 +69,13 @@ class Query(object):
         return doc
 
     def __iter__(self):
-        url = self.build_url()
-        log.debug("Query: %s" % url)
-        conn = self.env.connect_client()
-        resp = conn.request("GET", url)
-        handler = ObjectHandler(self.model_class, self.env)
-        assert resp.status == 200
-        parser = make_parser()
-        parser.setContentHandler(handler)
-        parser.parse(resp)
-        return iter(handler.objs)
+        self.env.register(self.model_class(self.env), self.model_class.__name__)
+        return iter(self.env.find(self.model_class, self.filters, self.sort_by, self.limit))
 
-    def build_url(self):
-        """
-        Generate the query URL
-        """
-        import types
-        if len(self.filters) > 4:
-            raise Exception('Too many filters, max is 4')
-        params = {}
-        parts = []
-        for name, op, value in self.filters:
-            if types.TypeType(value) == types.ListType:
-                filter_parts = []
-                for val in value:
-                    val = self.encode_value(property, val)
-                    filter_parts.append("'%s' %s '%s'" % (name, op, val))
-                parts.append("[%s]" % " OR ".join(filter_parts))
-            else:
-                value = self.encode_value(property, value)
-                parts.append("['%s' %s '%s']" % (name, op, value))
-        query = ' intersection '.join(parts)
-        if query:
-            params['query'] = query
-        if self.sort_by:
-            params['sort_by'] = self.sort_by
-        if self.limit:
-            params['limit'] = self.limit
-        url = self.model_class._get_base_url(self.env)
-        if len(params) > 0:
-            query = urllib.urlencode(params)
-            url += ("?"+query)
-        base_path = self.env.config.get("client", "base_path", "")
-        return "%s%s" % (base_path, url)
-
-    def encode_value(self, property, value):
-        return str(value)
+    def __call__(self):
+        """Nifty little trick to allow this to be treaded like a class
+        when we're being de-xmlized"""
+        return self
 
     def next(self):
         return self.__iter__().next()
