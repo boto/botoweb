@@ -96,7 +96,7 @@ class ClientObject(object):
         @param id: The ID of the object to get
         @type id: str
         """
-        return env.get_by_id(self, id)
+        return env.get_by_id(cls, id)
 
     def __call__(self):
         """A little trick to make this object act as if it could be callable like a class"""

@@ -16,6 +16,12 @@ log = logging.getLogger("boto_web.handlers.db")
 from lxml import etree
 from boto_web import xmlize
 
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 class DBHandler(RequestHandler):
     """
     DB Handler Base class
@@ -37,6 +43,7 @@ class DBHandler(RequestHandler):
         db_class_name = self.config.get('db_class', None)
         if db_class_name:
             self.db_class = find_class(db_class_name)
+            print "Loaded db class: %s" % db_class_name
         xmlize.register(self.db_class)
 
     def _get(self, request, response, id=None ):
@@ -138,23 +145,12 @@ class DBHandler(RequestHandler):
         query = self.db_class.find()
         sort_by = params.get("sort_by", None)
         if query_str:
-            parts = query_str.split(" intersection ")
-            for part in parts:
-                matches = re.match("^\[(.*)\]$", part)
-                if matches:
-                    match = matches.group(1)
-                    filters = match.split(" OR ")
-                    filter_name = None
-                    filter_cmp = None
-                    values = []
-                    for filter in filters:
-                        m = re.match("^\'(.*)\' (=|>=|<=|<|>|!=|starts-with|ends-with|like) \'(.*)\'$", filter)
-                        if m:
-                            filter_name = m.group(1)
-                            prop = self.db_class.find_property(filter_name)
-                            values.append(self.db_class._manager.decode_value(prop, m.group(3)))
-                            filter_cmp = m.group(2)
-                    query.filter("%s %s" % (filter_name, filter_cmp), values)
+            try:
+                filters = json.loads(query_str)
+            except:
+                raise BadRequest("Bad query string")
+            for filter in filters:
+                query.filter("%s %s" % (filter[0], filter[1]), filter[2])
         else:
             properties = [p.name for p in self.db_class.properties(hidden=False)]
             for filter in set(params.keys()):

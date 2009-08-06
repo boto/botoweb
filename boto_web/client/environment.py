@@ -183,11 +183,10 @@ class Environment(object):
         """
         assert len(id) > 0
         if type(cls) == str:
-            class_name = cls.__name__
-            xmlize.register(cls, class_name)
-        else:
             class_name = cls
             cls = xmlize.get_class(class_name)
+        else:
+            class_name = cls.__name__
         
         url = "%s/%s" % (self.routes[class_name], id)
         resp = self.request("GET", url)

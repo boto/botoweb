@@ -22,41 +22,14 @@
 BAD_CHARS = ['<', '>', '&'] # Illegal characters in XML that must be wrapped in a CDATA
 REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects into
 
+from boto_web.fixed_datetime import datetime
+
 class DefaultObject(object):
     """Default object for when re get something that we don't know about yet"""
     id = None
     __name__ = None
 
-from datetime import datetime, tzinfo
-class LocalTimezone(tzinfo):
-    """Local Timezone info copied directly out of the python stdlib documentation"""
-
-    def utcoffset(self, dt):
-        if self._isdst(dt):
-            return DSTOFFSET
-        else:
-            return STDOFFSET
-
-    def dst(self, dt):
-        if self._isdst(dt):
-            return DSTDIFF
-        else:
-            return ZERO
-
-    def tzname(self, dt):
-        return _time.tzname[self._isdst(dt)]
-
-    def _isdst(self, dt):
-        tt = (dt.year, dt.month, dt.day,
-              dt.hour, dt.minute, dt.second,
-              dt.weekday(), 0, -1)
-        stamp = _time.mktime(tt)
-        tt = _time.localtime(stamp)
-        return tt.tm_isdst > 0
-
-Local = LocalTimezone()
 from lxml import etree
-
 class XMLSerializer(object):
     """XML Serializer object"""
 
@@ -166,7 +139,7 @@ class XMLSerializer(object):
                     pass
                 elif prop.get("type") == "dateTime":
                     # Date Time
-                    value = self.decode_string(prop)
+                    value = self.decode_datetime(prop)
                 elif prop.get("type") == "bool":
                     # Boolean
                     value = (self.decode_string(prop).upper() == "TRUE")
@@ -195,6 +168,11 @@ class XMLSerializer(object):
     def decode_string(self, node):
         """Decode a simple string property"""
         return node.text
+
+    def decode_datetime(self, node):
+        """Decode a simple string property"""
+        date_str = self.decode_string()
+        return datetime.fromisoformat(txt)
 
 
 
