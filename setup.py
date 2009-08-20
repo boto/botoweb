@@ -54,5 +54,6 @@ setup(name = "boto_web",
             "paste",
             "boto",
             "lxml",
+            "pytz",
         ],
       )
