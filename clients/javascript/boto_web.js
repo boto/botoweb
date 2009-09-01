@@ -28,8 +28,8 @@ var boto_web = {
 	//
 	// Get all items at this url
 	// 
-	all: function(url, fnc){
-		return boto_web.find(url, null, fnc);
+	all: function(url, obj_name, fnc){
+		return boto_web.find(url, null, obj_name, fnc);
 	},
 
 	//
@@ -38,7 +38,7 @@ var boto_web = {
 	// @param filters: The Filters to apply (or null for none), this should be of the form {name: value, name2: value2}
 	// @param fnc: The function to call back to
 	//
-	find: function(url, filters, fnc){
+	find: function(url, filters, obj_name, fnc){
 		// Apply the filters
 		url += "?";
 		for (filter in filters){
@@ -47,7 +47,7 @@ var boto_web = {
 
 		return $.get(url, function(xml){
 			var data = [];
-			$(xml).find("object").each(function(){
+			$(xml).find(obj_name).each(function(){
 				var obj = boto_web.parseObject(this);
 				if(obj.length > 0){
 					data.push(obj);
@@ -107,8 +107,8 @@ var boto_web = {
 		obj.length = 0;
 		obj.id = $(data).attr('id');
 
-		$(data).find("property").each(function(){
-			var value = null
+		$(data).children().each(function(){
+			var value = null;
 			if($(this).attr("type") == "Reference"){
 				value = {
 					className: $(this).find("object").attr("class"),
@@ -136,7 +136,7 @@ var boto_web = {
 			} else {
 				value = $(this).text();
 			}
-			obj[$(this).attr('name')] = value;
+			obj[this.tagName] = value;
 			obj.length++;
 		});
 		return obj;
@@ -148,7 +148,7 @@ var boto_web = {
 	//
 	get_by_id: function(url, id, fnc){
 		$.get(url + "/" + id, function(data){
-			$(data).find("object").each(function(){
+			$(data).children().each(function(){
 				var curobj = boto_web.parseObject(this);
 				if(curobj.length > 0){
 					fnc(curobj);
@@ -164,13 +164,11 @@ var boto_web = {
 	// which is then converted into the proper XML document
 	// to be sent to the server
 	//
-	save: function(url, data){
-		var doc = document.implementation.createDocument("","objects",null);
-		var obj = doc.createElement("object");
-		doc.documentElement.appendChild(obj);
+	save: function(url, obj_name, data, method, fnc){
+		var doc = document.implementation.createDocument("", obj_name, null);
+		var obj = doc.documentElement;
 		for(pname in data){
-			var prop = doc.createElement("property");
-			$(prop).attr("name", pname);
+			var prop = doc.createElement(pname);
 			var pval = data[pname];
 			prop.appendChild(boto_web.encode_prop(pval, doc));
 			if(pval.constructor.toString().indexOf("Array") != -1){
@@ -180,12 +178,21 @@ var boto_web = {
 			}
 			obj.appendChild(prop);
 		}
-		$.ajax({
-			type: "PUT",
+		opts = {
 			url: url,
 			processData: false,
 			data: doc
-		});
+		}
+		if(method){
+			opts.type = method;
+		} else {
+			opts.method = "PUT";
+		}
+
+		if(fnc){
+			opts.complete = fnc;
+		}
+		$.ajax(opts);
 	},
 
 	//
@@ -210,6 +217,7 @@ var boto_web = {
 			}
 		} else {
 			ret = doc.createTextNode(prop.toString());
+			$(ret).attr("type", "string");
 		}
 		return ret;
 	},
@@ -255,20 +263,21 @@ var boto_web = {
 		// __init__ object
 		// Get our route info
 		$.get(self.base_url, function(xml){
+			// Setup our name
+			self.name = $(xml).find("Index").attr("name");
 			// Set our routes
-			$(xml).find("route").each(function(){
-				var model =  $(this).find("db_class").text().split('.');
+			$(xml).find("api").each(function(){
 				var route = {
-					href: $(this).attr("href"),
-					obj: model[model.length-1],
+					href: $(this).find("href").text(),
+					obj: $(this).attr("name")
 				};
 				self.routes.push(route);
 				// Init this model object
-				route_obj = new boto_web.ModelMeta(self.base_url + route.href);
+				route_obj = new boto_web.ModelMeta(self.base_url + route.href, route.obj);
 				eval("self.models." + route.obj + " = route_obj");
 			});
 			// Set our user object
-			$(xml).find("object[@class='boto_web.resources.user.User']").each(function(){
+			$(xml).find("user").each(function(){
 				var obj = boto_web.parseObject(this);
 				if(obj.length > 0){
 					self.user = obj;
@@ -282,11 +291,12 @@ var boto_web = {
 	// Base model object
 	// This shouldn't ever be called directly
 	//
-	ModelMeta: function(href){
+	ModelMeta: function(href, name){
 		mm = this;
 		this.href = href;
+		this.name = name;
 		this.find = function(filters, fnc){
-			boto_web.find(this.href, filters, function(data){
+			boto_web.find(this.href, filters, this.name, function(data){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
@@ -320,31 +330,50 @@ var boto_web = {
 			});
 		}
 
-		this.save = function(data){
+		this.save = function(data, fnc){
 			ref = this.href;
+			method = "POST";
 			if("id" in data){
 				ref += ("/" + data['id']);
 				delete(data['id']);
+				method = "PUT";
 			}
-			return boto_web.save(ref, data);
+			return boto_web.save(ref, this.name, data, method, fnc);
+		}
+		
+		//
+		// Delete this object
+		//
+		this.del = function(id, fnc){
+			ref = this.href;
+			return boto_web.del(ref + "/" + id, fnc);
 		}
 
+	},
+	//
+	// Model wrapper
+	//
+	Model: function(href, properties){
+		this.href = href;
+		this.properties = properties;
+		this.id = properties.id;
 	},
 
 	//
-	// Model Base Object
-	// 
-	Model: function(href, props, id){
-		this.href = href;
-		this.props = props;
-		if(id){
-			this.id = id;
-		} else {
-			this.id = props.id;
-		}
-
-		this.put = function(){
-			alert("save this object!");
-		}
-	},
+	// Simple Initialization script
+	// which handles the everyday setup that
+	// most of our apps will have to do
+	// We make available the environment object
+	// in boto_web.env
+	//
+	// href: the location of the API root
+	//
+	init: function(href){
+		$("div#home").hide();
+		boto_web.env = new boto_web.Environment(href, function(env){
+			$("div#home").show();
+			$("div#loading").hide();
+			$("body").trigger("ready");
+		});
+	}
 };
