@@ -59,6 +59,8 @@ class DBHandler(RequestHandler):
 			else:
 				response.write(xmlize.dumps(obj))
 		else:
+			# Add the count to the header
+			response = self._head(request, response)
 			objs = self.search(params=request.GET.mixed(), user=request.user)
 			response.write("<%sList>" % self.db_class.__name__)
 			obj_count = 0
@@ -70,6 +72,15 @@ class DBHandler(RequestHandler):
 					break
 			response.write("</%sList>" % self.db_class.__name__)
 		return response
+
+	def _head(self, request, response, id=None):
+		"""Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query"""
+		objs = self.search(params=request.GET.mixed(), user=request.user)
+		response.headers['Count'] = objs.count()
+		return response
+
 
 	def _post(self, request, response, id=None):
 		"""Create a new resource"""
@@ -222,13 +233,13 @@ class DBHandler(RequestHandler):
 		@param user: The user making these changes
 		@type user: User
 		"""
-		boto.log.info("===========================")
+		boto.log.debug("===========================")
 		boto.log.info("Update %s" % obj.__class__.__name__)
 		for prop_name in props:
 			prop_val = props[prop_name]
-			boto.log.info("%s = %s" % (prop_name, prop_val))
+			boto.log.debug("%s = %s" % (prop_name, prop_val))
 			setattr(obj, prop_name, prop_val)
-		boto.log.info("===========================")
+		boto.log.debug("===========================")
 		obj.put()
 		return obj
 
