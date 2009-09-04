@@ -28,7 +28,7 @@ class RequestHandler(object):
     The request handler is created only 
     once so we can handle caching.
     """
-    allowed_methods = ['get', 'post', 'head', 'options', 'put', 'delete']
+    allowed_methods = ['get', 'post', 'head','put', 'delete', 'options']
 
     def __init__(self, env, config={}):
         """Set up the environment and local config"""
@@ -36,9 +36,7 @@ class RequestHandler(object):
         self.config = config
 
     def __call__(self, request, response, obj_id):
-        """
-        Execute this handler based on the request passed in
-        """
+        """Execute this handler based on the request passed in"""
         method = request.method.lower()
         if method in self.allowed_methods:
             method = getattr(self, "_%s" % method)

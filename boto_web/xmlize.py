@@ -23,6 +23,7 @@ BAD_CHARS = ['<', '>', '&'] # Illegal characters in XML that must be wrapped in 
 REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects into
 
 from boto_web.fixed_datetime import datetime
+from datetime import datetime as datetime_type
 
 class DefaultObject(object):
 	"""Default object for when re get something that we don't know about yet"""
@@ -46,9 +47,10 @@ class XMLSerializer(object):
 		if prop_value == None:
 			return None
 		prop_type = type(prop_value)
+		print "Encoding: %s" % prop_type
 		if prop_type in self.type_map:
 			return self.type_map[prop_type](self, prop_name, prop_value)
-		if isinstance(prop_value, object) and hasattr(prop_value, "id"):
+		if isinstance(prop_value, object):
 			return self.encode_object(prop_name, prop_value)
 		return self.encode_default(prop_name, prop_value, prop_type.__name__)
 
@@ -59,6 +61,9 @@ class XMLSerializer(object):
 
 	def encode_str(self, prop_name, prop_value):
 		return self.encode_default(prop_name, str(prop_value), "string")
+
+	def encode_int(self, prop_name, prop_value):
+		return self.encode_default(prop_name, str(prop_value), "integer")
 
 	def encode_list(self, prop_name, prop_value):
 		"""Encode a list by encoding each property individually"""
@@ -79,7 +84,15 @@ class XMLSerializer(object):
 
 	def encode_object(self, prop_name, prop_value):
 		"""Encode a generic object (must have an "id" attribute)"""
-		self.encode_default(prop_name, prop_value.id, prop_value.__class__.__name__)
+		from boto.sdb.db.query import Query
+		if isinstance(prop_value, Query):
+			return None
+		elif hasattr(prop_value, "id"):
+			prop_value = str(prop_value.id)
+		else:
+			prop_value = str(prop_value)
+
+		self.encode_default(prop_name, prop_value, prop_value.__class__.__name__)
 
 	def encode_cdata(self, string):
 		"""Return what might be a CDATA encoded string"""
@@ -92,10 +105,12 @@ class XMLSerializer(object):
 
 	type_map = {
 		str: encode_str,
+		int: encode_int,
 		unicode: encode_str,
 		list: encode_list,
 		dict: encode_dict,
 		datetime: encode_datetime,
+		datetime_type: encode_datetime,
 		object: encode_object,
 	}
 
