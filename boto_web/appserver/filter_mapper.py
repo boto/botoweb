@@ -39,104 +39,104 @@ from StringIO import StringIO
 
 from boto_web.appserver.wsgi_layer import WSGILayer
 class FilterMapper(WSGILayer):
-    """
-    Filter URL Mapper
-    """
+	"""
+	Filter URL Mapper
+	"""
 
 
-    def update(self, env):
-        """
-        On update, we have to re-build our entire filter list
-        """
-        self.env = env
-        self.filters = {}
-        self.parser = etree.XMLParser()
-        self.parser.resolvers.add(S3FilterResolver())
-        self.parser.resolvers.add(PythonFilterResolver())
-        self.external_functions = []
-        if self.env.config.has_key("xsltfunctions"):
-            for func_path in self.env.config['xsltfunctions']:
-                __import__(func_path)
-                funcset = find_class(func_path)
-                ns = etree.FunctionNamespace(funcset.uri)
-                for fname in funcset.functions:
-                    ns[fname] = funcset.functions[fname]
+	def update(self, env):
+		"""
+		On update, we have to re-build our entire filter list
+		"""
+		self.env = env
+		self.filters = {}
+		self.parser = etree.XMLParser()
+		self.parser.resolvers.add(S3FilterResolver())
+		self.parser.resolvers.add(PythonFilterResolver())
+		self.external_functions = []
+		if self.env.config.has_key("xsltfunctions"):
+			for func_path in self.env.config['xsltfunctions']:
+				__import__(func_path)
+				funcset = find_class(func_path)
+				ns = etree.FunctionNamespace(funcset.uri)
+				for fname in funcset.functions:
+					ns[fname] = funcset.functions[fname]
 
-    def handle(self, req, response):
-        """
-        Map to the correct filters
-        """
-        variables = {}
-        user = req.user
-        headers = {}
-        for key in req.headers:
-            if not key.lower() in ["content-length", "authorization"]:
-                headers[key] = req.headers[key]
+	def handle(self, req, response):
+		"""
+		Map to the correct filters
+		"""
+		variables = {}
+		user = req.user
+		headers = {}
+		for key in req.headers:
+			if not key.lower() in ["content-length", "authorization"]:
+				headers[key] = req.headers[key]
 
 
-        variables['host_url'] = etree.XSLT.strparam(req.host_url)
-        if user:
-            variables['user_id'] = etree.XSLT.strparam(str(user.id))
-            variables['user_name'] = etree.XSLT.strparam(str(user.username))
+		variables['host_url'] = etree.XSLT.strparam(req.host_url)
+		if user:
+			variables['user_id'] = etree.XSLT.strparam(str(user.id))
+			variables['user_name'] = etree.XSLT.strparam(str(user.username))
 
-        filter = self.get_filter(req.path,req.method, user)
+		filter = self.get_filter(req.path,req.method, user)
 
-        stylesheet = None
-        if filter[0] and req.body:
-            req.body = str(filter[0](etree.parse(StringIO(req.body), self.parser), **variables))
+		stylesheet = None
+		if filter[0] and req.body:
+			req.body = str(filter[0](etree.parse(StringIO(req.body), self.parser), **variables))
 
-        if self.app:
-            response = self.app.handle(req, response)
+		if self.app:
+			response = self.app.handle(req, response)
 
-        if filter[1]:
-            response.body = str(filter[1](etree.parse(StringIO(response.body), self.parser), **variables))
+		if filter[1]:
+			response.body = str(filter[1](etree.parse(StringIO(response.body), self.parser), **variables))
 
-        return response
+		return response
 
-    def get_filter(self, path, method, user):
-        """
-        Get the filter for this URL and
-        User
+	def get_filter(self, path, method, user):
+		"""
+		Get the filter for this URL and
+		User
 
-        @return: (input_filter, output_filter), either filter may also be None
-        @rtype: 2-tuple
-        """
-        log.info("Get Stylesheet: %s %s" % (path, user))
-        styledoc = None
-        match = None
-        for rule in self.env.config.get("boto_web", "filters", []):
-            if rule.has_key("url"):
-                if not re.match(rule['url'], path):
-                    continue
-            if rule.has_key("method"):
-                if rule['method'] != method:
-                    continue
-            if rule.has_key("user"):
-                if not user or rule['user'] != user.username:
-                    continue
-            if rule.has_key("group"):
-                if not user or not rule['group'] in user.groups:
-                    continue
-            match = rule
-            break
+		@return: (input_filter, output_filter), either filter may also be None
+		@rtype: 2-tuple
+		"""
+		log.info("Get Stylesheet: %s %s" % (path, user))
+		styledoc = None
+		match = None
+		for rule in self.env.config.get("boto_web", "filters", []):
+			if rule.has_key("url"):
+				if not re.match(rule['url'], path):
+					continue
+			if rule.has_key("method"):
+				if rule['method'] != method:
+					continue
+			if rule.has_key("user"):
+				if not user or rule['user'] != user.username:
+					continue
+			if rule.has_key("group"):
+				if not user or not rule['group'] in user.groups:
+					continue
+			match = rule
+			break
 
-        input_filter = None
-        output_filter = None
-        if match and rule.has_key('filters'):
-            if rule['filters'].has_key("input"):
-                input_filter = self._build_proc(rule['filters']['input'], user)
-            if rule['filters'].has_key("output"):
-                output_filter = self._build_proc(rule['filters']['output'], user)
+		input_filter = None
+		output_filter = None
+		if match and rule.has_key('filters'):
+			if rule['filters'].has_key("input"):
+				input_filter = self._build_proc(rule['filters']['input'], user)
+			if rule['filters'].has_key("output"):
+				output_filter = self._build_proc(rule['filters']['output'], user)
 
-        return (input_filter, output_filter)
+		return (input_filter, output_filter)
 
-    def _build_proc(self, uri, user):
-        proc = None
-        if uri:
-            extensions = {}
-            if user:
-                extensions = {
-                    ("python://boto_web/xslt_functions", "hasGroup"):  user.has_auth_group_ctx
-                }
-            proc = etree.XSLT(etree.parse(uri, self.parser), extensions=extensions)
-        return proc
+	def _build_proc(self, uri, user):
+		proc = None
+		if uri:
+			extensions = {}
+			if user:
+				extensions = {
+					("python://boto_web/xslt_functions", "hasGroup"):  user.has_auth_group_ctx
+				}
+			proc = etree.XSLT(etree.parse(uri, self.parser), extensions=extensions)
+		return proc

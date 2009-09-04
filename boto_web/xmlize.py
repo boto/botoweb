@@ -59,7 +59,6 @@ class XMLSerializer(object):
 		if prop_value == None:
 			return None
 		prop_type = type(prop_value)
-		print "Encoding: %s" % prop_type
 		if prop_type in self.type_map:
 			return self.type_map[prop_type](self, prop_name, prop_value)
 		if isinstance(prop_value, object):

@@ -63,6 +63,8 @@ class IndexHandler(RequestHandler):
 				if route.get("description"):
 					etree.SubElement(api_node, "description").text = route.get("description")
 				handler = find_class(route.get("handler"))
+				if not handler:
+					raise Exception("Handler not found: %s" % route.get('handler'))
 				methods_node = etree.SubElement(api_node, "methods")
 				for method_name in handler.allowed_methods:
 					method = getattr(handler, "_%s" % method_name)

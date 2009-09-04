@@ -25,39 +25,37 @@ import re
 import boto
 
 class S3FilterResolver (etree.Resolver):
-    """
-    Resolves the follwing URIs
-    s3://bucket_name/key_name
-    This resolver also caches files locally once it has been initialized
-    """
-    prefix = "s3"
+	"""Resolves the follwing URIs
+	s3://bucket_name/key_name
+	This resolver also caches files locally once it has been initialized
+	"""
+	prefix = "s3"
 
-    def __init__(self):
-        self.files = {}
-        etree.Resolver.__init__(self)
+	def __init__(self):
+		self.files = {}
+		etree.Resolver.__init__(self)
 
-    def resolve(self, url, pubid, context):
-        if not self.files.has_key(url):
-            match = re.match("^s3:\/\/([^\/]*)\/(.*)$", url)
-            if match:
-                s3 = boto.connect_s3()
-                b = s3.get_bucket(match.group(1))
-                k = b.get_key(match.group(2))
-                if k:
-                    self.files[url] = k.read()
-        if self.files.has_key(url):
-            return self.resolve_string(self.file[url], context)
+	def resolve(self, url, pubid, context):
+		if not self.files.has_key(url):
+			match = re.match("^s3:\/\/([^\/]*)\/(.*)$", url)
+			if match:
+				s3 = boto.connect_s3()
+				b = s3.get_bucket(match.group(1))
+				k = b.get_key(match.group(2))
+				if k:
+					self.files[url] = k.read()
+		if self.files.has_key(url):
+			return self.resolve_string(self.file[url], context)
 
 class PythonFilterResolver(etree.Resolver):
-    """
-    Resolves the follwing URIs
-    python://module.name/file.name
-    """
-    prefix = "python"
+	"""Resolves the follwing URIs
+	python://module.name/file.name
+	"""
+	prefix = "python"
 
-    def resolve(self, url, pubid, context):
-        match = re.match("^python:\/\/([^\/]*)\/(.*)$", url)
-        if match:
-            module = match.group(1)
-            name = match.group(2)
-            return self.resolve_string(resource_string(module, name), context)
+	def resolve(self, url, pubid, context):
+		match = re.match("^python:\/\/([^\/]*)\/(.*)$", url)
+		if match:
+			module = match.group(1)
+			name = match.group(2)
+			return self.resolve_string(resource_string(module, name), context)
