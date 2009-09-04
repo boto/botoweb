@@ -25,6 +25,18 @@ REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects i
 from boto_web.fixed_datetime import datetime
 from datetime import datetime as datetime_type
 
+TYPE_NAMES = {
+	str: "string",
+	unicode: "string",
+	int: "integer",
+	list: "list",
+	dict: "map",
+	datetime: "dateTime",
+	datetime_type: "dateTime",
+	object: "object",
+
+}
+
 class DefaultObject(object):
 	"""Default object for when re get something that we don't know about yet"""
 	id = None

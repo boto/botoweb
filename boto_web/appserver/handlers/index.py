@@ -26,6 +26,9 @@ import copy
 import logging
 log = logging.getLogger("boto_web.handlers.db")
 
+
+from boto_web.xmlize import TYPE_NAMES
+
 class IndexHandler(RequestHandler):
 	"""
 	Simple Index Handler which helps to show what
@@ -44,6 +47,8 @@ class IndexHandler(RequestHandler):
 		if request.user:
 			user_node = etree.SubElement(doc, "User", id=request.user.id)
 			etree.SubElement(user_node, "href").text = str("users/%s" % request.user.id)
+			etree.SubElement(user_node, "name").text = request.user.name
+			etree.SubElement(user_node, "username").text = request.user.username
 
 		for route in self.env.config.get("boto_web", "handlers"):
 			if route.get("name"):
@@ -66,7 +71,13 @@ class IndexHandler(RequestHandler):
 							prop_node = etree.SubElement(props_node, "property")
 							prop = model_class.find_property(prop_name)
 							prop_node.set("name", prop_name)
-							prop_node.set("type", prop.type_name.lower())
-							prop_node.text = prop.verbose_name
+							prop_node.set("type", TYPE_NAMES.get(prop.data_type, "object"))
+							if hasattr(prop, "item_type"):
+								prop_node.set("item_type", TYPE_NAMES.get(prop.item_type, "object"))
+							etree.SubElement(prop_node, "description").text = prop.verbose_name
+							if prop.choices:
+								choices_node = etree.SubElement(prop_node, "choices")
+								for choice in prop.choices:
+									etree.SubElement(choices_node, "choice", value=choice)
 		response.write(etree.tostring(doc, encoding="utf-8", pretty_print=True))
 		return response
