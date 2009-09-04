@@ -49,6 +49,10 @@ class IndexHandler(RequestHandler):
 			etree.SubElement(user_node, "href").text = str("users/%s" % request.user.id)
 			etree.SubElement(user_node, "name").text = request.user.name
 			etree.SubElement(user_node, "username").text = request.user.username
+			etree.SubElement(user_node, "email").text = request.user.email
+			auth_node = etree.SubElement(user_node, "groups")
+			for auth_group in request.user.auth_groups:
+				etree.SubElement(auth_node, "group", name=auth_group)
 
 		for route in self.env.config.get("boto_web", "handlers"):
 			if route.get("name"):
@@ -72,9 +76,16 @@ class IndexHandler(RequestHandler):
 							prop = model_class.find_property(prop_name)
 							prop_node.set("name", prop_name)
 							prop_node.set("type", TYPE_NAMES.get(prop.data_type, "object"))
+							if prop.data_type in [str, unicode]:
+								prop_node.set("max_length", "1024")
+							if prop.data_type == int:
+								prop_node.set("min", "-2147483648")
+								prop_node.set("max", "2147483647")
 							if hasattr(prop, "item_type"):
 								prop_node.set("item_type", TYPE_NAMES.get(prop.item_type, "object"))
 							etree.SubElement(prop_node, "description").text = prop.verbose_name
+							if hasattr(prop, "default"):
+								default_node = etree.SubElement(prop_node, "default")
 							if prop.choices:
 								choices_node = etree.SubElement(prop_node, "choices")
 								for choice in prop.choices:
