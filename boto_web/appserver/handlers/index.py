@@ -85,7 +85,8 @@ class IndexHandler(RequestHandler):
 								prop_node.set("max", "2147483647")
 							if hasattr(prop, "item_type"):
 								prop_node.set("item_type", TYPE_NAMES.get(prop.item_type, "object"))
-							etree.SubElement(prop_node, "description").text = prop.verbose_name
+							if hasattr(prop, "verbose_name") and prop.verbose_name != None and isinstance(prop.verbose_name, str):
+								etree.SubElement(prop_node, "description").text = str(prop.verbose_name)
 							if hasattr(prop, "default"):
 								default_node = etree.SubElement(prop_node, "default")
 							if prop.choices:
