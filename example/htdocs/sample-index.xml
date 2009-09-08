@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Index name="boto_web application">
+  <User id="e2791a1c-ab6e-4649-92dd-7de53c0fed2f">
+    <href>users/e2791a1c-ab6e-4649-92dd-7de53c0fed2f</href>
+    <name/>
+    <username>cmoyer</username>
+    <email/>
+    <groups>
+      <group name="admin"/>
+
+    </groups>
+  </User>
+  <api name="Provider">
+    <href>providers</href>
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+    <properties>
+
+      <property name="status" type="string" max_length="1024">
+        <description>Provider Status</description>
+        <default/>
+        <choices>
+          <choice value="standby"/>
+          <choice value="active"/>
+          <choice value="disabled"/>
+        </choices>
+
+      </property>
+      <property name="name" type="string" max_length="1024">
+        <description>Name</description>
+        <default/>
+      </property>
+      <property name="created" type="dateTime">
+        <description>Created Date</description>
+        <default/>
+
+      </property>
+      <property name="modified" type="dateTime">
+        <description>Modified Date</description>
+        <default/>
+      </property>
+      <property name="newstex_id" type="integer" min="-2147483648" max="2147483647">
+        <description>Newstex ID</description>
+        <default/>
+
+      </property>
+    </properties>
+  </api>
+  <api name="Publisher">
+    <href>publishers</href>
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+    <properties>
+
+      <property name="status" type="string" max_length="1024">
+        <description>Publisher Status</description>
+        <default>active</default>
+        <choices>
+          <choice value="standby"/>
+          <choice value="active"/>
+          <choice value="disabled"/>
+        </choices>
+
+      </property>
+      <property name="code" type="string" max_length="1024">
+        <description>Publisher Code</description>
+        <default>test</default>
+      </property>
+      <property name="description" type="string" max_length="1024">
+        <description>Publisher Description</description>
+        <default/>
+
+      </property>
+      <property name="icon_url" type="string" max_length="1024">
+        <description>Icon URL</description>
+        <default/>
+      </property>
+      <property name="link" type="string" max_length="1024">
+        <description>Publisher Link</description>
+        <default/>
+
+      </property>
+      <property name="provider" type="object">
+        <description>Provider</description>
+        <default/>
+      </property>
+      <property name="name" type="string" max_length="1024">
+        <description>Name</description>
+        <default/>
+
+      </property>
+      <property name="created" type="dateTime">
+        <description>Created Date</description>
+        <default/>
+      </property>
+      <property name="modified" type="dateTime">
+        <description>Modified Date</description>
+        <default/>
+
+      </property>
+      <property name="newstex_id" type="integer" min="-2147483648" max="2147483647">
+        <description>Newstex ID</description>
+        <default/>
+      </property>
+    </properties>
+  </api>
+  <api name="Publication">
+
+    <href>publications</href>
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+
+      <delete>
+		Delete a given object
+		</delete>
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+    <properties>
+      <property name="status" type="string" max_length="1024">
+        <description>Publisher Status</description>
+
+        <default/>
+        <choices>
+          <choice value="standby"/>
+          <choice value="active"/>
+          <choice value="disabled"/>
+        </choices>
+      </property>
+      <property name="publisher" type="object">
+        <description>Publisher</description>
+
+        <default/>
+      </property>
+      <property name="code" type="string" max_length="1024">
+        <description>Publication Code</description>
+        <default/>
+      </property>
+      <property name="name" type="string" max_length="1024">
+        <description>Name</description>
+
+        <default/>
+      </property>
+      <property name="icon_url" type="string" max_length="1024">
+        <description>Icon URL</description>
+        <default/>
+      </property>
+      <property name="link" type="string" max_length="1024">
+        <description>Publisher Link</description>
+
+        <default/>
+      </property>
+      <property name="created" type="dateTime">
+        <description>Created Date</description>
+        <default/>
+      </property>
+      <property name="modified" type="dateTime">
+        <description>Modified Date</description>
+
+        <default/>
+      </property>
+      <property name="newstex_id" type="integer" min="-2147483648" max="2147483647">
+        <description>Newstex ID</description>
+        <default/>
+      </property>
+    </properties>
+  </api>
+
+  <api name="Story">
+    <href>stories</href>
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+
+      <delete>
+		Delete a given object
+		</delete>
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+  </api>
+  <api name="Topic">
+    <href>topics</href>
+
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+    <properties>
+      <property name="publication" type="object">
+        <description>Publication</description>
+        <default/>
+      </property>
+      <property name="name" type="string" max_length="1024">
+
+        <description>Name</description>
+        <default/>
+      </property>
+    </properties>
+  </api>
+  <api name="Tag">
+    <href>tags</href>
+    <methods>
+
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+    <properties>
+      <property name="name" type="string" max_length="1024">
+        <description>Name</description>
+        <default/>
+      </property>
+      <property name="created" type="dateTime">
+
+        <description>Created Date</description>
+        <default/>
+      </property>
+      <property name="modified" type="dateTime">
+        <description>Modified Date</description>
+        <default/>
+      </property>
+      <property name="newstex_id" type="integer" min="-2147483648" max="2147483647">
+
+        <description>Newstex ID</description>
+        <default/>
+      </property>
+    </properties>
+  </api>
+  <api name="Ticker">
+    <href>tickers</href>
+    <methods>
+
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+    <properties>
+      <property name="name" type="string" max_length="1024">
+        <description>Name</description>
+        <default/>
+      </property>
+    </properties>
+
+  </api>
+  <api name="Category">
+    <href>categories</href>
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+    <properties>
+      <property name="name" type="string" max_length="1024">
+
+        <description>Name</description>
+        <default/>
+      </property>
+    </properties>
+  </api>
+  <api name="Product">
+    <href>products</href>
+    <methods>
+
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+  </api>
+  <api name="Delivery">
+    <href>deliveries</href>
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+
+    </methods>
+    <properties>
+      <property name="name" type="string" max_length="1024">
+        <description>Name</description>
+        <default/>
+      </property>
+    </properties>
+  </api>
+
+  <api name="Recipient">
+    <href>recipients</href>
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+
+      <delete>
+		Delete a given object
+		</delete>
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+  </api>
+  <api name="Distributor">
+    <href>distributors</href>
+
+    <methods>
+      <get>Get an object, or search for a list of objects</get>
+      <post>Create a new resource</post>
+      <head>Get the headers for this response, realisticaly this
+		just means they want to know the count of how many results would be
+		returned if they'd run this query</head>
+      <put>Update an existing resource</put>
+      <delete>
+		Delete a given object
+		</delete>
+
+      <options>OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header</options>
+    </methods>
+    <properties>
+      <property name="name" type="string" max_length="1024">
+        <description>Name</description>
+        <default/>
+      </property>
+      <property name="icon_url" type="string" max_length="1024">
+
+        <description>Icon URL</description>
+        <default/>
+      </property>
+      <property name="allowed_referers" type="list" item_type="string">
+        <description>Allowed Referers</description>
+        <default/>
+      </property>
+      <property name="internal_hostnames" type="list" item_type="string">
+
+        <description>Internal Hostnames</description>
+        <default/>
+      </property>
+    </properties>
+  </api>
+</Index>
