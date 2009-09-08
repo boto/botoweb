@@ -1,11 +1,14 @@
 - url: /blog
+  name: Blog
   handler: boto_web.appserver.handlers.db.DBHandler
   db_class: example.resources.post.Post
 
 - url: /rules
+  name: Rule
   handler: boto_web.appserver.handlers.db.DBHandler
   db_class: boto_web.resources.filter_rule.FilterRule
 
 - url: /user
+  name: Users
   handler: boto_web.appserver.handlers.user.UserHandler
   db_class: boto_web.resources.user.User
