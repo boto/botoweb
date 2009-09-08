@@ -44,9 +44,16 @@ boto_web.ui = {
 		 */
 		this.add_field = function(data) {
 			data = boto_web.ui._get_html_properties(data);
+			var field;
 
 			//TODO Decide which field type is appropriate, for now just text fields
-			var field = new boto_web.ui.text(data);
+			switch (data._type) {
+				case 'dateTime':
+					field = new boto_web.ui.date(data);
+					break;
+				default:
+					field = new boto_web.ui.text(data);
+			}
 
 			this.node.append(field.node);
 		}
@@ -68,8 +75,22 @@ boto_web.ui = {
 		var html_props = {
 			name: xml_prop.attr('name'),
 			maxlength: xml_prop.attr('max_length'),
-			label: $('description', xml_prop).text()
+			_label: $('description', xml_prop).text(),
+			_default: $('default', xml_prop).text(),
+			_type: xml_prop.attr('type')
 		};
+
+		if ($('choices', xml_prop).length) {
+			html_props._tagName = 'select';
+			html_props.choices = new Array();
+
+			$('choices choice', xml_prop).each(function() {
+				html_props.choices.push({
+					value: $(this).attr('value'),
+					text: $(this).text()
+				});
+			})
+		}
 
 		return html_props;
 	},
@@ -82,19 +103,34 @@ boto_web.ui = {
 	_field: function(properties) {
 		var self = this;
 		this.node = $('<div/>');
-		this.label = $('<label/>').text(properties.label || '');
-		this.field = $('<' + (properties.tagName || 'input') + '/>');
+		this.label = $('<label/>').text(properties._label || '');
+		this.field = $('<' + (properties._tagName || 'input') + '/>');
+
+		properties.id = properties.id || 'field_' + properties.name;
 
 		for (p in properties) {
 			var v = properties[p];
 
+			if (p.indexOf('_') == 0)
+				continue;
+
 			//TODO More special cases needed (i.e. multiple choice items)
 			switch (p) {
-				case 'tagName':
-					return;
+				case 'choices':
+					for (i in v) {
+						v[i].text = v[i].text || v[i].value;
+						var opt = $('<option/>').attr(v[i]);
+
+						this.field.append(opt)
+					}
+					break;
 				default:
 					this.field.attr(p, v);
 			}
+		}
+
+		if (properties._default) {
+			this.field.val(properties._default);
 		}
 
 		this.node.append(this.label, this.field);
@@ -113,5 +149,18 @@ boto_web.ui = {
 	 */
 	text: function(properties) {
 		boto_web.ui._field.call(this, properties);
+	},
+
+	/**
+	 * @param {Object} properties HTML node properties.
+	 */
+	date: function(properties) {
+		boto_web.ui._field.call(this, properties);
+
+		this.datepicker = $(this.field).datepicker({
+			showOn: 'both',
+			showAnim: 'slideDown'
+		});
+
 	}
 };
