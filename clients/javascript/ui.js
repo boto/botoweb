@@ -19,75 +19,10 @@ boto_web.ui = {
 	init: function(data) {
 		data = $(data);
 
-		boto_web.env.apis = $('api', data).map(function(){ return new boto_web.ui.api(this) })
 
-		alert($.dump(boto_web.env.apis));
 	},
 
-	/**
-	 * Builds the interface for a specific api.
-	 *
-	 * @param {Element} data The XML element defining this api.
-	 * @constructor
-	 */
-	api: function(data) {
-		var self = this;
-		data = $(data);
 
-		self.name = data.attr('name');
-		self.href = $('href', data).text();
-		self.methods = {};
-
-		// Parse method names and descriptions
-		$('methods *', data).each(function(){ self.methods[this.nodeName] = $(this).text() });
-
-		self.properties = $('properties property', data).map(function(){
-			var data = $(this);
-			var property = {};
-
-			// Pull attributes from the property node
-			var map = {
-				name: 'name',
-				maxlength: 'max_length',
-				min_value: 'min',
-				max_value: 'max'
-			};
-
-			for (var i in map) {
-				if (data.attr(map[i]) == undefined) continue;
-
-				property[i] = data.attr(map[i]);
-			}
-
-			// Pull text content of children of the property node
-			map = {
-				label: 'description',
-				default_value: 'default'
-			};
-
-			for (var i in map) {
-				var node = $(map[i], data);
-				if (!node.length) continue;
-				property[i] = node.text();
-			}
-
-			// Get key value maps for multiple choice properties
-			map = {
-				choices: 'choice'
-			};
-
-			for (var i in map) {
-				var nodes = $(map[i], data);
-				if (!nodes.length) continue;
-				property[i] = new Array();
-				nodes.each(function(){
-					property[i].push({value: $(this).attr('value'), text: $(this).text()});
-				})
-			}
-
-			return property;
-		});
-	},
 
 	///**
 	 //* Generic interface for all field types.
