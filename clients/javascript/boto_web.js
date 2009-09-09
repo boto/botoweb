@@ -14,7 +14,7 @@
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
 // ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-// SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+// SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 // WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
@@ -27,7 +27,7 @@ var boto_web = {
 
 	//
 	// Get all items at this url
-	// 
+	//
 	all: function(url, obj_name, fnc){
 		return boto_web.find(url, null, obj_name, fnc);
 	},
@@ -249,7 +249,7 @@ var boto_web = {
 	// @param fnc: Optional callback function to call after we finish loading
 	//
 	Environment: function(base_url, fnc){
-		// This is to support some weird things that 
+		// This is to support some weird things that
 		// jQuery does while doing ajax processing, if
 		// we ever need to refer to the Environment
 		// object, we use "self"
@@ -265,11 +265,13 @@ var boto_web = {
 		$.get(self.base_url, function(xml){
 			// Setup our name
 			self.name = $(xml).find("Index").attr("name");
+			// Set our APIs
+			self.apis = $(xml).find('api').map(function(){ return new boto_web.API(this) });
 			// Set our routes
-			$(xml).find("api").each(function(){
+			$.each(self.apis, function(){
 				var route = {
-					href: $(this).find("href").text(),
-					obj: $(this).attr("name")
+					href: this.href,
+					obj: this.name
 				};
 				self.routes.push(route);
 				// Init this model object
@@ -340,7 +342,7 @@ var boto_web = {
 			}
 			return boto_web.save(ref, this.name, data, method, fnc);
 		}
-		
+
 		//
 		// Delete this object
 		//
@@ -357,6 +359,67 @@ var boto_web = {
 		this.href = href;
 		this.properties = properties;
 		this.id = properties.id;
+	},
+
+	//
+	// Parses XML for a specific API.
+	//
+	API: function(xml) {
+		var self = this;
+		xml = $(xml);
+
+		self.name = xml.attr('name');
+		self.href = $('href', xml).text();
+		self.methods = {};
+
+		// Parse method names and descriptions
+		$('methods *', xml).each(function(){ self.methods[this.nodeName] = $(this).text() });
+
+		self.properties = $('properties property', xml).map(function(){
+			var xml = $(this);
+			var property = {};
+
+			// Pull attributes from the property node
+			var map = {
+				name: 'name',
+				maxlength: 'max_length',
+				min_value: 'min',
+				max_value: 'max'
+			};
+
+			for (var i in map) {
+				if (xml.attr(map[i]) == undefined) continue;
+				property[i] = xml.attr(map[i]);
+			}
+
+			// Pull text content of children of the property node
+			map = {
+				label: 'description',
+				default_value: 'default'
+			};
+
+			for (var i in map) {
+				var node = $(map[i], xml);
+				if (!node.length) continue;
+				property[i] = node.text();
+			}
+
+			// Get key value maps for multiple choice properties
+			map = {
+				choices: 'choice'
+			};
+
+			for (var i in map) {
+				var nodes = $(map[i], xml);
+				if (!nodes.length) continue;
+				property[i] = [];
+				nodes.each(function(){
+					property[i].push({value: $(this).attr('value'), text: $(this).text()});
+				});
+			}
+
+			return property;
+		});
 	},
 
 	//
