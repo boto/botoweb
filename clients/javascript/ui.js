@@ -36,6 +36,10 @@ boto_web.ui = {
 		this.name = data.attr('name');
 		this.node = $('body').append($('<div/>'));
 		this.node.append($('<h2/>').text(this.name));
+		this.fields = new Array();
+
+		this.node.append($('<button/>').text('Edit').click(function() { self.switch_method('put') }));
+		this.node.append($('<button/>').text('View').click(function() { self.switch_method('get') }));
 
 		/**
 		 * Adds a field based on the XML definition.
@@ -55,7 +59,19 @@ boto_web.ui = {
 					field = new boto_web.ui.text(data);
 			}
 
+			this.fields.push(field);
 			this.node.append(field.node);
+		}
+
+		this.switch_method = function(method) {
+			switch(method) {
+				case 'post':
+				case 'put':
+					$.each(this.fields, function() { this.read_only(false) })
+					break;
+				default:
+					$.each(this.fields, function() { this.read_only(true) })
+			}
 		}
 
 		$('properties property', data).each(function(){
@@ -105,6 +121,7 @@ boto_web.ui = {
 		this.node = $('<div/>');
 		this.label = $('<label/>').text(properties._label || '');
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
+		this.text = $('<span/>');
 
 		properties.id = properties.id || 'field_' + properties.name;
 
@@ -133,7 +150,25 @@ boto_web.ui = {
 			this.field.val(properties._default);
 		}
 
-		this.node.append(this.label, this.field);
+		this.text.text(this.field.val());
+
+		/**
+		 * Switches the
+		 */
+		this.read_only = function(on) {
+			if (on || on == undefined) {
+				this.field_container.hide();
+				this.text.show();
+			}
+			else {
+				this.text.hide();
+				this.field_container.show();
+			}
+		}
+
+		this.field_container = $('<span/>').append(this.field);
+		this.node.append(this.label, this.field_container, this.text);
+		this.read_only();
 	},
 
 	/**
