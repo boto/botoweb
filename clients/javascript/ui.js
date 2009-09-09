@@ -19,183 +19,161 @@ boto_web.ui = {
 	init: function(data) {
 		data = $(data);
 
-		//TODO Access a specific api
-		//TODO Convert everything to JSON up front instead of passing along XML?
-		var api = new boto_web.ui.api($('api[name=Publisher]', data));
+		boto_web.env.apis = $('api', data).map(function(){ return new boto_web.ui.api(this) })
+
+		alert($.dump(boto_web.env.apis));
 	},
 
 	/**
 	 * Builds the interface for a specific api.
 	 *
 	 * @param {Element} data The XML element defining this api.
+	 * @constructor
 	 */
 	api: function(data) {
 		var self = this;
 		data = $(data);
 
-		this.name = data.attr('name');
-		this.node = $('body').append($('<div/>'));
-		this.node.append($('<h2/>').text(this.name));
-		this.fields = new Array();
+		self.name = data.attr('name');
+		self.href = $('href', data).text();
+		self.methods = {};
 
-		this.node.append($('<button/>').text('Edit').click(function() { self.switch_method('put') }));
-		this.node.append($('<button/>').text('View').click(function() { self.switch_method('get') }));
+		// Parse method names and descriptions
+		$('methods *', data).each(function(){ self.methods[this.nodeName] = $(this).text() });
 
-		/**
-		 * Adds a field based on the XML definition.
-		 *
-		 * @param {Element} data The XML element defining this field.
-		 */
-		this.add_field = function(data) {
-			data = boto_web.ui._get_html_properties(data);
-			var field;
+		self.properties = $('properties property', data).map(function(){
+			var data = $(this);
+			var property = {};
 
-			//TODO Decide which field type is appropriate, for now just text fields
-			switch (data._type) {
-				case 'dateTime':
-					field = new boto_web.ui.date(data);
-					break;
-				default:
-					field = new boto_web.ui.text(data);
+			// Pull attributes from the property node
+			var map = {
+				name: 'name',
+				maxlength: 'max_length',
+				min_value: 'min',
+				max_value: 'max'
+			};
+
+			for (var i in map) {
+				if (data.attr(map[i]) == undefined) continue;
+
+				property[i] = data.attr(map[i]);
 			}
 
-			this.fields.push(field);
-			this.node.append(field.node);
-		}
+			// Pull text content of children of the property node
+			map = {
+				label: 'description',
+				default_value: 'default'
+			};
 
-		this.switch_method = function(method) {
-			switch(method) {
-				case 'post':
-				case 'put':
-					$.each(this.fields, function() { this.read_only(false) })
-					break;
-				default:
-					$.each(this.fields, function() { this.read_only(true) })
+			for (var i in map) {
+				var node = $(map[i], data);
+				if (!node.length) continue;
+				property[i] = node.text();
 			}
-		}
 
-		$('properties property', data).each(function(){
-			self.add_field(this)
+			// Get key value maps for multiple choice properties
+			map = {
+				choices: 'choice'
+			};
+
+			for (var i in map) {
+				var nodes = $(map[i], data);
+				if (!nodes.length) continue;
+				property[i] = new Array();
+				nodes.each(function(){
+					property[i].push({value: $(this).attr('value'), text: $(this).text()});
+				})
+			}
+
+			return property;
 		});
 	},
 
-	/**
-	 * Converts XML properties to a simple object of HTML element properties.
-	 *
-	 * @param {Element} xml_prop A property element generated from XML.
-	 */
-	_get_html_properties: function(xml_prop) {
-		xml_prop = $(xml_prop);
+	///**
+	 //* Generic interface for all field types.
+	 //*
+	 //* @param {Object} properties HTML node properties.
+	 //*/
+	//_field: function(properties) {
+		//var self = this;
+		//this.node = $('<div/>');
+		//this.label = $('<label/>').text(properties._label || '');
+		//this.field = $('<' + (properties._tagName || 'input') + '/>');
+		//this.text = $('<span/>');
 
-		//TODO Implement all property conversions
-		var html_props = {
-			name: xml_prop.attr('name'),
-			maxlength: xml_prop.attr('max_length'),
-			_label: $('description', xml_prop).text(),
-			_default: $('default', xml_prop).text(),
-			_type: xml_prop.attr('type')
-		};
+		//properties.id = properties.id || 'field_' + properties.name;
 
-		if ($('choices', xml_prop).length) {
-			html_props._tagName = 'select';
-			html_props.choices = new Array();
+		//for (p in properties) {
+			//var v = properties[p];
 
-			$('choices choice', xml_prop).each(function() {
-				html_props.choices.push({
-					value: $(this).attr('value'),
-					text: $(this).text()
-				});
-			})
-		}
+			//if (p.indexOf('_') == 0)
+				//continue;
 
-		return html_props;
-	},
+			////TODO More special cases needed (i.e. multiple choice items)
+			//switch (p) {
+				//case 'choices':
+					//for (i in v) {
+						//v[i].text = v[i].text || v[i].value;
+						//var opt = $('<option/>').attr(v[i]);
 
-	/**
-	 * Generic interface for all field types.
-	 *
-	 * @param {Object} properties HTML node properties.
-	 */
-	_field: function(properties) {
-		var self = this;
-		this.node = $('<div/>');
-		this.label = $('<label/>').text(properties._label || '');
-		this.field = $('<' + (properties._tagName || 'input') + '/>');
-		this.text = $('<span/>');
+						//this.field.append(opt)
+					//}
+					//break;
+				//default:
+					//this.field.attr(p, v);
+			//}
+		//}
 
-		properties.id = properties.id || 'field_' + properties.name;
+		//if (properties._default) {
+			//this.field.val(properties._default);
+		//}
 
-		for (p in properties) {
-			var v = properties[p];
+		//this.text.text(this.field.val());
 
-			if (p.indexOf('_') == 0)
-				continue;
+		///**
+		 //* Switches the
+		 //*/
+		//this.read_only = function(on) {
+			//if (on || on == undefined) {
+				//this.field_container.hide();
+				//this.text.show();
+			//}
+			//else {
+				//this.text.hide();
+				//this.field_container.show();
+			//}
+		//}
 
-			//TODO More special cases needed (i.e. multiple choice items)
-			switch (p) {
-				case 'choices':
-					for (i in v) {
-						v[i].text = v[i].text || v[i].value;
-						var opt = $('<option/>').attr(v[i]);
+		//this.field_container = $('<span/>').append(this.field);
+		//this.node.append(this.label, this.field_container, this.text);
+		//this.read_only();
+	//},
 
-						this.field.append(opt)
-					}
-					break;
-				default:
-					this.field.attr(p, v);
-			}
-		}
+	///**
+	 //* @param {Object} properties HTML node properties.
+	 //*/
+	//textarea: function(properties) {
+		//properties.innerHTML = properties.value;
+		//boto_web.ui._field.call(this, properties);
+	//},
 
-		if (properties._default) {
-			this.field.val(properties._default);
-		}
+	///**
+	 //* @param {Object} properties HTML node properties.
+	 //*/
+	//text: function(properties) {
+		//boto_web.ui._field.call(this, properties);
+	//},
 
-		this.text.text(this.field.val());
+	///**
+	 //* @param {Object} properties HTML node properties.
+	 //*/
+	//date: function(properties) {
+		//boto_web.ui._field.call(this, properties);
 
-		/**
-		 * Switches the
-		 */
-		this.read_only = function(on) {
-			if (on || on == undefined) {
-				this.field_container.hide();
-				this.text.show();
-			}
-			else {
-				this.text.hide();
-				this.field_container.show();
-			}
-		}
+		//this.datepicker = $(this.field).datepicker({
+			//showOn: 'both',
+			//showAnim: 'slideDown'
+		//});
 
-		this.field_container = $('<span/>').append(this.field);
-		this.node.append(this.label, this.field_container, this.text);
-		this.read_only();
-	},
-
-	/**
-	 * @param {Object} properties HTML node properties.
-	 */
-	textarea: function(properties) {
-		properties.innerHTML = properties.value;
-		boto_web.ui._field.call(this, properties);
-	},
-
-	/**
-	 * @param {Object} properties HTML node properties.
-	 */
-	text: function(properties) {
-		boto_web.ui._field.call(this, properties);
-	},
-
-	/**
-	 * @param {Object} properties HTML node properties.
-	 */
-	date: function(properties) {
-		boto_web.ui._field.call(this, properties);
-
-		this.datepicker = $(this.field).datepicker({
-			showOn: 'both',
-			showAnim: 'slideDown'
-		});
-
-	}
+	//}
 };
