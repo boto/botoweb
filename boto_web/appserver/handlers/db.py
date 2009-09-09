@@ -7,6 +7,8 @@ from boto.utils import find_class, Password
 from boto.sdb.db.model import Model
 from boto.sdb.db.key import Key
 
+import urllib
+
 import re
 from datetime import datetime
 
@@ -37,6 +39,7 @@ class DBHandler(RequestHandler):
 	* db_class: Required, the class to use for this interface
 	"""
 	db_class = None
+	page_size = 15
 
 	def __init__(self, env, config):
 		RequestHandler.__init__(self, env, config)
@@ -62,14 +65,19 @@ class DBHandler(RequestHandler):
 			# Add the count to the header
 			response = self._head(request, response)
 			objs = self.search(params=request.GET.mixed(), user=request.user)
+			objs.limit = self.page_size
 			response.write("<%sList>" % self.db_class.__name__)
-			obj_count = 0
 			for obj in objs:
-				obj_count += 1
 				response.write(xmlize.dumps(obj))
-				if obj_count > 50:
-					response.write("<more_results/>")
-					break
+			params = request.GET.mixed()
+			if objs.next_token:
+				if params.has_key("next_token"):
+					del(params['next_token'])
+				self_link = '%s%s%s?%s' % (request.real_host_url, request.base_url, request.script_name, urllib.urlencode(params).replace("&", "&amp;"))
+				params['next_token'] = objs.next_token
+				next_link = '%s%s%s?%s' % (request.real_host_url, request.base_url, request.script_name, urllib.urlencode(params).replace("&", "&amp;"))
+				response.write('<link type="text/xml" rel="next" href="%s"/>' % (next_link))
+				response.write('<link type="text/xml" rel="self" href="%s"/>' % (self_link))
 			response.write("</%sList>" % self.db_class.__name__)
 		return response
 
@@ -166,6 +174,7 @@ class DBHandler(RequestHandler):
 		query_str = params.get("query", None)
 		query = self.db_class.find()
 		sort_by = params.get("sort_by", None)
+		next_token = params.get("next_token", None)
 		if query_str:
 			try:
 				filters = json.loads(query_str)
@@ -176,7 +185,7 @@ class DBHandler(RequestHandler):
 		else:
 			properties = [p.name for p in self.db_class.properties(hidden=False)]
 			for filter in set(params.keys()):
-				if filter == "sort_by":
+				if filter in ["sort_by", "next_token"]:
 					continue
 				if not filter in properties:
 					raise BadRequest("Property not found: '%s'" % filter)
@@ -193,6 +202,8 @@ class DBHandler(RequestHandler):
 					query.filter("%s %s " % (filter, filter_cmp), filter_value)
 		if sort_by:
 			query.order(sort_by)
+		if next_token:
+			query.next_token = next_token
 		return query
 
 	def create(self, obj, user):
