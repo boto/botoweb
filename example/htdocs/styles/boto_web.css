@@ -1,0 +1,29 @@
+.boto_web .header {
+background: #222;
+}
+
+.boto_web .header h1 {
+color: #fff;
+line-height: 2.5em;
+padding: 0 15px;
+border: 0 solid #000;
+border-width: 2px 0;
+}
+
+.boto_web .nav {
+list-style-type: none;
+line-height: 2em;
+}
+
+.boto_web .header .nav {
+background: #eee;
+}
+
+.boto_web .nav li {
+display: inline;
+}
+
+.boto_web .nav li a {
+padding: .25em 15px;
+}
+

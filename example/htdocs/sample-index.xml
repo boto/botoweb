@@ -30,6 +30,13 @@
       <property name="date" type="dateTime">
         <default/>
       </property>
+      <property name="type" type="string">
+        <default/>
+        <choices>
+            <choice value=""/>
+            <choice value="video">Video</choice>
+        </choices>
+      </property>
       <property name="title" type="string" max_length="1024">
         <description>Title</description>
         <default/>
