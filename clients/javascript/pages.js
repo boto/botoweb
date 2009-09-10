@@ -73,7 +73,7 @@ function setPage(page_args){
 			currentPage = page_name;
 		}
 		// Load the sub page, if present
-		sub_page_name = page_args.shift();
+		sub_page_name = page_args.shift() || 'main';
 		$(".content").hide();
 		$(".content#"+page_name + "_" + sub_page_name).show().trigger("load", page_args);
 	}
