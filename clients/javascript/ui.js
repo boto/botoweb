@@ -1,29 +1,81 @@
 /**
- * @projectDescription This is an experimental and very unfinished JavaScript
+ * @projectDescription This is an experimental and unfinished JavaScript
  * library which will be capable of generating a full CRUD interface based on
- * an XML API definition.
+ * a boto_web environment.
  *
  * @author    Ian Paterson
  * @namespace boto_web.ui.js
  */
 
 /**
- * CRUD interface for simplified web application implementation based on an XML
- * definition.
+ * CRUD interface for simplified web application implementation based on a
+ * boto_web environment.
  */
 boto_web.ui = {
 	/**
-	 * Loads and displays the appropriate API.
-	 * @param {XMLDocument} data The boto_web application index definition.
+	 * Initializes the boto_web interface.
+	 *
+	 * @param {boto_web.Environment} env The current boto_web environment.
 	 */
-	init: function(data) {
-		data = $(data);
+	init: function(env) {
+		var self = boto_web.ui;
 
+		self.node = $('<div/>')
+			.addClass('boto_web')
+			.appendTo('body');
+		self.header = $('<div/>')
+			.addClass('header')
+			.appendTo(self.node);
+		self.heading = $('<h1/>')
+			.text('Database Management')
+			.appendTo(self.header);
+		self.nav = $('<ul/>')
+			.addClass('nav')
+			.appendTo(self.header);
+		self.content = $('<div/>')
+			.attr({id: 'content'})
+			.appendTo(self.node);
 
+		self.pages = {};
+		$.each(env.apis, function() {
+			var page_href = env.base_url.replace(/([^\/])$/, '$1/') + this.href;
+			var page_name = this.name + ' Management';
+			$('<a/>')
+				.attr({href: '#' + page_href})
+				.text(this.name)
+				.appendTo($('<li/>').appendTo(self.nav));
+			var page = self.pages[this.href] = $('<div/>')
+				.attr({id: this.href})
+				.text('Unfinished content placeholder for ' + this.name + ' page.')
+				.addClass('page')
+				.load(function() { boto_web.ui.heading.text(page_name) })
+				.hide()
+				.appendTo(self.node);
+			var home = $('<div/>')
+				.attr({id: this.href + '_main'})
+				.addClass('content')
+				.appendTo(page)
+			for (var i in this.methods) {
+				switch (i) {
+					case 'put':
+					case 'post':
+					case 'get':
+						$('<a/>')
+							.attr({href: '#' + page_href + '/' + i})
+							.text(this.methods[i])
+							.addClass('button')
+							.appendTo(home)
+					default:
+						$('<div/>')
+							.attr({id: this.href + '_' + i})
+							.text('Unfinished content placeholder for ' + this.name + ' ' + i + ' method page.' )
+							.addClass('content')
+							.hide()
+							.appendTo(page)
+				}
+			}
+		});
 	},
-
-
-
 	///**
 	 //* Generic interface for all field types.
 	 //*
