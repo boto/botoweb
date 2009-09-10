@@ -433,10 +433,6 @@ var boto_web = {
 	//
 	init: function(href){
 		$("div#home").hide();
-		boto_web.env = new boto_web.Environment(href, function(env){
-			$("div#home").show();
-			$("div#loading").hide();
-			$("body").trigger("ready");
-		});
+		boto_web.env = new boto_web.Environment(href, boto_web.ui.init);
 	}
 };
