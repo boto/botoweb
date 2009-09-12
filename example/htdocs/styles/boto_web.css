@@ -13,6 +13,8 @@ border-width: 2px 0;
 .boto_web .nav {
 list-style-type: none;
 line-height: 2em;
+border: 0 double #fff;
+border-width: 3px 0;
 }
 
 .boto_web .header .nav {
@@ -24,6 +26,20 @@ display: inline;
 }
 
 .boto_web .nav li a {
-padding: .25em 15px;
+padding: .75em 15px .5em 15px;
+border-width: 1px 1px 0 1px;
+-moz-border-radius-topleft: 5px;
+-moz-border-radius-topright: 5px;
+border-top-left-radius: 5px;
+border-top-right-radius: 5px;
 }
 
+.boto_web .nav li a:hover {
+background: #f5f5f5;
+border-color: #e5e5e5;
+}
+
+.boto_web .nav li a.active, .boto_web .nav li a.active:hover {
+background: #fff;
+border-color: #ddd;
+}

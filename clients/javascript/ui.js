@@ -37,44 +37,55 @@ boto_web.ui = {
 			.appendTo(self.node);
 
 		self.pages = {};
-		$.each(env.apis, function() {
-			var page_href = env.base_url.replace(/([^\/])$/, '$1/') + this.href;
-			var page_name = this.name + ' Management';
+		// Merge homepage as a generated false API
+		$.each($.merge([{href: 'home', name: 'Home', home: 1}], env.apis), function() {
+			var page = new boto_web.ui.Page(this, env);
 			$('<a/>')
-				.attr({href: '#' + page_href})
+				.attr({href: '#' + page.href})
 				.text(this.name)
 				.appendTo($('<li/>').appendTo(self.nav));
-			var page = self.pages[this.href] = $('<div/>')
-				.attr({id: this.href})
-				.text('Unfinished content placeholder for ' + this.name + ' page.')
-				.addClass('page')
-				.load(function() { boto_web.ui.heading.text(page_name) })
-				.hide()
-				.appendTo(self.node);
-			var home = $('<div/>')
-				.attr({id: this.href + '_main'})
-				.addClass('content')
-				.appendTo(page)
-			for (var i in this.methods) {
-				switch (i) {
-					case 'put':
-					case 'post':
-					case 'get':
-						$('<a/>')
-							.attr({href: '#' + page_href + '/' + i})
-							.text(this.methods[i])
-							.addClass('button')
-							.appendTo(home)
-					default:
-						$('<div/>')
-							.attr({id: this.href + '_' + i})
-							.text('Unfinished content placeholder for ' + this.name + ' ' + i + ' method page.' )
-							.addClass('content')
-							.hide()
-							.appendTo(page)
-				}
-			}
+
+			self.pages[this.href] = page;
 		});
+	},
+
+	Page: function(api, env) {
+		var self = this;
+
+		self.api = api;
+		self.href = env.base_url.replace(/([^\/])$/, '$1/') + self.api.href;
+		self.name = 'Database Management' + ((api.home) ? '' : ' &ndash; ' + self.api.name);
+
+		self.node = $('<div/>')
+			.attr({id: self.api.href})
+			.text('Unfinished content placeholder for ' + self.api.name + ' page.')
+			.addClass('page')
+			.load(function() { boto_web.ui.heading.html(self.name) })
+			.hide()
+			.appendTo(boto_web.ui.node);
+		var home = $('<div/>')
+			.attr({id: self.api.href + '_main'})
+			.addClass('content')
+			.appendTo(self.node)
+		for (var i in self.api.methods) {
+			switch (i) {
+				case 'put':
+				case 'post':
+				case 'get':
+					$('<a/>')
+						.attr({href: '#' + self.href + '/' + i})
+						.text(self.api.methods[i])
+						.addClass('button')
+						.appendTo(home)
+				default:
+					$('<div/>')
+						.attr({id: self.api.href + '_' + i})
+						.text('Unfinished content placeholder for ' + self.api.name + ' ' + i + ' method page.' )
+						.addClass('content')
+						.hide()
+						.appendTo(self.node)
+			}
+		}
 	},
 	///**
 	 //* Generic interface for all field types.

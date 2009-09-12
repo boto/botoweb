@@ -63,6 +63,7 @@
 //
 var currentPage = null;
 function setPage(page_args){
+	var original_args = page_args;
 	page_args = page_args.split("/");
 	if(page_args.length > 1){
 		page_args.shift();
@@ -71,6 +72,9 @@ function setPage(page_args){
 			$(".page").hide();
 			$(".page#"+page_name).show().trigger("load");
 			currentPage = page_name;
+
+			$(".boto_web .header .nav a").removeClass('active');
+			$(".boto_web .header .nav a[href=#" + original_args + "]").addClass('active');
 		}
 		// Load the sub page, if present
 		sub_page_name = page_args.shift() || 'main';
