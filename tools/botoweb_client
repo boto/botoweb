@@ -24,7 +24,7 @@ if __name__ == "__main__":
 	import sys
 	sys.path.append(".")
 	from optparse import OptionParser
-	from boto_web.client.environment import Environment
+	from botoweb.client.environment import Environment
 	import code
 	import readline
 

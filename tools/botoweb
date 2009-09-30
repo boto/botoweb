@@ -35,8 +35,8 @@ if __name__ == "__main__":
 	sys.path.append(".")
 	from optparse import OptionParser
 	from paste import httpserver
-	import boto_web
-	from boto_web.environment import Environment
+	import botoweb
+	from botoweb.environment import Environment
 
 	parser = OptionParser(usage="usage: %prog [options] application")
 	parser.add_option("-e", "--environment", dest="env", default=None, help="Environment file to use")
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 		exit(0)
 
 	if (options.add_user == True):
-		from boto_web.resources.user import User
+		from botoweb.resources.user import User
 		u = User()
 		u.username = raw_input("Username: ")
 		u.password = raw_input("Password: ")
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 	if (options.shell == True):
 		import code
 		import readline
-		from boto_web.resources.user import User
+		from botoweb.resources.user import User
 		code.interact(local={
 			"env": e,
 			"boto": boto,
@@ -90,10 +90,10 @@ if __name__ == "__main__":
 		})
 		exit(0)
 
-	from boto_web.appserver.url_mapper import URLMapper
-	from boto_web.appserver.filter_mapper import FilterMapper
-	from boto_web.appserver.cache_layer import CacheLayer
-	from boto_web.appserver.auth_layer import AuthLayer
+	from botoweb.appserver.url_mapper import URLMapper
+	from botoweb.appserver.filter_mapper import FilterMapper
+	from botoweb.appserver.cache_layer import CacheLayer
+	from botoweb.appserver.auth_layer import AuthLayer
 	mapper = AuthLayer(
 					app=FilterMapper(
 						app=CacheLayer(
