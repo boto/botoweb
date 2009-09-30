@@ -5,10 +5,10 @@ API Reference
 =============
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
 
      botoweb
-     botoweb.appserver
-     botoweb.appserver.handlers
-     botoweb.client
-     botoweb.resources
+     appserver
+     handlers
+     client
+     resources

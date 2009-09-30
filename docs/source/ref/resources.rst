@@ -1,25 +1,25 @@
-.. _ref-botoweb.resources:
+.. _ref-resources:
 
-=================
-botoweb.resources
-=================
+=========
+resources
+=========
 
-botoweb.resources
------------------
+resources
+---------
 
 .. automodule::  botoweb.resources
    :members:
    :undoc-members:
 
-botoweb.resources.filter_rule
------------------------------
+filter_rule
+-----------
 
 .. automodule::  botoweb.resources.filter_rule
    :members:
    :undoc-members:
 
-botoweb.resources.user
-----------------------
+user
+----
 
 .. automodule::  botoweb.resources.user
    :members:

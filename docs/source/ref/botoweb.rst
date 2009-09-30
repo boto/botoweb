@@ -11,71 +11,71 @@ botoweb
    :members:
    :undoc-members:
 
-botoweb.config
---------------
+config
+------
 
 .. automodule::  botoweb.config
    :members:
    :undoc-members:
 
-botoweb.environment
--------------------
+environment
+-----------
 
 .. automodule::  botoweb.environment
    :members:
    :undoc-members:
 
-botoweb.exceptions
-------------------
+exceptions
+----------
 
 .. automodule::  botoweb.exceptions
    :members:
    :undoc-members:
 
-botoweb.fixed_datetime
-----------------------
+fixed_datetime
+--------------
 
 .. automodule::  botoweb.fixed_datetime
    :members:
    :undoc-members:
 
-botoweb.request
----------------
+request
+-------
 
 .. automodule::  botoweb.request
    :members:
    :undoc-members:
 
-botoweb.response
-----------------
+response
+--------
 
 .. automodule::  botoweb.response
    :members:
    :undoc-members:
 
-botoweb.status
---------------
+status
+------
 
 .. automodule::  botoweb.status
    :members:
    :undoc-members:
 
-botoweb.testbase
-----------------
+testbase
+--------
 
 .. automodule::  botoweb.testbase
    :members:
    :undoc-members:
 
-botoweb.xmlize
---------------
+xmlize
+------
 
 .. automodule::  botoweb.xmlize
    :members:
    :undoc-members:
 
-botoweb.xslt_functions
-----------------------
+xslt_functions
+--------------
 
 .. automodule::  botoweb.xslt_functions
    :members:

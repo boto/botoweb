@@ -1,39 +1,39 @@
-.. _ref-botoweb.client:
+.. _ref-client:
 
-==============
-botoweb.client
-==============
+======
+client
+======
 
-botoweb.client
---------------
+client
+------
 
 .. automodule::  botoweb.client
    :members:
    :undoc-members:
 
-botoweb.client.connection
--------------------------
+connection
+----------
 
 .. automodule::  botoweb.client.connection
    :members:
    :undoc-members:
 
-botoweb.client.environment
---------------------------
+environment
+-----------
 
 .. automodule::  botoweb.client.environment
    :members:
    :undoc-members:
 
-botoweb.client.quer
--------------------
+quer
+----
 
 .. automodule::  botoweb.client.quer
    :members:
    :undoc-members:
 
-botoweb.client.sax_handler
---------------------------
+sax_handler
+-----------
 
 .. automodule::  botoweb.client.sax_handler
    :members:

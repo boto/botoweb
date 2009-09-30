@@ -1,53 +1,53 @@
-.. _ref-botoweb.appserver:
+.. _ref-appserver:
 
-=================
-botoweb.appserver
-=================
+=========
+appserver
+=========
 
-botoweb.appserver
------------------
+appserver
+---------
 
 .. automodule::  botoweb.appserver
    :members:
    :undoc-members:
 
-botoweb.appserver.auth_layer
-----------------------------
+auth_layer
+----------
 
 .. automodule::  botoweb.appserver.auth_layer
    :members:
    :undoc-members:
 
-botoweb.appserver.cache_layer
------------------------------
+cache_layer
+-----------
 
 .. automodule::  botoweb.appserver.cache_layer
    :members:
    :undoc-members:
 
-botoweb.appserver.filter_mapper
--------------------------------
+filter_mapper
+-------------
 
 .. automodule::  botoweb.appserver.filter_mapper
    :members:
    :undoc-members:
 
-botoweb.appserver.filter_resolver
----------------------------------
+filter_resolver
+---------------
 
 .. automodule::  botoweb.appserver.filter_resolver
    :members:
    :undoc-members:
 
-botoweb.appserver.url_mapper
-----------------------------
+url_mapper
+----------
 
 .. automodule::  botoweb.appserver.url_mapper
    :members:
    :undoc-members:
 
-botoweb.appserver.wsgi_layer
-----------------------------
+wsgi_layer
+----------
 
 .. automodule::  botoweb.appserver.wsgi_layer
    :members:
