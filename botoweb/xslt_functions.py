@@ -19,7 +19,7 @@ def getObj(ctx, nodes):
     doc = etree.parse(StringIO(doc))
     return doc.getroot().getchildren()
 
-uri = "python://boto_web/xslt_functions"
+uri = "python://botoweb/xslt_functions"
 functions = {
     "getObj": getObj
 }

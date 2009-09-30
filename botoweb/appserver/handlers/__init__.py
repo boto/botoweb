@@ -11,15 +11,15 @@ import wsgiref
 import wsgiref.headers
 
 import boto
-import boto_web
+import botoweb
 
-from boto_web.exceptions import *
+from botoweb.exceptions import *
 from boto.utils import find_class
 import time
 import mimetypes
 
 import logging
-log = logging.getLogger("boto_web.appserver.handlers")
+log = logging.getLogger("botoweb.appserver.handlers")
 
 
 class RequestHandler(object):

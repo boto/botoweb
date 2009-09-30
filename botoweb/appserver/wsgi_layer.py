@@ -21,13 +21,13 @@
 import httplib
 
 import boto
-from boto_web.request import Request
-from boto_web.response import Response
-from boto_web.exceptions import *
+from botoweb.request import Request
+from botoweb.response import Response
+from botoweb.exceptions import *
 
 import traceback
 import logging
-log = logging.getLogger("boto_web.wsgi_layer")
+log = logging.getLogger("botoweb.wsgi_layer")
 
 import re
 
@@ -43,8 +43,8 @@ class WSGILayer(object):
         """
         Initialize this WSGI layer.
 
-        @param env: A boto_web environment object that represents what we're running in
-        @type env: boto_web.environment.Environment
+        @param env: A botoweb environment object that represents what we're running in
+        @type env: botoweb.environment.Environment
 
         @param app: An optional WSGI layer that this layer is on top of.
         @type app: WSGILayer

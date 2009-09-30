@@ -19,10 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from lxml import etree
-from boto_web import xmlize
+from botoweb import xmlize
 import time
 import logging
-log = logging.getLogger("boto_web.client.Environment")
+log = logging.getLogger("botoweb.client.Environment")
 
 try:
     import json
@@ -32,7 +32,7 @@ except ImportError:
 class Environment(object):
     """Client Environment Object
     This operates off of the "Index" XML information 
-    passed by the boto_web index handler
+    passed by the botoweb index handler
     """
     max_tries = 10
 

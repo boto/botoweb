@@ -1,8 +1,8 @@
 import webob
-from boto_web.resources.user import User
+from botoweb.resources.user import User
 import logging
 log = logging.getLogger("vermouth.request")
-from boto_web.response import Response
+from botoweb.response import Response
 
 class Request(webob.Request):
 	"""We add in a few special extra functions for us here."""

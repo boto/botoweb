@@ -5,19 +5,19 @@ import sys
 import traceback
 import urllib
 
-import boto_web
+import botoweb
 import mimetypes
 from boto.utils import find_class
-from boto_web.appserver.handlers import RequestHandler
-from boto_web.appserver.handlers.index import IndexHandler
-from boto_web.request import Request
-from boto_web.response import Response
-from boto_web import status
-from boto_web.exceptions import *
+from botoweb.appserver.handlers import RequestHandler
+from botoweb.appserver.handlers.index import IndexHandler
+from botoweb.request import Request
+from botoweb.response import Response
+from botoweb import status
+from botoweb.exceptions import *
 
-log = logging.getLogger("boto_web.url_mapper")
+log = logging.getLogger("botoweb.url_mapper")
 
-from boto_web.appserver.wsgi_layer import WSGILayer
+from botoweb.appserver.wsgi_layer import WSGILayer
 class URLMapper(WSGILayer):
     """
     Simple URL mapper
@@ -56,7 +56,7 @@ class URLMapper(WSGILayer):
         path = req.path
         handler = None
         obj_id = None
-        for handler_config in self.env.config.get("boto_web", "handlers"):
+        for handler_config in self.env.config.get("botoweb", "handlers"):
             match = re.match("^(%s)(\/(.*))?$" % handler_config['url'], path)
 
             if match:

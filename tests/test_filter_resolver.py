@@ -1,5 +1,5 @@
 
-from boto_web.appserver.filter_resolver import FilterResolver
+from botoweb.appserver.filter_resolver import FilterResolver
 from pkg_resources import resource_string
 import boto
 

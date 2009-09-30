@@ -1,11 +1,11 @@
 # NOTE: these tests need to be executed from the root
 # directory of an svn checkout using py.test
 
-from boto_web.appserver.url_mapper import URLMapper
-from boto_web.appserver.handlers import RequestHandler
-from boto_web.request import Request
-from boto_web.response import Response
-from boto_web.environment import Environment
+from botoweb.appserver.url_mapper import URLMapper
+from botoweb.appserver.handlers import RequestHandler
+from botoweb.request import Request
+from botoweb.response import Response
+from botoweb.environment import Environment
 
 
 class XMLString(object):

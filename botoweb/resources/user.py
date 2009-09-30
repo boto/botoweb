@@ -44,7 +44,7 @@ class User(Model):
         @param body: The message to send you
         @type body: str
         """
-        from_string = boto.config.get('Notification', 'smtp_from', 'boto_web')
+        from_string = boto.config.get('Notification', 'smtp_from', 'botoweb')
         msgRoot = MIMEMultipart('related')
         msgRoot['Subject'] = subject
         msgRoot['From'] = from_string

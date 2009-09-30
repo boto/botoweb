@@ -1,6 +1,6 @@
 # Author: Chris Moyer
-from boto_web.exceptions import NotFound, Unauthorized, BadRequest
-from boto_web.appserver.handlers import RequestHandler
+from botoweb.exceptions import NotFound, Unauthorized, BadRequest
+from botoweb.appserver.handlers import RequestHandler
 
 import boto
 from boto.utils import find_class, Password
@@ -13,10 +13,10 @@ import re
 from datetime import datetime
 
 import logging
-log = logging.getLogger("boto_web.handlers.db")
+log = logging.getLogger("botoweb.handlers.db")
 
 from lxml import etree
-from boto_web import xmlize
+from botoweb import xmlize
 
 
 try:
@@ -32,7 +32,7 @@ class DBHandler(RequestHandler):
 
 	The simplest use of this handler would be calling it directly as such::
 		- url: /blog
-		  handler: boto_web.appserver.handlers.db.DBHandler
+		  handler: botoweb.appserver.handlers.db.DBHandler
 		  db_class: resources.post.Post
 
 	You may also pass in the follwoing custom fields:

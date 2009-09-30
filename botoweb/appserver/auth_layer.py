@@ -21,18 +21,18 @@
 import httplib
 
 import boto
-from boto_web.request import Request
-from boto_web.response import Response
-from boto_web.resources.user import User
-from boto_web.exceptions import *
+from botoweb.request import Request
+from botoweb.response import Response
+from botoweb.resources.user import User
+from botoweb.exceptions import *
 
 import traceback
 import logging
-log = logging.getLogger("boto_web.auth_layer")
+log = logging.getLogger("botoweb.auth_layer")
 
 import re
 
-from boto_web.appserver.wsgi_layer import WSGILayer
+from botoweb.appserver.wsgi_layer import WSGILayer
 class AuthLayer(WSGILayer):
     """
     Authentication/Authorization layer
@@ -60,9 +60,9 @@ class AuthLayer(WSGILayer):
         """
         log.info("Get Auth Config: %s" % (path))
         match = None
-        if not self.env.config.has_key('boto_web'):
+        if not self.env.config.has_key('botoweb'):
             return None
-        for rule in self.env.config.get("boto_web", "auth", []):
+        for rule in self.env.config.get("botoweb", "auth", []):
             if rule.has_key("url"):
                 if not re.match(rule['url'], path):
                     continue

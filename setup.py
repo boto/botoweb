@@ -25,35 +25,36 @@ ez_setup.use_setuptools()
 
 from setuptools import setup, find_packages
 
-from boto_web import Version
+from botoweb import __version__
 
-setup(name = "boto_web",
-      version = Version,
-      description = "Boto based webapp framework",
-      long_description="Python Enterprise level 3-Tier distributed webapp framework for use within the Amazon Web Services environment.",
-      author = "Chris Moyer",
-      author_email = "kopertop@gmail.com",
-      url = "http://code.google.com/p/boto-web/",
-      packages = find_packages(exclude=['ez_setup']),
-      include_package_data = True,
-      license = 'MIT',
-      scripts = ['tools/boto_web', 'tools/boto_web_client'],
-      platforms = 'Posix; MacOS X; Windows',
-      classifiers = [ 'Development Status :: 3 - Alpha',
-                      'Intended Audience :: Developers',
-                      'License :: OSI Approved :: MIT License',
-                      'Operating System :: OS Independent',
-                      'Topic :: Internet',
-                      ],
-        dependency_links = [
-            "http://code.google.com/p/boto/downloads/list",
-        ],
-        install_requires = [
-            "pyyaml",
-            "webob",
-            "paste",
-            "boto",
-            "lxml",
-            "pytz",
-        ],
-      )
+setup(name = "botoweb",
+		version = __version__,
+		description = "Boto based webapp framework",
+		long_description="Python Enterprise level 3-Tier distributed webapp framework for use within the Amazon Web Services environment.",
+		author = "Chris Moyer",
+		author_email = "cmoyer@cloudbasin.com",
+		url = "http://botoweb.com",
+		packages = find_packages(exclude=['ez_setup', 'example']),
+		include_package_data = True,
+		license = 'MIT',
+		scripts = ['tools/botoweb', 'tools/botoweb_client'],
+		platforms = 'Posix; MacOS X; Windows',
+		classifiers = [ 
+			'Development Status :: 3 - Alpha',
+			'Intended Audience :: Developers',
+			'License :: OSI Approved :: MIT License',
+			'Operating System :: OS Independent',
+			'Topic :: Internet',
+		],
+		dependency_links = [
+			"http://code.google.com/p/boto/downloads/list",
+		],
+		install_requires = [
+			"pyyaml",
+			"webob",
+			"paste",
+			"boto",
+			"lxml",
+			"pytz",
+		],
+	)

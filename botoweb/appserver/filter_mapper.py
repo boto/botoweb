@@ -22,22 +22,22 @@ import httplib
 
 import boto
 from boto.utils import find_class
-from boto_web.request import Request
-from boto_web.response import Response
-from boto_web.resources.user import User
-from boto_web.exceptions import *
+from botoweb.request import Request
+from botoweb.response import Response
+from botoweb.resources.user import User
+from botoweb.exceptions import *
 
 import traceback
 import logging
-log = logging.getLogger("boto_web.filter_mapper")
+log = logging.getLogger("botoweb.filter_mapper")
 
 from lxml import etree
-from boto_web.appserver.filter_resolver import S3FilterResolver, PythonFilterResolver
+from botoweb.appserver.filter_resolver import S3FilterResolver, PythonFilterResolver
 
 import re
 from StringIO import StringIO
 
-from boto_web.appserver.wsgi_layer import WSGILayer
+from botoweb.appserver.wsgi_layer import WSGILayer
 class FilterMapper(WSGILayer):
 	"""
 	Filter URL Mapper
@@ -104,7 +104,7 @@ class FilterMapper(WSGILayer):
 		log.info("Get Stylesheet: %s %s" % (path, user))
 		styledoc = None
 		match = None
-		for rule in self.env.config.get("boto_web", "filters", []):
+		for rule in self.env.config.get("botoweb", "filters", []):
 			if rule.has_key("url"):
 				if not re.match(rule['url'], path):
 					continue
@@ -136,7 +136,7 @@ class FilterMapper(WSGILayer):
 			extensions = {}
 			if user:
 				extensions = {
-					("python://boto_web/xslt_functions", "hasGroup"):  user.has_auth_group_ctx
+					("python://botoweb/xslt_functions", "hasGroup"):  user.has_auth_group_ctx
 				}
 			proc = etree.XSLT(etree.parse(uri, self.parser), extensions=extensions)
 		return proc

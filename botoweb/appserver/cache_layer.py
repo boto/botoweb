@@ -21,21 +21,21 @@
 import httplib
 
 import boto
-from boto_web.request import Request
-from boto_web.response import Response
-from boto_web.resources.user import User
-from boto_web.exceptions import *
+from botoweb.request import Request
+from botoweb.response import Response
+from botoweb.resources.user import User
+from botoweb.exceptions import *
 
 import traceback
 import logging
-log = logging.getLogger("boto_web.cache_layer")
+log = logging.getLogger("botoweb.cache_layer")
 
 import re
 
-from boto_web.appserver.wsgi_layer import WSGILayer
+from botoweb.appserver.wsgi_layer import WSGILayer
 class CacheLayer(WSGILayer):
     """
-    Memcached layer on top of boto_web, this helps to 
+    Memcached layer on top of botoweb, this helps to 
     speed up frequent querys
 
     To Enable caching you must have python-memcached or libmemcached 

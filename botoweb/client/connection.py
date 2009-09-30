@@ -2,11 +2,11 @@
 # Author: Chris Moyer
 #
 import logging
-log = logging.getLogger("boto_web.client_connection")
+log = logging.getLogger("botoweb.client_connection")
 import time
 class ClientConnection(object):
     """
-    HTTP Connection wrapper for boto_web clients
+    HTTP Connection wrapper for botoweb clients
     """
     max_tries = 10
 

@@ -23,9 +23,9 @@ import urllib
 import urllib2
 from lxml import etree
 from xml.sax import make_parser
-from boto_web.client.sax_handler import ObjectHandler
+from botoweb.client.sax_handler import ObjectHandler
 import logging
-log = logging.getLogger("boto_web.client")
+log = logging.getLogger("botoweb.client")
 class Query(object):
     """
     Query object iterator

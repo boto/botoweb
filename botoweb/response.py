@@ -1,5 +1,5 @@
 import webob
-from boto_web import status
+from botoweb import status
 
 class Response(webob.Response):
     """

@@ -1,16 +1,16 @@
 # Author: Chris Moyer
 import os, os.path
 import yaml
-from boto_web.config import Config
+from botoweb.config import Config
 from pkg_resources import get_provider, ResourceManager
 
 import boto 
 import logging
-log = logging.getLogger("boto_web")
+log = logging.getLogger("botoweb")
 
 class Environment(object):
     """
-    boto_web Environment
+    botoweb Environment
     """
 
     def __init__(self, module, env=None):
@@ -57,9 +57,9 @@ class Environment(object):
                 if isinstance(section, dict):
                     config[section_name] = section
                 else:
-                    if not config.has_key("boto_web"):
-                        config['boto_web'] = {}
-                    config['boto_web'][section_name] = section
+                    if not config.has_key("botoweb"):
+                        config['botoweb'] = {}
+                    config['botoweb'][section_name] = section
             elif not cf.startswith("."):
                 config[cf] = self.get_config(os.path.join(path, cf))
         return config
@@ -76,7 +76,7 @@ class Environment(object):
             if not port:
                 port = int(self.config.get("client", "port", 8080))
             log.debug("Creating connection: %s:%s" % (host, port))
-            from boto_web.client.connection import ClientConnection
+            from botoweb.client.connection import ClientConnection
             self._client_connection = ClientConnection(host, port, enable_ssl)
             self._client_connection.request("GET", "/")
         return self._client_connection

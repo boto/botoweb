@@ -3,7 +3,7 @@
 
 import boto
 import time
-from boto_web.appserver.handlers.db import DBHandler
+from botoweb.appserver.handlers.db import DBHandler
 from boto.sdb.db.model import Model
 from boto.sdb.db.property import StringProperty
 

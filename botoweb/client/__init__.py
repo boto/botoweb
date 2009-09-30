@@ -18,13 +18,13 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from boto_web.client.query import Query
+from botoweb.client.query import Query
 
 import logging
-log = logging.getLogger("boto_web.client")
+log = logging.getLogger("botoweb.client")
 class ClientObject(object):
     """
-    boto_web Client Object to interface via REST to our
+    botoweb Client Object to interface via REST to our
     XML server
     """
     _properties = []
@@ -35,8 +35,8 @@ class ClientObject(object):
         Additional arguments may be passed to set them immediately on the newly 
         created object
 
-        @param env: The boto_web.environment.Environment object to use
-        @type env: boto_web.environment.Environment
+        @param env: The botoweb.environment.Environment object to use
+        @type env: botoweb.environment.Environment
 
         @param id: The ID to use for this object
         @type id: str
@@ -51,8 +51,8 @@ class ClientObject(object):
         """
         List all objects
 
-        @param env: The boto_web.environment.Environment object to use
-        @type env: boto_web.environment.Environment
+        @param env: The botoweb.environment.Environment object to use
+        @type env: botoweb.environment.Environment
         """
         return cls.query(env, [])
 
@@ -61,8 +61,8 @@ class ClientObject(object):
         """
         Simple search method.
 
-        @param env: The boto_web.environment.Environment object to use
-        @type env: boto_web.environment.Environment
+        @param env: The botoweb.environment.Environment object to use
+        @type env: botoweb.environment.Environment
 
         @param **params: Parameters to search for, passed in standard key=value pairs
         """
@@ -76,8 +76,8 @@ class ClientObject(object):
         """
         Search for objects
 
-        @param env: The boto_web.environment.Environment object to use
-        @type env: boto_web.environment.Environment
+        @param env: The botoweb.environment.Environment object to use
+        @type env: botoweb.environment.Environment
 
         @param filters: Filters to apply to the search, formatted as [(key, op, value), (key, op, [value, value])]
              values, if a list, are considered OR searches, whereas filters are normally AND operations.
@@ -90,8 +90,8 @@ class ClientObject(object):
         """
         GET for object ID
 
-        @param env: The boto_web.client.environment.Environment object to use
-        @type env: boto_web.client.environment.Environment
+        @param env: The botoweb.client.environment.Environment object to use
+        @type env: botoweb.client.environment.Environment
 
         @param id: The ID of the object to get
         @type id: str

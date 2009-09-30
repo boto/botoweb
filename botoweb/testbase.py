@@ -17,7 +17,7 @@ class TestBase(object):
     you connected via the HTTP server without actually
     running the HTTP server.
     """
-    application="boto_web"
+    application="botoweb"
     user = None
 
     def __init__(self):
@@ -25,14 +25,14 @@ class TestBase(object):
         Setup this class to handle testing
         """
         import boto
-        from boto_web.environment import Environment
+        from botoweb.environment import Environment
         e = Environment(self.application)
         self.env = e
         boto.config = self.env.config
 
-        from boto_web.appserver.url_mapper import URLMapper
-        from boto_web.appserver.filter_mapper import FilterMapper
-        from boto_web.appserver.auth_layer import AuthLayer
+        from botoweb.appserver.url_mapper import URLMapper
+        from botoweb.appserver.filter_mapper import FilterMapper
+        from botoweb.appserver.auth_layer import AuthLayer
 
         self.mapper = AuthLayer( app=FilterMapper( app=URLMapper(e), env=e), env=e)
 
@@ -57,8 +57,8 @@ class TestBase(object):
         @param headers: Optional extra headers to send
         @type headers: dict
         """
-        from boto_web.request import Request
-        from boto_web.response import Response
+        from botoweb.request import Request
+        from botoweb.response import Response
         import urllib
 
         query_params = []

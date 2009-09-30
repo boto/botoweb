@@ -19,8 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from boto_web.appserver.handlers.db import DBHandler
-from boto_web.exceptions import Unauthorized
+from botoweb.appserver.handlers.db import DBHandler
+from botoweb.exceptions import Unauthorized
 
 class UserHandler(DBHandler):
     """

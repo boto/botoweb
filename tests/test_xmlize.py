@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from boto_web import xmlize
+from botoweb import xmlize
 
 class ObjectTest(object):
     """Test Object to dump/load from XML"""

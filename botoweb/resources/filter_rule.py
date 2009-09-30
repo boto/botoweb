@@ -20,7 +20,7 @@
 # IN THE SOFTWARE.
 from boto.sdb.db.model import Model
 from boto.sdb.db import property
-from boto_web.resources.user import User
+from botoweb.resources.user import User
 
 class FilterRule(Model):
     """

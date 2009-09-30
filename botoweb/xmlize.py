@@ -22,7 +22,7 @@
 BAD_CHARS = ['<', '>', '&'] # Illegal characters in XML that must be wrapped in a CDATA
 REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects into
 
-from boto_web.fixed_datetime import datetime
+from botoweb.fixed_datetime import datetime
 from datetime import datetime as datetime_type
 
 TYPE_NAMES = {

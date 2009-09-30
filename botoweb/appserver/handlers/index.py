@@ -18,16 +18,16 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from boto_web.appserver.handlers import RequestHandler
+from botoweb.appserver.handlers import RequestHandler
 from boto.utils import find_class
 from lxml import etree
 import copy
 
 import logging
-log = logging.getLogger("boto_web.handlers.db")
+log = logging.getLogger("botoweb.handlers.db")
 
 
-from boto_web.xmlize import TYPE_NAMES
+from botoweb.xmlize import TYPE_NAMES
 
 class IndexHandler(RequestHandler):
 	"""
@@ -43,7 +43,7 @@ class IndexHandler(RequestHandler):
 		"""List all our APIs,
 		as well as properties on each object we have."""
 		response.content_type = 'text/xml'
-		doc = etree.Element("Index", name=self.env.config.get("app", "name", "boto_web application"))
+		doc = etree.Element("Index", name=self.env.config.get("app", "name", "botoweb application"))
 		if request.user:
 			user_node = etree.SubElement(doc, "User", id=request.user.id)
 			etree.SubElement(user_node, "href").text = str("users/%s" % request.user.id)
@@ -54,7 +54,7 @@ class IndexHandler(RequestHandler):
 			for auth_group in request.user.auth_groups:
 				etree.SubElement(auth_node, "group", name=auth_group)
 
-		for route in self.env.config.get("boto_web", "handlers"):
+		for route in self.env.config.get("botoweb", "handlers"):
 			if route.get("name"):
 				model_name = route.get("name")
 				href = route['url'].strip('/')

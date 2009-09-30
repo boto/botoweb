@@ -1,6 +1,6 @@
 # Author: Chris Moyer
 # Exception classes
-from boto_web import status
+from botoweb import status
 from xml.dom.minidom import getDOMImplementation
 
 class HTTPException(Exception):
