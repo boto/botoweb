@@ -9,11 +9,13 @@ import logging
 log = logging.getLogger("botoweb")
 
 class Environment(object):
-	"""
-	botoweb Environment
-	"""
+	"""botoweb Environment"""
 
 	def __init__(self, module, env=None):
+		"""Initialize the Environment object
+		:param module: The Module that serves as the basis for this botoweb application
+		:param env: Optional environment file that overrides any settings in our config
+		"""
 		self.module = module
 		self._client_connection = None
 		if not env:
@@ -49,6 +51,10 @@ class Environment(object):
 			self.config['DB']['Session'] = {'db_name': self.config.get("session_db")}
 
 	def get_config(self, path):
+		"""Get configuration file at path
+		:param path: Location for the file to load
+		:type path: str
+		"""
 		config = {}
 		for cf in self.dist.resource_listdir(path):
 			if cf.endswith(".yaml"):
@@ -65,9 +71,7 @@ class Environment(object):
 		return config
 
 	def connect_client(self, host=None, port=None, enable_ssl=None):
-		"""
-		Client Connection caching
-		"""
+		"""Client Connection caching"""
 		if not self._client_connection and self.config.has_section("client"):
 			if not enable_ssl:
 				enable_ssl = bool(self.config.get("client", "enable_ssl", True))
