@@ -23,14 +23,14 @@ from boto.sdb.db import property
 from botoweb.resources.user import User
 
 class FilterRule(Model):
-    """
-    Filter Rule
-    """
-    user = property.ReferenceProperty(User)
-    path = property.StringProperty(default="*")
-    method = property.StringProperty(default="*")
+	"""
+	Filter Rule
+	"""
+	user = property.ReferenceProperty(User)
+	path = property.StringProperty(default="*")
+	method = property.StringProperty(default="*")
 
-    weight = property.IntegerProperty()
+	weight = property.IntegerProperty()
 
-    input_filter = property.BlobProperty()
-    output_filter = property.BlobProperty()
+	input_filter = property.BlobProperty()
+	output_filter = property.BlobProperty()

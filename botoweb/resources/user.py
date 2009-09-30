@@ -22,53 +22,53 @@ from boto.sdb.db.model import Model
 from boto.sdb.db import property
 
 class User(Model):
-    """
-    Simple user object
-    """
-    username = property.StringProperty(verbose_name="Username", unique=True)
-    name = property.StringProperty(verbose_name="Name")
-    email = property.StringProperty(verbose_name="Email Adress")
-    auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
-    password = property.PasswordProperty()
+	"""
+	Simple user object
+	"""
+	username = property.StringProperty(verbose_name="Username", unique=True)
+	name = property.StringProperty(verbose_name="Name")
+	email = property.StringProperty(verbose_name="Email Adress")
+	auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
+	password = property.PasswordProperty()
 
-    def __str__(self):
-        return self.name
+	def __str__(self):
+		return self.name
 
-    def notify(self, subject, body=''):
-        """
-        Send notification to this user
+	def notify(self, subject, body=''):
+		"""
+		Send notification to this user
 
-        @param subject: Subject for this notification
-        @type subject: str
+		@param subject: Subject for this notification
+		@type subject: str
 
-        @param body: The message to send you
-        @type body: str
-        """
-        from_string = boto.config.get('Notification', 'smtp_from', 'botoweb')
-        msgRoot = MIMEMultipart('related')
-        msgRoot['Subject'] = subject
-        msgRoot['From'] = from_string
-        msgRoot['To'] = self.email
-        msgRoot.preamble = 'This is a multi-part message in MIME format.'
-        if isinstance(body, MIMEMultipart):
-            msg = body
-        else:
-            msg = MIMEText(body, 'html')
+		@param body: The message to send you
+		@type body: str
+		"""
+		from_string = boto.config.get('Notification', 'smtp_from', 'botoweb')
+		msgRoot = MIMEMultipart('related')
+		msgRoot['Subject'] = subject
+		msgRoot['From'] = from_string
+		msgRoot['To'] = self.email
+		msgRoot.preamble = 'This is a multi-part message in MIME format.'
+		if isinstance(body, MIMEMultipart):
+			msg = body
+		else:
+			msg = MIMEText(body, 'html')
 
-        msgRoot.attach(msg)
+		msgRoot.attach(msg)
 
-        smtp_host = boto.config.get('Notification', 'smtp_host', 'localhost')
-        server = smtplib.SMTP(smtp_host)
-        smtp_user = boto.config.get('Notification', 'smtp_user', '')
-        smtp_pass = boto.config.get('Notification', 'smtp_pass', '')
-        if smtp_user:
-            server.login(smtp_user, smtp_pass)
-        server.sendmail(from_string, self.email, msgRoot.as_string())
-        server.quit()
+		smtp_host = boto.config.get('Notification', 'smtp_host', 'localhost')
+		server = smtplib.SMTP(smtp_host)
+		smtp_user = boto.config.get('Notification', 'smtp_user', '')
+		smtp_pass = boto.config.get('Notification', 'smtp_pass', '')
+		if smtp_user:
+			server.login(smtp_user, smtp_pass)
+		server.sendmail(from_string, self.email, msgRoot.as_string())
+		server.quit()
 
 
-    def has_auth_group(self, group):
-        return (group in self.auth_groups)
+	def has_auth_group(self, group):
+		return (group in self.auth_groups)
 
-    def has_auth_group_ctx(self, ctx, group):
-        return (group in self.auth_groups)
+	def has_auth_group_ctx(self, ctx, group):
+		return (group in self.auth_groups)

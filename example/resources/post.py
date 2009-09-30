@@ -25,10 +25,10 @@ from boto.sdb.db import property
 from botoweb.resources.user import User
 
 class Post(Model):
-    """
-    Representation of a blog post
-    """
-    title = property.StringProperty(verbose_name="Title")
-    date = property.DateTimeProperty(auto_now_add=True)
-    author = property.ReferenceProperty(User, collection_name="posts")
-    contents = property.BlobProperty(verbose_name="Entry")
+	"""
+	Representation of a blog post
+	"""
+	title = property.StringProperty(verbose_name="Title")
+	date = property.DateTimeProperty(auto_now_add=True)
+	author = property.ReferenceProperty(User, collection_name="posts")
+	contents = property.BlobProperty(verbose_name="Entry")

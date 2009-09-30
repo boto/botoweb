@@ -20,18 +20,18 @@
 # IN THE SOFTWARE.
 
 def start(app, env=None, port=8080, hostname="localhost"):
-    """
-    Start up a server hosting this application
-    Optionally, you can pass in the name of the environment
-    file relative to this application
-    """
-    from botoweb.environment import Environment
-    e = Environment(app, env)
-    import boto
-    boto.config = e.config
-    from paste import httpserver
-    from botoweb.appserver.url_mapper import URLMapper
-    from botoweb.appserver.filter_mapper import FilterMapper
-    mapper = FilterMapper(app=URLMapper(e), env=e)
-    
-    httpserver.serve(mapper, host=hostname, port=int(port))
+	"""
+	Start up a server hosting this application
+	Optionally, you can pass in the name of the environment
+	file relative to this application
+	"""
+	from botoweb.environment import Environment
+	e = Environment(app, env)
+	import boto
+	boto.config = e.config
+	from paste import httpserver
+	from botoweb.appserver.url_mapper import URLMapper
+	from botoweb.appserver.filter_mapper import FilterMapper
+	mapper = FilterMapper(app=URLMapper(e), env=e)
+	
+	httpserver.serve(mapper, host=hostname, port=int(port))

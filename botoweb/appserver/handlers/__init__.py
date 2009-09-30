@@ -23,45 +23,45 @@ log = logging.getLogger("botoweb.appserver.handlers")
 
 
 class RequestHandler(object):
-    """
-    Simple Request Handler,
-    The request handler is created only 
-    once so we can handle caching.
-    """
-    allowed_methods = ['get', 'post', 'head','put', 'delete', 'options']
+	"""
+	Simple Request Handler,
+	The request handler is created only 
+	once so we can handle caching.
+	"""
+	allowed_methods = ['get', 'post', 'head','put', 'delete', 'options']
 
-    def __init__(self, env, config={}):
-        """Set up the environment and local config"""
-        self.env = env
-        self.config = config
+	def __init__(self, env, config={}):
+		"""Set up the environment and local config"""
+		self.env = env
+		self.config = config
 
-    def __call__(self, request, response, obj_id):
-        """Execute this handler based on the request passed in"""
-        method = request.method.lower()
-        if method in self.allowed_methods:
-            method = getattr(self, "_%s" % method)
-            return method(request, response, obj_id)
-        else:
-            raise BadRequest(description="Unknown Method: %s" % request.method)
+	def __call__(self, request, response, obj_id):
+		"""Execute this handler based on the request passed in"""
+		method = request.method.lower()
+		if method in self.allowed_methods:
+			method = getattr(self, "_%s" % method)
+			return method(request, response, obj_id)
+		else:
+			raise BadRequest(description="Unknown Method: %s" % request.method)
 
-    def _options(self, request, response, id=None):
-        """OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header"""
-        response.headers['Allow'] = ", ".join(map(str.upper, self.allowed_methods))
-        response.content_length = 0
-        response.set_status(200)
-        return response
+	def _options(self, request, response, id=None):
+		"""OPTIONS as per the RFC2616 specification, requires that we send any and all allowed methods in an allow header"""
+		response.headers['Allow'] = ", ".join(map(str.upper, self.allowed_methods))
+		response.content_length = 0
+		response.set_status(200)
+		return response
 
-    def _get(self, request, response, id=None):
-        raise NotImplemented()
+	def _get(self, request, response, id=None):
+		raise NotImplemented()
 
-    def _post(self, request, response, id=None):
-        raise NotImplemented()
-    
-    def _head(self, request, response, id=None):
-        raise NotImplemented()
+	def _post(self, request, response, id=None):
+		raise NotImplemented()
+	
+	def _head(self, request, response, id=None):
+		raise NotImplemented()
 
-    def _put(self, request, response, id=None):
-        raise NotImplemented()
+	def _put(self, request, response, id=None):
+		raise NotImplemented()
 
-    def _delete(self, request, response, id=None):
-        raise NotImplemented()
+	def _delete(self, request, response, id=None):
+		raise NotImplemented()

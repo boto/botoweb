@@ -23,85 +23,85 @@ from botoweb.client.query import Query
 import logging
 log = logging.getLogger("botoweb.client")
 class ClientObject(object):
-    """
-    botoweb Client Object to interface via REST to our
-    XML server
-    """
-    _properties = []
+	"""
+	botoweb Client Object to interface via REST to our
+	XML server
+	"""
+	_properties = []
 
-    def __init__(self, env, id=None, **params):
-        """
-        Initialize the Client Object with a given environment
-        Additional arguments may be passed to set them immediately on the newly 
-        created object
+	def __init__(self, env, id=None, **params):
+		"""
+		Initialize the Client Object with a given environment
+		Additional arguments may be passed to set them immediately on the newly 
+		created object
 
-        @param env: The botoweb.environment.Environment object to use
-        @type env: botoweb.environment.Environment
+		@param env: The botoweb.environment.Environment object to use
+		@type env: botoweb.environment.Environment
 
-        @param id: The ID to use for this object
-        @type id: str
-        """
-        self._env = env
-        self.id = id
-        for k in params:
-            setattr(self, k, params[k])
+		@param id: The ID to use for this object
+		@type id: str
+		"""
+		self._env = env
+		self.id = id
+		for k in params:
+			setattr(self, k, params[k])
 
-    @classmethod
-    def all(cls, env):
-        """
-        List all objects
+	@classmethod
+	def all(cls, env):
+		"""
+		List all objects
 
-        @param env: The botoweb.environment.Environment object to use
-        @type env: botoweb.environment.Environment
-        """
-        return cls.query(env, [])
+		@param env: The botoweb.environment.Environment object to use
+		@type env: botoweb.environment.Environment
+		"""
+		return cls.query(env, [])
 
-    @classmethod
-    def find(cls, env, **params):
-        """
-        Simple search method.
+	@classmethod
+	def find(cls, env, **params):
+		"""
+		Simple search method.
 
-        @param env: The botoweb.environment.Environment object to use
-        @type env: botoweb.environment.Environment
+		@param env: The botoweb.environment.Environment object to use
+		@type env: botoweb.environment.Environment
 
-        @param **params: Parameters to search for, passed in standard key=value pairs
-        """
-        filters = []
-        for k in params:
-            filters.append((k, "=", params[k]))
-        return cls.query(env, filters)
+		@param **params: Parameters to search for, passed in standard key=value pairs
+		"""
+		filters = []
+		for k in params:
+			filters.append((k, "=", params[k]))
+		return cls.query(env, filters)
 
-    @classmethod
-    def query(cls, env, filters):
-        """
-        Search for objects
+	@classmethod
+	def query(cls, env, filters):
+		"""
+		Search for objects
 
-        @param env: The botoweb.environment.Environment object to use
-        @type env: botoweb.environment.Environment
+		@param env: The botoweb.environment.Environment object to use
+		@type env: botoweb.environment.Environment
 
-        @param filters: Filters to apply to the search, formatted as [(key, op, value), (key, op, [value, value])]
-             values, if a list, are considered OR searches, whereas filters are normally AND operations.
-        @type filters: [(key, op, value), (key2, op2, [value2, value3, ..])]
-        """
-        return Query(cls, env, filters)
+		@param filters: Filters to apply to the search, formatted as [(key, op, value), (key, op, [value, value])]
+			 values, if a list, are considered OR searches, whereas filters are normally AND operations.
+		@type filters: [(key, op, value), (key2, op2, [value2, value3, ..])]
+		"""
+		return Query(cls, env, filters)
 
-    @classmethod
-    def get_by_id(cls, env, id):
-        """
-        GET for object ID
+	@classmethod
+	def get_by_id(cls, env, id):
+		"""
+		GET for object ID
 
-        @param env: The botoweb.client.environment.Environment object to use
-        @type env: botoweb.client.environment.Environment
+		@param env: The botoweb.client.environment.Environment object to use
+		@type env: botoweb.client.environment.Environment
 
-        @param id: The ID of the object to get
-        @type id: str
-        """
-        return env.get_by_id(cls, id)
+		@param id: The ID of the object to get
+		@type id: str
+		"""
+		return env.get_by_id(cls, id)
 
-    def __call__(self):
-        """A little trick to make this object act as if it could be callable like a class"""
-        return self.__class__(self._env)
+	def __call__(self):
+		"""A little trick to make this object act as if it could be callable like a class"""
+		return self.__class__(self._env)
 
-    def put(self):
-        """PUT this object (save)"""
-        return self._env.save(self)
+	def put(self):
+		"""PUT this object (save)"""
+		return self._env.save(self)

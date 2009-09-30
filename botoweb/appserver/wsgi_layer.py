@@ -32,82 +32,82 @@ log = logging.getLogger("botoweb.wsgi_layer")
 import re
 
 class WSGILayer(object):
-    """
-    Base WSGI Layer. This simply gives us an additional
-    few functions that allow this object to be called as a function,
-    but also allows us to chain them together without having to re-build
-    the request/response objects
-    """
+	"""
+	Base WSGI Layer. This simply gives us an additional
+	few functions that allow this object to be called as a function,
+	but also allows us to chain them together without having to re-build
+	the request/response objects
+	"""
 
-    def __init__(self, env, app=None):
-        """
-        Initialize this WSGI layer.
+	def __init__(self, env, app=None):
+		"""
+		Initialize this WSGI layer.
 
-        @param env: A botoweb environment object that represents what we're running in
-        @type env: botoweb.environment.Environment
+		@param env: A botoweb environment object that represents what we're running in
+		@type env: botoweb.environment.Environment
 
-        @param app: An optional WSGI layer that this layer is on top of.
-        @type app: WSGILayer
+		@param app: An optional WSGI layer that this layer is on top of.
+		@type app: WSGILayer
 
-        """
-        self.app = app
-        self.update(env)
+		"""
+		self.app = app
+		self.update(env)
 
-    def __call__(self, environ, start_response):
-        """
-        Handles basic one-time-only WSGI setup, and handles
-        error catching.
-        """
-        # This is a god aweful hack because HTTPlib is NOT threadsafe
-        # we essentially have to re-connect to SDB for every thread we're in
-        # which must be set up in each model object loaded
-        from boto.sdb.db.model import Model
-        from boto.sdb.db.manager import get_manager
-        for cls in Model.__sub_classes__:
-            cls._manager = get_manager(cls)
+	def __call__(self, environ, start_response):
+		"""
+		Handles basic one-time-only WSGI setup, and handles
+		error catching.
+		"""
+		# This is a god aweful hack because HTTPlib is NOT threadsafe
+		# we essentially have to re-connect to SDB for every thread we're in
+		# which must be set up in each model object loaded
+		from boto.sdb.db.model import Model
+		from boto.sdb.db.manager import get_manager
+		for cls in Model.__sub_classes__:
+			cls._manager = get_manager(cls)
 
-        resp = Response()
-        try:
-            req = Request(environ)
-            resp = self.handle(req, resp)
-        except HTTPRedirect, e:
-            resp.set_status(e.code)
-            resp.headers['Location'] = str(e.url)
-            resp = self.format_exception(e, resp)
-        except Unauthorized, e:
-            resp.set_status(e.code)
-            resp.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
-            resp = self.format_exception(e, resp)
-        except HTTPException, e:
-            resp.set_status(e.code)
-            resp = self.format_exception(e, resp)
-        except Exception, e:
-            content = InternalServerError(message=e.message)
-            resp.set_status(content.code)
-            log.critical(traceback.format_exc())
-            resp = self.format_exception(content, resp)
+		resp = Response()
+		try:
+			req = Request(environ)
+			resp = self.handle(req, resp)
+		except HTTPRedirect, e:
+			resp.set_status(e.code)
+			resp.headers['Location'] = str(e.url)
+			resp = self.format_exception(e, resp)
+		except Unauthorized, e:
+			resp.set_status(e.code)
+			resp.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
+			resp = self.format_exception(e, resp)
+		except HTTPException, e:
+			resp.set_status(e.code)
+			resp = self.format_exception(e, resp)
+		except Exception, e:
+			content = InternalServerError(message=e.message)
+			resp.set_status(content.code)
+			log.critical(traceback.format_exc())
+			resp = self.format_exception(content, resp)
 
-        return resp(environ, start_response)
+		return resp(environ, start_response)
 
-    def format_exception(self, e, resp):
-        resp.clear()
-        resp.set_status(e.code)
-        resp.content_type = "text/xml"
-        e.to_xml().writexml(resp)
-        return resp
+	def format_exception(self, e, resp):
+		resp.clear()
+		resp.set_status(e.code)
+		resp.content_type = "text/xml"
+		e.to_xml().writexml(resp)
+		return resp
 
-    def update(self, env):
-        """
-        Update this layer to use a new environment. Minimally
-        this will set "self.env = env", but for specific layers
-        you may have to undate or invalidate your cache
-        """
-        self.env = env
+	def update(self, env):
+		"""
+		Update this layer to use a new environment. Minimally
+		this will set "self.env = env", but for specific layers
+		you may have to undate or invalidate your cache
+		"""
+		self.env = env
 
-    def handle(self, req, response):
-        """
-        This is the function that is called when chainging WSGI layers
-        together, it has the request and response objects passed
-        into it so they are not re-created.
-        """
-        return self.app.handle(req, response)
+	def handle(self, req, response):
+		"""
+		This is the function that is called when chainging WSGI layers
+		together, it has the request and response objects passed
+		into it so they are not re-created.
+		"""
+		return self.app.handle(req, response)

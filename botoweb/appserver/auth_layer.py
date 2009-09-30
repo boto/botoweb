@@ -34,43 +34,43 @@ import re
 
 from botoweb.appserver.wsgi_layer import WSGILayer
 class AuthLayer(WSGILayer):
-    """
-    Authentication/Authorization layer
-    This only handles authorization on a macro level, it 
-    will prevent users from getting to specific paths based on 
-    groups, or just simply limit a path to require you to be logged
-    in to get to it.
-    """
+	"""
+	Authentication/Authorization layer
+	This only handles authorization on a macro level, it 
+	will prevent users from getting to specific paths based on 
+	groups, or just simply limit a path to require you to be logged
+	in to get to it.
+	"""
 
-    def handle(self, req, response):
-        auth = self.get_auth_config(req.path)
-        if auth:
-            log.info("Checking auth: %s" % auth)
-            if not req.user:
-                raise Unauthorized()
-            elif auth.has_key("group") and not req.user.has_auth_group(auth['group']):
-                raise Unauthorized()
-        if self.app:
-            response = self.app.handle(req, response)
-        return response
+	def handle(self, req, response):
+		auth = self.get_auth_config(req.path)
+		if auth:
+			log.info("Checking auth: %s" % auth)
+			if not req.user:
+				raise Unauthorized()
+			elif auth.has_key("group") and not req.user.has_auth_group(auth['group']):
+				raise Unauthorized()
+		if self.app:
+			response = self.app.handle(req, response)
+		return response
 
-    def get_auth_config(self, path):
-        """
-        Get the auth config for this path
-        """
-        log.info("Get Auth Config: %s" % (path))
-        match = None
-        if not self.env.config.has_key('botoweb'):
-            return None
-        for rule in self.env.config.get("botoweb", "auth", []):
-            if rule.has_key("url"):
-                if not re.match(rule['url'], path):
-                    continue
-            if rule.has_key("method"):
-                if rule['method'] != method:
-                    continue
-            match = rule
-            break
-        return match
+	def get_auth_config(self, path):
+		"""
+		Get the auth config for this path
+		"""
+		log.info("Get Auth Config: %s" % (path))
+		match = None
+		if not self.env.config.has_key('botoweb'):
+			return None
+		for rule in self.env.config.get("botoweb", "auth", []):
+			if rule.has_key("url"):
+				if not re.match(rule['url'], path):
+					continue
+			if rule.has_key("method"):
+				if rule['method'] != method:
+					continue
+			match = rule
+			break
+		return match
 
 

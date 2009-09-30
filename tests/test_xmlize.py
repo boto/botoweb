@@ -22,23 +22,23 @@
 from botoweb import xmlize
 
 class ObjectTest(object):
-    """Test Object to dump/load from XML"""
-    pass
+	"""Test Object to dump/load from XML"""
+	pass
 
 class TestXMLize(object):
-    """Test the xmlize package serializing and de-serializing XML"""
+	"""Test the xmlize package serializing and de-serializing XML"""
 
-    def test_str(self):
-        """Test encoding a string"""
-        xmlize.register(ObjectTest)
-        obj = ObjectTest()
-        obj.foo = "bar"
-        obj.name = "Bizzle"
-        obj.id = "12345"
-        sr = xmlize.dumps(obj)
-        obj2 = xmlize.loads(sr)
+	def test_str(self):
+		"""Test encoding a string"""
+		xmlize.register(ObjectTest)
+		obj = ObjectTest()
+		obj.foo = "bar"
+		obj.name = "Bizzle"
+		obj.id = "12345"
+		sr = xmlize.dumps(obj)
+		obj2 = xmlize.loads(sr)
 
 
-        assert obj2.foo == obj.foo
-        assert obj2.name == obj.name
-        assert obj2.id == obj.id
+		assert obj2.foo == obj.foo
+		assert obj2.name == obj.name
+		assert obj2.id == obj.id

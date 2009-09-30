@@ -27,58 +27,58 @@ from botoweb.client.sax_handler import ObjectHandler
 import logging
 log = logging.getLogger("botoweb.client")
 class Query(object):
-    """
-    Query object iterator
-    """
-    ALLOWED_EXPRESSIONS = ["=", "!=", ">", ">=", "<", "<=", "like", "not like", "between", "is null", "is not null"]
+	"""
+	Query object iterator
+	"""
+	ALLOWED_EXPRESSIONS = ["=", "!=", ">", ">=", "<", "<=", "like", "not like", "between", "is null", "is not null"]
 
-    def __init__(self, model_class, env, filters=[], limit=None, sort_by=None):
-        self.model_class = model_class
-        self.env = env
-        self.filters = filters
-        self.limit = limit
-        self.sort_by = sort_by
+	def __init__(self, model_class, env, filters=[], limit=None, sort_by=None):
+		self.model_class = model_class
+		self.env = env
+		self.filters = filters
+		self.limit = limit
+		self.sort_by = sort_by
 
-    def filter(self, key, op, value):
-        """
-        Add a filter to this query
+	def filter(self, key, op, value):
+		"""
+		Add a filter to this query
 
-        @param key: Key to filter on
-        @param op: Operator to use
-        @param value: Value, or list of values, to filter on
-        """
-        assert op in self.ALLOWED_EXPRESSIONS
-        self.filters.append((key, op, value))
-        return self
+		@param key: Key to filter on
+		@param op: Operator to use
+		@param value: Value, or list of values, to filter on
+		"""
+		assert op in self.ALLOWED_EXPRESSIONS
+		self.filters.append((key, op, value))
+		return self
 
-    def order(self, key):
-        """
-        Sort by this key
-        """
-        self.sort_by = key
-        return self
+	def order(self, key):
+		"""
+		Sort by this key
+		"""
+		self.sort_by = key
+		return self
 
-    def to_xml(self, doc=None):
-        """
-        XML serialize this query
-        """
-        if doc == None:
-            doc = etree.Element("%sList" % self.model_class.__name__)
-        for obj in self:
-            obj.to_xml(doc)
-        return doc
+	def to_xml(self, doc=None):
+		"""
+		XML serialize this query
+		"""
+		if doc == None:
+			doc = etree.Element("%sList" % self.model_class.__name__)
+		for obj in self:
+			obj.to_xml(doc)
+		return doc
 
-    def __iter__(self):
-        self.env.register(self.model_class(self.env), self.model_class.__name__)
-        return iter(self.env.find(self.model_class, self.filters, self.sort_by, self.limit))
+	def __iter__(self):
+		self.env.register(self.model_class(self.env), self.model_class.__name__)
+		return iter(self.env.find(self.model_class, self.filters, self.sort_by, self.limit))
 
-    def __call__(self):
-        """Nifty little trick to allow this to be treaded like a class
-        when we're being de-xmlized"""
-        return self
+	def __call__(self):
+		"""Nifty little trick to allow this to be treaded like a class
+		when we're being de-xmlized"""
+		return self
 
-    def next(self):
-        return self.__iter__().next()
+	def next(self):
+		return self.__iter__().next()
 
-    def count(self):
-        return 0
+	def count(self):
+		return 0
