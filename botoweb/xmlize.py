@@ -42,6 +42,19 @@ class DefaultObject(object):
 	id = None
 	__name__ = None
 
+class ProxyObject(object):
+	"""Proxy object so we're not setting up an actual object,
+	we simply have the __name__ set to the name of this object type,
+	and we set the __model_class__ to the model_class for this object.
+	all other properties set are actual properties explicitly set in
+	the XML.
+
+	We also set __id__ if it's set in the "id=" attribute
+	"""
+	__name__ = None
+	__model_class__ = None
+	__id__ = None
+
 from lxml import etree
 class XMLSerializer(object):
 	"""XML Serializer object"""
@@ -151,10 +164,17 @@ class XMLSerializer(object):
 
 	def decode(self, node):
 		"""Decode this node into an object or list of objects"""
-		if node.tag in REGISTERED_CLASSES.keys():
-			model_class = REGISTERED_CLASSES[node.tag]
-			obj = model_class()
-			obj.id = node.get("id")
+		if node.tag.endswith("List"):
+			return [self.decode(x) for x in node]
+		else:
+			obj = ProxyObject()
+			obj.__name__ = node.tag
+			obj.__id__ = node.get("id")
+
+			if node.tag in REGISTERED_CLASSES.keys():
+				model_class = REGISTERED_CLASSES[node.tag]
+				obj.__model_class__ = model_class()
+
 			props = {}
 			for prop in node:
 				value = None
@@ -185,8 +205,6 @@ class XMLSerializer(object):
 					val = val[0]
 				setattr(obj, prop_name, val)
 			return obj
-		elif node.tag.endswith("List"):
-			return [self.decode(x) for x in node]
 
 
 	def decode_string(self, node):

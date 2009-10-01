@@ -98,7 +98,7 @@ class DBHandler(RequestHandler):
 				raise Conflict("Object %s already exists" % id)
 
 		new_obj = xmlize.loads(request.body)
-		new_obj.id = id
+		new_obj.__id__ = id
 		obj = self.create(new_obj, request.user)
 		response.set_status(201)
 		response.headers['Location'] = obj.id
@@ -117,9 +117,9 @@ class DBHandler(RequestHandler):
 
 		new_obj = xmlize.loads(request.body)
 		props = {}
-		for prop in dir(new_obj):
+		for prop in new_obj.__dict__:
 			prop_value = getattr(new_obj, prop)
-			if not prop.startswith("_") and not prop == "id" and not type(prop_value) == type(self._put):
+			if not prop.startswith("_"):
 				props[prop] = prop_value
 		content =  self.update(obj, props, request.user)
 
@@ -207,15 +207,26 @@ class DBHandler(RequestHandler):
 		return query
 
 	def create(self, obj, user):
+		"""Create an object in the DB
+		:param obj: an object with all the properties to create
+		:type obj: botoweb.xmlize.ProxyObject
+		:param user: The user doing the creation
+		:type user: User
 		"""
-		Create an object in the DB
-		@param obj: The object to create
-		@type obj: self.db_class
-		@param user: The user doing the creation
-		@type user: User
-		"""
-		obj.put()
-		return obj
+		if obj.__model_class__:
+			newobj = obj.__model_class__()
+		else:
+			newobj = self.db_class()
+		if not isinstance(newobj, self.db_class):
+			raise BadRequest("Object you passed in isn't of a type this handler understands!")
+		for prop in obj.__dict__:
+			if not prop.startswith("_"):
+				prop_value = getattr(obj, prop)
+				try:
+					setattr(newobj, prop, prop_value)
+				except Exception, e:
+					raise BadRequest("Invalid value for %s" % prop)
+		return newobj
 
 	def read(self, id, user):
 		"""
