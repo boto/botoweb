@@ -19,7 +19,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-
 //
 // Javascript API for boto_web searching
 //
@@ -275,11 +274,11 @@ var boto_web = {
 				};
 				self.routes.push(route);
 				// Init this model object
-				route_obj = new boto_web.ModelMeta(self.base_url + route.href, route.obj);
+				route_obj = new boto_web.ModelMeta(self.base_url + route.href, route.obj, this);
 				eval("self.models." + route.obj + " = route_obj");
 			});
 			// Set our user object
-			$(xml).find("user").each(function(){
+			$(xml).find("User").each(function(){
 				var obj = boto_web.parseObject(this);
 				if(obj.length > 0){
 					self.user = obj;
@@ -293,16 +292,18 @@ var boto_web = {
 	// Base model object
 	// This shouldn't ever be called directly
 	//
-	ModelMeta: function(href, name){
+	ModelMeta: function(href, name, api){
 		mm = this;
 		this.href = href;
 		this.name = name;
+		this.api = api;
 		this.find = function(filters, fnc){
+			var self = this;
 			boto_web.find(this.href, filters, this.name, function(data){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
-						objects[x] = new boto_web.Model(mm.href, data[x]);
+						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
 					}
 					fnc(objects);
 				}
@@ -310,11 +311,12 @@ var boto_web = {
 		}
 
 		this.query = function(query, fnc){
+			var self = this;
 			boto_web.query(this.href, query, function(data){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
-						objects[x] = new boto_web.Model(mm.href, data[x]);
+						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
 					}
 					fnc(objects);
 				}
@@ -325,9 +327,10 @@ var boto_web = {
 		}
 
 		this.get = function(id, fnc){
-			boto_web.get_by_id(this.href, id, function(obj){
+			var self = this;
+			boto_web.get_by_id(self.href, id, function(obj){
 				if(obj){
-					fnc(new boto_web.Model(this.href, obj));
+					fnc(new boto_web.Model(self.href, self.name, obj));
 				}
 			});
 		}
@@ -355,8 +358,9 @@ var boto_web = {
 	//
 	// Model wrapper
 	//
-	Model: function(href, properties){
+	Model: function(href, name, properties){
 		this.href = href;
+		this.name = name;
 		this.properties = properties;
 		this.id = properties.id;
 	},
@@ -382,6 +386,7 @@ var boto_web = {
 			// Pull attributes from the property node
 			var map = {
 				name: 'name',
+				type: 'type',
 				maxlength: 'max_length',
 				min_value: 'min',
 				max_value: 'max'
@@ -394,8 +399,8 @@ var boto_web = {
 
 			// Pull text content of children of the property node
 			map = {
-				label: 'description',
-				default_value: 'default'
+				_label: 'description',
+				_default_value: 'default'
 			};
 
 			for (var i in map) {
@@ -432,7 +437,6 @@ var boto_web = {
 	// href: the location of the API root
 	//
 	init: function(href){
-		$("div#home").hide();
 		boto_web.env = new boto_web.Environment(href, boto_web.ui.init);
 	}
 };
