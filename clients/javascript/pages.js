@@ -45,7 +45,7 @@
 						previousHref: strPrevLocation,
 						previousHash: fnCleanHash( strPrevHash )
 					}
-					);
+				);
 
 			}
 		}
@@ -62,25 +62,28 @@
 // Author: Chris Moyer
 //
 var currentPage = null;
-function setPage(page_args){
-	var original_args = page_args;
-	page_args = page_args.split("/");
-	if(page_args.length > 1){
-		page_args.shift();
-		page_name = page_args.shift();
-		if(page_name != currentPage){
+function setPage(href, old_href){
+	var sub_href = '';
+	if (href.indexOf(old_href) >= 0) {
+		sub_href = href.replace(old_href, '');
+		href = old_href;
+	}
+
+	if(href){
+		if(href != currentPage){
 			$(".page").hide();
-			$(".page#"+page_name).show().trigger("load");
-			currentPage = page_name;
+			$(".page#"+href.replace(/\//g, '_')).show().trigger("load");
+			currentPage = href + sub_href;
 
 			$(".boto_web .header .nav a").removeClass('active');
-			$(".boto_web .header .nav a[href=#" + original_args + "]").addClass('active');
+			$(".boto_web .header .nav a[href=#" + href + "]").addClass('active');
 		}
-		// Load the sub page, if present
-		sub_page_name = page_args.shift() || 'main';
-		$(".content").hide();
-		$(".content#"+page_name + "_" + sub_page_name).show().trigger("load", page_args);
 	}
+
+	sub_href = sub_href || '/main';
+
+	$(".content").hide();
+	$(".content#"+href.replace(/\//g, '_') + sub_href.replace(/\//g, '_')).show().trigger("load", href);
 }
 
 //
@@ -90,6 +93,6 @@ function setPage(page_args){
 $(window.location).bind(
 	"change",
 	function(objEvent, objData){
-		setPage(objData.currentHash);
+		setPage(objData.currentHash, objData.previousHash);
 	}
 );
