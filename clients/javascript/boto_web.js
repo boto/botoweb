@@ -252,7 +252,7 @@ var boto_web = {
 		// jQuery does while doing ajax processing, if
 		// we ever need to refer to the Environment
 		// object, we use "self"
-		self = this;
+		var self = this;
 		self.base_url = base_url;
 		self.user = null;
 		self.routes = [];
@@ -264,18 +264,16 @@ var boto_web = {
 		$.get(self.base_url, function(xml){
 			// Setup our name
 			self.name = $(xml).find("Index").attr("name");
-			// Set our APIs
-			self.apis = $(xml).find('api').map(function(){ return new boto_web.API(this) });
-			// Set our routes
-			$.each(self.apis, function(){
+			// Set our routes and model APIs
+			$(xml).find('api').map(function(){
+				var mm = new boto_web.ModelMeta(this);
 				var route = {
-					href: this.href,
-					obj: this.name
+					href: mm.href,
+					obj: mm.name
 				};
+				mm.href = mm.href;
 				self.routes.push(route);
-				// Init this model object
-				route_obj = new boto_web.ModelMeta(self.base_url + route.href, route.obj, this);
-				eval("self.models." + route.obj + " = route_obj");
+				eval("self.models." + mm.name + " = mm");
 			});
 			// Set our user object
 			$(xml).find("User").each(function(){
@@ -292,83 +290,7 @@ var boto_web = {
 	// Base model object
 	// This shouldn't ever be called directly
 	//
-	ModelMeta: function(href, name, api){
-		mm = this;
-		this.href = href;
-		this.name = name;
-		this.api = api;
-		this.find = function(filters, fnc){
-			var self = this;
-			boto_web.find(this.href, filters, this.name, function(data){
-				if(fnc){
-					var objects = [];
-					for(var x=0; x < data.length; x++){
-						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
-					}
-					fnc(objects);
-				}
-			});
-		}
-
-		this.query = function(query, fnc){
-			var self = this;
-			boto_web.query(this.href, query, function(data){
-				if(fnc){
-					var objects = [];
-					for(var x=0; x < data.length; x++){
-						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
-					}
-					fnc(objects);
-				}
-			});
-		}
-		this.all = function(fnc){
-			return this.find([], fnc);
-		}
-
-		this.get = function(id, fnc){
-			var self = this;
-			boto_web.get_by_id(self.href, id, function(obj){
-				if(obj){
-					fnc(new boto_web.Model(self.href, self.name, obj));
-				}
-			});
-		}
-
-		this.save = function(data, fnc){
-			ref = this.href;
-			method = "POST";
-			if("id" in data){
-				ref += ("/" + data['id']);
-				delete(data['id']);
-				method = "PUT";
-			}
-			return boto_web.save(ref, this.name, data, method, fnc);
-		}
-
-		//
-		// Delete this object
-		//
-		this.del = function(id, fnc){
-			ref = this.href;
-			return boto_web.del(ref + "/" + id, fnc);
-		}
-
-	},
-	//
-	// Model wrapper
-	//
-	Model: function(href, name, properties){
-		this.href = href;
-		this.name = name;
-		this.properties = properties;
-		this.id = properties.id;
-	},
-
-	//
-	// Parses XML for a specific API.
-	//
-	API: function(xml) {
+	ModelMeta: function(xml){
 		var self = this;
 		xml = $(xml);
 
@@ -386,7 +308,7 @@ var boto_web = {
 			// Pull attributes from the property node
 			var map = {
 				name: 'name',
-				type: 'type',
+				_type: 'type',
 				maxlength: 'max_length',
 				min_value: 'min',
 				max_value: 'max'
@@ -425,6 +347,73 @@ var boto_web = {
 
 			return property;
 		});
+
+		this.find = function(filters, fnc){
+			var self = this;
+			boto_web.find(boto_web.env.base_url + this.href, filters, this.name, function(data){
+				if(fnc){
+					var objects = [];
+					for(var x=0; x < data.length; x++){
+						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
+					}
+					fnc(objects);
+				}
+			});
+		}
+
+		this.query = function(query, fnc){
+			var self = this;
+			boto_web.query(boto_web.env.base_url + this.href, query, function(data){
+				if(fnc){
+					var objects = [];
+					for(var x=0; x < data.length; x++){
+						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
+					}
+					fnc(objects);
+				}
+			});
+		}
+		this.all = function(fnc){
+			return this.find([], fnc);
+		}
+
+		this.get = function(id, fnc){
+			var self = this;
+			boto_web.get_by_id(boto_web.env.base_url + self.href, id, function(obj){
+				if(obj){
+					fnc(new boto_web.Model(self.href, self.name, obj));
+				}
+			});
+		}
+
+		this.save = function(data, fnc){
+			ref = boto_web.env.base_url + this.href;
+			method = "POST";
+			if("id" in data){
+				ref += ("/" + data['id']);
+				delete(data['id']);
+				method = "PUT";
+			}
+			return boto_web.save(ref, this.name, data, method, fnc);
+		}
+
+		//
+		// Delete this object
+		//
+		this.del = function(id, fnc){
+			ref = this.href;
+			return boto_web.del(ref + "/" + id, fnc);
+		}
+
+	},
+	//
+	// Model wrapper
+	//
+	Model: function(href, name, properties){
+		this.href = href;
+		this.name = name;
+		this.properties = properties;
+		this.id = properties.id;
 	},
 
 	//
