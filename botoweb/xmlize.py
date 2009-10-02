@@ -173,7 +173,7 @@ class XMLSerializer(object):
 
 			if node.tag in REGISTERED_CLASSES.keys():
 				model_class = REGISTERED_CLASSES[node.tag]
-				obj.__model_class__ = model_class()
+				obj.__model_class__ = model_class
 
 			props = {}
 			for prop in node:
