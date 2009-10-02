@@ -43,3 +43,13 @@ border-color: #e5e5e5;
 background: #fff;
 border-color: #ddd;
 }
+
+.boto_web label {
+float: left;
+clear: both;
+width: 150px;
+}
+
+.boto_web .field_container {
+float: left;
+}

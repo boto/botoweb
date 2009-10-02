@@ -26,6 +26,10 @@ p {
 	padding: .5em 0;
 }
 
+input, select, textarea {
+	border: 1px inset #aaa;
+}
+
 h1 { font-size: 1.8em; }
 h2 { font-size: 1.6em; }
 h3 { font-size: 1.4em; }
@@ -39,6 +43,7 @@ background: #357;
 color: #eef;
 font-weight: bold;
 padding: 2px 5px;
+border: 0;
 -moz-border-radius: 10px;
 border-radius: 10px;
 margin: 5px;
@@ -47,4 +52,8 @@ margin: 5px;
 .button:hover, button:hover {
 background: #246;
 color: #fff;
+}
+
+.clear {
+clear: both;
 }
