@@ -37,57 +37,79 @@ boto_web.ui = {
 			.appendTo(self.node);
 
 		self.pages = {};
-		// Merge homepage as a generated false API
-		$.each($.merge([{href: 'home', name: 'Home', home: 1}], env.apis), function() {
-			this.page = new boto_web.ui.Section(this, env);
+
+		// Merge homepage as a generated false model
+		$.each($.merge([{obj: {href: 'home', name: 'Home', home: 1}}], env.routes), function() {
+			var model = this.obj;
+
+			if (typeof this.obj == 'string')
+				model = env.models[this.obj];
+
+			model.page = new boto_web.ui.Section(model, env);
 			$('<a/>')
-				.attr({href: '#' + this.page.href})
-				.text(this.name)
+				.attr({href: '#' + this.href})
+				.text(model.name)
 				.appendTo($('<li/>').appendTo(self.nav));
 
-			self.pages[this.href] = this.page;
+			self.pages[model.href] = model.page;
 		});
-
-		env.models.User.all(function(o) { alert(o.length)} );
-		env.models.User.get(env.user.id, function(o) { o.show_editor(); });
-		//.show_editor();
 	},
 
-	Section: function(api, env) {
+	Section: function(model, env) {
 		var self = this;
 
-		self.api = api;
-		self.href = '/' + self.api.href;
-		self.name = 'Database Management' + ((api.home) ? '' : ' &ndash; ' + self.api.name);
+		self.model = model;
+		self.href = self.model.href;
+		self.name = 'Database Management' + ((model.home) ? '' : ' &ndash; ' + self.model.name);
 
 		self.node = $('<div/>')
-			.attr({id: self.api.href})
-			.text('Unfinished content placeholder for ' + self.api.name + ' page.')
+			.attr({id: self.model.href.replace(/\//g, '_')})
+			.text('Unfinished content placeholder for ' + self.model.name + ' page.')
 			.addClass('page')
 			.load(function() { boto_web.ui.heading.html(self.name) })
 			.hide()
 			.appendTo(boto_web.ui.node);
 		self.content = $('<div/>')
-			.attr({id: self.api.href + '_main'})
+			.attr({id: self.model.href.replace(/\//g, '_') + '_main'})
 			.addClass('content')
-			.appendTo(self.node)
-		for (var i in self.api.methods) {
+			.appendTo(self.node);
+		self.sub_pages = {};
+
+		self.switch_mode = function(mode) {
+			switch (mode) {
+				case 'post':
+					self.model.ui_create();
+					break;
+				case 'put':
+					self.model.get(prompt('Please enter the ID of the object you wish to edit'), function(obj) {
+						obj.ui_edit();
+					});
+					break;
+				case 'get':
+					self.model.all(function(obj) {
+						self.sub_pages[mode].html('<pre>' + $.dump($.map(obj, function(o) { return o.properties.id + ': ' + o.properties.name })) + '</pre>')
+					});
+					break;
+			}
+		}
+
+		for (var i in self.model.methods) {
 			switch (i) {
 				case 'put':
 				case 'post':
 				case 'get':
 					$('<a/>')
 						.attr({href: '#' + self.href + '/' + i})
-						.text(self.api.methods[i])
+						.text(self.model.methods[i])
 						.addClass('button')
 						.appendTo(self.content)
 				default:
-					$('<div/>')
-						.attr({id: self.api.href + '_' + i})
+					self.sub_pages[i] = $('<div/>')
+						.attr({id: self.model.href.replace(/\//g, '_') + '_' + i})
 						.text('Please wait, loading.')
 						.addClass('content')
 						.hide()
-						.load(function() { alert('loaded') })
+						.load(function(mode) { return function() { self.switch_mode(mode) } }(i))
 						.appendTo(self.node)
 			}
 		}
@@ -98,28 +120,42 @@ boto_web.ui = {
 
 		self.node = $('<div/>')
 			.addClass('content')
-			.appendTo(model.api.page.node);
+			.appendTo(model.page.node);
 
-		model.api.page.node.show();
+		model.page.node.show();
 
-		self.properties = model.api.properties;
+		self.properties = model.properties;
 		self.obj = obj;
 		self.model = model;
 		self.fields = [];
 
 		$(self.properties).each(function() {
-			var props = $.extend(this, {value: obj.properties[this.name]});
+			var props = this;
+
+			if (typeof obj != 'undefined')
+				props = $.extend(this, {value: obj.properties[this.name]});
+
 			var field;
 
-			switch (this.type) {
+			switch (this._type) {
 				case 'string':
 				case 'integer':
-					field = new boto_web.ui.text(props)
-						.read_only(false);
+				case 'list':
+					if (this.choices)
+						field = new boto_web.ui.dropdown(props)
+							.read_only(false);
+					else
+						field = new boto_web.ui.text(props)
+							.read_only(false);
 					break;
 				case 'dateTime':
 					field = new boto_web.ui.date(props)
 						.read_only(false);
+					break;
+				case 'object':
+					field = new boto_web.ui.picklist(props)
+						.read_only(false);
+					break;
 			}
 
 			if (typeof field == 'undefined') return;
@@ -130,18 +166,30 @@ boto_web.ui = {
 
 		self.submit = function() {
 			var self = this;
-			var data = {id: self.obj.id};
+			var data = {};
+
+			if (self.obj)
+				data.id = self.obj.id;
 
 			$(self.fields).each(function() {
 				data[this.field.attr('name')] = this.field.val();
 			});
 
-			self.model.save(data);
+			self.model.save(data, function(data) {
+
+				alert(data.status);
+				// TODO data save complete callback
+			});
 		};
 
+		$('<br/>')
+			.addClass('clear')
+			.appendTo(self.node);
+
 		$('<input/>')
-			.attr({type: 'submit'})
-			.text('Update')
+			.attr({type: 'button'})
+			.val('Update')
+			.addClass('button')
 			.click(function() { self.submit() })
 			.appendTo(self.node);
 	},
@@ -155,7 +203,7 @@ boto_web.ui = {
 	_field: function(properties) {
 		var self = this;
 		this.node = $('<div/>');
-		this.label = $('<label/>').text(properties._label || '');
+		this.label = $('<label/>').html(properties._label || '&nbsp;');
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
 		this.text = $('<span/>');
 
@@ -167,7 +215,6 @@ boto_web.ui = {
 			if (p.indexOf('_') == 0)
 				continue;
 
-			//TODO More special cases needed (i.e. multiple choice items)
 			switch (p) {
 				case 'choices':
 					for (i in v) {
@@ -204,7 +251,7 @@ boto_web.ui = {
 			return this;
 		}
 
-		this.field_container = $('<span/>').append(this.field);
+		this.field_container = $('<span/>').addClass('field_container').append(this.field);
 		this.node.append(this.label, this.field_container, this.text);
 		this.read_only();
 	},
@@ -221,6 +268,21 @@ boto_web.ui = {
 	 * @param {Object} properties HTML node properties.
 	 */
 	text: function(properties) {
+		if (/password/.test(properties.name))
+			properties.type = 'password';
+
+		boto_web.ui._field.call(this, properties);
+
+		if (properties._type == 'list') {
+			$('<div />').text('Add').appendTo(this.field_container)
+		}
+	},
+
+	/**
+	 * @param {Object} properties HTML node properties.
+	 */
+	dropdown: function(properties) {
+		properties._tagName = 'select';
 		boto_web.ui._field.call(this, properties);
 	},
 
@@ -235,7 +297,21 @@ boto_web.ui = {
 			showAnim: 'slideDown'
 		});
 
+	},
+
+	/**
+	 * @param {Object} properties HTML node properties.
+	 */
+	picklist: function(properties) {
+		properties.value = '[will eventually be a picklist]';
+		boto_web.ui._field.call(this, properties);
+
+		if (properties._type == 'list') {
+			this.field.attr({cols: 5, multiple: 'multiple'});
+		}
 	}
 };
 
-boto_web.Model.prototype.show_editor = function(opts) { return boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts); }
+boto_web.ModelMeta.prototype.ui_create = function(opts) { return boto_web.ui.BaseModelEditor(this, undefined, opts); };
+
+boto_web.Model.prototype.ui_edit = function(opts) { return boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts); };
