@@ -214,7 +214,7 @@ class XMLSerializer(object):
 	def decode_datetime(self, node):
 		"""Decode a simple string property"""
 		date_str = self.decode_string()
-		return datetime.fromisoformat(txt)
+		return datetime.parseisoformat(txt)
 
 
 
