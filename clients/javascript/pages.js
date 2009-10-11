@@ -63,6 +63,9 @@
 //
 var currentPage = null;
 function setPage(href, old_href){
+	if (href == currentPage)
+		return;
+
 	var sub_href = '';
 	if (href.indexOf(old_href) >= 0) {
 		sub_href = href.replace(old_href, '');
@@ -73,11 +76,11 @@ function setPage(href, old_href){
 		if(href != currentPage){
 			$(".page").hide();
 			$(".page#"+href.replace(/\//g, '_')).show().trigger("load");
-			currentPage = href + sub_href;
 
 			$(".boto_web .header .nav a").removeClass('active');
 			$(".boto_web .header .nav a[href=#" + href + "]").addClass('active');
 		}
+		currentPage = href + sub_href;
 	}
 
 	sub_href = sub_href || '/main';
