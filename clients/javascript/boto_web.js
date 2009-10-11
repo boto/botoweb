@@ -135,7 +135,14 @@ var boto_web = {
 			} else {
 				value = $(this).text();
 			}
-			obj[this.tagName] = value;
+			if (obj[this.tagName]) {
+				if (!$.isArray(obj[this.tagName]))
+					obj[this.tagName] = [obj[this.tagName]];
+				obj[this.tagName].push(value);
+			}
+			else {
+				obj[this.tagName] = value;
+			}
 			obj.length++;
 		});
 		return obj;
@@ -167,16 +174,27 @@ var boto_web = {
 		var doc = document.implementation.createDocument("", obj_name, null);
 		var obj = doc.documentElement;
 		for(pname in data){
-			var prop = doc.createElement(pname);
 			var pval = data[pname];
-			prop.appendChild(boto_web.encode_prop(pval, doc));
-			if(pval.constructor.toString().indexOf("Array") != -1){
-				$(prop).attr("type", "List");
-			} else if (pval.constructor.toString().indexOf("Class") != -1){
-				$(prop).attr("type", "Reference");
+
+			if (pval == undefined)
+				continue;
+
+			if(pval.constructor.toString().indexOf("Array") == -1){
+				pval = [pval];
 			}
-			obj.appendChild(prop);
+
+			$(pval).each(function() {
+				var prop = doc.createElement(pname);
+				prop.appendChild(boto_web.encode_prop(this, doc));
+				if(this.constructor.toString().indexOf("Array") != -1){
+					$(prop).attr("type", "List");
+				} else if (this.constructor.toString().indexOf("Class") != -1){
+					$(prop).attr("type", "Reference");
+				}
+				obj.appendChild(prop);
+			});
 		}
+
 		opts = {
 			url: url,
 			processData: false,
@@ -200,6 +218,8 @@ var boto_web = {
 	//
 	encode_prop: function(prop, doc){
 		var ret = null;
+		if (prop == undefined)
+			return null;
 		if(prop.constructor.toString().indexOf("Array") != -1){
 			ret = doc.createElement("items");
 			for(var x=0; x < prop.length; x++){
