@@ -24,6 +24,7 @@ REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects i
 
 from botoweb.fixed_datetime import datetime
 from datetime import datetime as datetime_type
+from boto.utils import Password
 
 TYPE_NAMES = {
 	str: "string",
@@ -34,7 +35,7 @@ TYPE_NAMES = {
 	datetime: "dateTime",
 	datetime_type: "dateTime",
 	object: "object",
-
+	Password: "password",
 }
 
 class DefaultObject(object):
@@ -80,6 +81,8 @@ class XMLSerializer(object):
 
 	def encode_default(self, prop_name, prop_value, prop_type):
 		"""Encode Default encoding property"""
+		if prop_type == "str":
+			prop_type = "string"
 		args = {"prop_name": prop_name, "prop_value": self.encode_cdata(prop_value), "prop_type": str(prop_type)}
 		self.file.write("""<%(prop_name)s type="%(prop_type)s">%(prop_value)s</%(prop_name)s>""" % args)
 
@@ -178,18 +181,19 @@ class XMLSerializer(object):
 			props = {}
 			for prop in node:
 				value = None
-				if prop.get("type").lower() == "string":
+				prop_type = prop.get("type") or "string"
+				if prop_type == "string":
 					value = self.decode_string(prop)
-				elif prop.get("type").lower() in ('complex', 'complextype'):
+				elif prop_type in ('complex', 'complextype'):
 					# Dictionary
 					pass
-				elif prop.get("type").lower() in ('date', 'datetime', 'time'):
+				elif prop_type in ('date', 'datetime', 'time'):
 					# Date Time
 					value = self.decode_datetime(prop)
-				elif prop.get("type") == "bool":
+				elif prop_type == "bool":
 					# Boolean
 					value = (self.decode_string(prop).upper() == "TRUE")
-				elif prop.get("type") in REGISTERED_CLASSES.keys():
+				elif prop_type in REGISTERED_CLASSES.keys():
 					# Object
 					value = REGISTERED_CLASSES[prop.get("type")]()
 					value.id = prop.text
