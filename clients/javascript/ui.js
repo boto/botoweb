@@ -76,18 +76,24 @@ boto_web.ui = {
 		self.sub_pages = {};
 
 		self.switch_mode = function(mode) {
+			self.sub_pages[mode].html('');
+
 			switch (mode) {
 				case 'post':
-					self.model.ui_create();
+					self.sub_pages[mode].append(self.model.ui_create().node);
 					break;
 				case 'put':
 					self.model.get(prompt('Please enter the ID of the object you wish to edit'), function(obj) {
-						obj.ui_edit();
+						self.sub_pages[mode].append(obj.ui_edit().node);
 					});
 					break;
 				case 'get':
 					self.model.all(function(obj) {
-						self.sub_pages[mode].html('<pre>' + $.dump($.map(obj, function(o) { return o.properties.id + ': ' + o.properties.name })) + '</pre>')
+						$(obj).each(function() {
+							self.sub_pages[mode].append(this.ui_display().node)
+						});
+						if (obj.length == 0)
+							self.sub_pages[mode].html('<h2>No results found</h2>');
 					});
 					break;
 			}
@@ -119,8 +125,8 @@ boto_web.ui = {
 		var self = this;
 
 		self.node = $('<div/>')
-			.addClass('content')
-			.appendTo(model.page.node);
+			.addClass('editor')
+			.addClass(model.name);
 
 		model.page.node.show();
 
@@ -192,6 +198,7 @@ boto_web.ui = {
 			self.model.save(data, function(data) {
 				if (data.status < 300) {
 					alert('The database has been updated.');
+					$(self.node).slideUp();
 				}
 				else {
 					alert('There was an error updating the database.');
@@ -209,6 +216,62 @@ boto_web.ui = {
 			.val('Update')
 			.addClass('button')
 			.click(function() { self.submit() })
+			.appendTo(self.node);
+
+		$('<input/>')
+			.attr({type: 'button'})
+			.val('Cancel')
+			.addClass('button')
+			.click(function() { $(self.node).slideUp(); })
+			.appendTo(self.node);
+	},
+
+
+	BaseModelDisplay: function(model, obj, opts) {
+		var self = this;
+
+		self.node = $('<div/>')
+			.addClass('object')
+			.addClass(model.name);
+
+		var display_value = obj.properties.name || obj.properties[model.properties[0].name];
+
+		if (!display_value) {
+			$(obj.properties).each(function() {
+				if (this && typeof this == 'string') {
+					display_value = this;
+					return false;
+				}
+			});
+		}
+
+		display_value = display_value || '[unnamed]';
+
+		$('<h3/>')
+			.text(display_value)
+			.appendTo(self.node);
+
+		$('<a/>')
+			.addClass('button')
+			.text('Modify')
+			.click(function() { $(obj.ui_edit().node).insertAfter(self.node); })
+			.appendTo(self.node);
+
+		$('<a/>')
+			.addClass('button')
+			.text('Delete')
+			.click(function() {
+				if (confirm('Are you sure you want to delete this object?')) {
+					model.del(obj.id, function(data) {
+						if (data.status < 300) {
+							alert('Successfully deleted');
+							self.node.slideUp();
+						}
+						else
+							alert('There was an error deleting the object');
+					});
+				}
+			})
 			.appendTo(self.node);
 	},
 
@@ -380,6 +443,8 @@ boto_web.ui = {
 	}
 };
 
-boto_web.ModelMeta.prototype.ui_create = function(opts) { return boto_web.ui.BaseModelEditor(this, undefined, opts); };
+boto_web.ModelMeta.prototype.ui_create = function(opts) { return new boto_web.ui.BaseModelEditor(this, undefined, opts); };
 
-boto_web.Model.prototype.ui_edit = function(opts) { return boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts); };
+boto_web.Model.prototype.ui_edit = function(opts) { return new boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts); };
+
+boto_web.Model.prototype.ui_display = function(opts) { return new boto_web.ui.BaseModelDisplay(boto_web.env.models[this.name], this, opts); };
