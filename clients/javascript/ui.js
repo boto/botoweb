@@ -263,12 +263,8 @@ boto_web.ui = {
 			.click(function() {
 				if (confirm('Are you sure you want to delete this object?')) {
 					model.del(obj.id, function(data) {
-						if (data.status < 300) {
-							alert('Successfully deleted');
-							self.node.slideUp();
-						}
-						else
-							alert('There was an error deleting the object');
+						alert('Successfully deleted');
+						self.node.slideUp();
 					});
 				}
 			})
@@ -435,9 +431,13 @@ boto_web.ui = {
 
 		if (properties._label in boto_web.env.models) {
 			boto_web.env.models[properties._label].all(function(data) {
-				self.add_choices($(data).map(function() {
-					return { text: this.properties.name, value: this.id };
-				}));
+				try {
+					self.add_choices($(data).map(function() {
+						return { text: this.properties.name, value: this.id };
+					}));
+				} catch (e) { }
+
+				self.field.val(properties.value);
 			});
 		}
 	}
