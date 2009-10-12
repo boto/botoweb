@@ -178,12 +178,12 @@ class XMLSerializer(object):
 			props = {}
 			for prop in node:
 				value = None
-				if prop.get("type") == "string":
+				if prop.get("type").lower() == "string":
 					value = self.decode_string(prop)
-				elif prop.get("type") == "complexType":
+				elif prop.get("type").lower() in ('complex', 'complextype'):
 					# Dictionary
 					pass
-				elif prop.get("type") == "dateTime":
+				elif prop.get("type").lower() in ('date', 'datetime', 'time'):
 					# Date Time
 					value = self.decode_datetime(prop)
 				elif prop.get("type") == "bool":
@@ -218,8 +218,8 @@ class XMLSerializer(object):
 
 	def decode_datetime(self, node):
 		"""Decode a simple string property"""
-		date_str = self.decode_string()
-		return datetime.parseisoformat(txt)
+		date_str = self.decode_string(node)
+		return datetime.parseisoformat(date_str)
 
 
 
