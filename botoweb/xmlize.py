@@ -80,6 +80,8 @@ class XMLSerializer(object):
 
 	def encode_default(self, prop_name, prop_value, prop_type):
 		"""Encode Default encoding property"""
+		if prop_type == "str":
+			prop_type = "string"
 		args = {"prop_name": prop_name, "prop_value": self.encode_cdata(prop_value), "prop_type": str(prop_type)}
 		self.file.write("""<%(prop_name)s type="%(prop_type)s">%(prop_value)s</%(prop_name)s>""" % args)
 
