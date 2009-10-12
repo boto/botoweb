@@ -179,11 +179,17 @@ var boto_web = {
 			if (pval == undefined)
 				continue;
 
+			var list = true;
+
 			if(pval.constructor.toString().indexOf("Array") == -1){
 				pval = [pval];
+				list = false;
 			}
 
 			$(pval).each(function() {
+				if (list && this == '')
+					return;
+
 				var prop = doc.createElement(pname);
 				prop.appendChild(boto_web.encode_prop(this, doc));
 				if(this.constructor.toString().indexOf("Array") != -1){
@@ -194,6 +200,9 @@ var boto_web = {
 				obj.appendChild(prop);
 			});
 		}
+
+		//DEBUG
+		// alert((new XMLSerializer()).serializeToString(doc));
 
 		opts = {
 			url: url,
