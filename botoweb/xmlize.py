@@ -223,6 +223,8 @@ class XMLSerializer(object):
 	def decode_datetime(self, node):
 		"""Decode a simple string property"""
 		date_str = self.decode_string(node)
+		if not date_str or len(date_str) == 0:
+			return None
 		return datetime.parseisoformat(date_str)
 
 
