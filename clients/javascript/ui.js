@@ -144,6 +144,9 @@ boto_web.ui = {
 					if (this.choices)
 						field = new boto_web.ui.dropdown(props)
 							.read_only(false);
+					else if (props.maxlength > 1024)
+						field = new boto_web.ui.textarea(props)
+							.read_only(false);
 					else
 						field = new boto_web.ui.text(props)
 							.read_only(false);
@@ -172,13 +175,28 @@ boto_web.ui = {
 				data.id = self.obj.id;
 
 			$(self.fields).each(function() {
-				data[this.field.attr('name')] = this.field.val();
+				var val;
+
+				if (this.fields.length > 1) {
+					val = [];
+					$(this.fields).each(function() {
+						val.push(this.val());
+					});
+				}
+				else
+					val = this.field.val();
+
+				data[this.field.attr('name')] = val;
 			});
 
 			self.model.save(data, function(data) {
-
-				alert(data.status);
-				// TODO data save complete callback
+				if (data.status < 300) {
+					alert('The database has been updated.');
+				}
+				else {
+					alert('There was an error updating the database.');
+				}
+				// TODO data save callback
 			});
 		};
 
@@ -206,10 +224,33 @@ boto_web.ui = {
 		this.label = $('<label/>').html(properties._label || '&nbsp;');
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
 		this.text = $('<span/>');
+		this.fields = [this.field];
 
 		properties.id = properties.id || 'field_' + properties.name;
+		properties.id += Math.round(Math.random() * 99999);
 
-		for (p in properties) {
+		this.add_choices = function(choices) {
+			for (var i in choices) {
+				choices[i].text = choices[i].text || choices[i].value;
+				var opt = $('<option/>').attr(choices[i]);
+
+				this.field.append(opt)
+			}
+		}
+
+		this.add_field = function() {
+			var field = this.field.clone()
+				.css('display', 'block')
+				.val('')
+				.insertAfter(this.fields[this.fields.length - 1])
+				.focus()
+
+			this.fields.push(field);
+
+			return field;
+		}
+
+		for (var p in properties) {
 			var v = properties[p];
 
 			if (p.indexOf('_') == 0)
@@ -217,26 +258,15 @@ boto_web.ui = {
 
 			switch (p) {
 				case 'choices':
-					for (i in v) {
-						v[i].text = v[i].text || v[i].value;
-						var opt = $('<option/>').attr(v[i]);
-
-						this.field.append(opt)
-					}
+					this.add_choices(v);
 					break;
 				default:
 					this.field.attr(p, v);
 			}
 		}
 
-		if (properties._default) {
-			this.field.val(properties._default);
-		}
-
-		this.text.text(this.field.val());
-
 		/**
-		 * Switches the
+		 * Switches from an input field to a text value display
 		 */
 		this.read_only = function(on) {
 			if (on || typeof on == 'undefined') {
@@ -254,13 +284,29 @@ boto_web.ui = {
 		this.field_container = $('<span/>').addClass('field_container').append(this.field);
 		this.node.append(this.label, this.field_container, this.text);
 		this.read_only();
+
+		if (properties.value) {
+			if ($.isArray(properties.value)) {
+				this.field.val(properties.value.shift());
+				$(properties.value).each(function() {
+					self.add_field().val(this);
+				});
+			}
+			else
+				this.field.val(properties.value);
+		}
+
+		this.text.text(this.field.val());
 	},
 
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
 	textarea: function(properties) {
+		properties._tagName = 'textarea';
 		properties.innerHTML = properties.value;
+		properties.rows = properties.rows || 3;
+		properties.cols = properties.cols || 48;
 		boto_web.ui._field.call(this, properties);
 	},
 
@@ -268,13 +314,19 @@ boto_web.ui = {
 	 * @param {Object} properties HTML node properties.
 	 */
 	text: function(properties) {
+		properties.size = properties.size || 50;
+		var self = this;
+
 		if (/password/.test(properties.name))
 			properties.type = 'password';
 
 		boto_web.ui._field.call(this, properties);
 
 		if (properties._type == 'list') {
-			$('<div />').text('Add').appendTo(this.field_container)
+			$('<div />')
+				.text('Add')
+				.click(function() { self.add_field() })
+				.appendTo(self.field_container)
 		}
 	},
 
@@ -291,23 +343,39 @@ boto_web.ui = {
 	 */
 	date: function(properties) {
 		boto_web.ui._field.call(this, properties);
+		var self = this;
 
 		this.datepicker = $(this.field).datepicker({
 			showOn: 'both',
-			showAnim: 'slideDown'
+			dateFormat: 'yy-mm-dd',
+			altField: this.field,
+			changeMonth: true,
+			changeYear: true,
+			constrainInput: false
 		});
-
 	},
 
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	picklist: function(properties) {
-		properties.value = '[will eventually be a picklist]';
+	picklist: function(properties, data) {
+		properties._tagName = 'select';
+		properties.choices = [];
+
 		boto_web.ui._field.call(this, properties);
+
+		var self = this;
 
 		if (properties._type == 'list') {
 			this.field.attr({cols: 5, multiple: 'multiple'});
+		}
+
+		if (properties._label in boto_web.env.models) {
+			boto_web.env.models[properties._label].all(function(data) {
+				self.add_choices($(data).map(function() {
+					return { text: this.properties.name, value: this.id };
+				}));
+			});
 		}
 	}
 };
