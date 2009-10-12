@@ -226,6 +226,7 @@ class DBHandler(RequestHandler):
 					setattr(newobj, prop, prop_value)
 				except Exception, e:
 					raise BadRequest("Invalid value for %s" % prop)
+		newobj.put()
 		return newobj
 
 	def read(self, id, user):
@@ -249,7 +250,7 @@ class DBHandler(RequestHandler):
 		@param obj: Object to update
 		@type obj: self.db_class
 
-		@param props: A has of properties to update
+		@param props: A hash of properties to update
 		@type props: hash
 
 		@param user: The user making these changes
