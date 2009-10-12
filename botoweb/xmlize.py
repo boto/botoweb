@@ -178,18 +178,19 @@ class XMLSerializer(object):
 			props = {}
 			for prop in node:
 				value = None
-				if prop.get("type").lower() == "string":
+				prop_type = prop.get("type") or "string"
+				if prop_type == "string":
 					value = self.decode_string(prop)
-				elif prop.get("type").lower() in ('complex', 'complextype'):
+				elif prop_type in ('complex', 'complextype'):
 					# Dictionary
 					pass
-				elif prop.get("type").lower() in ('date', 'datetime', 'time'):
+				elif prop_type in ('date', 'datetime', 'time'):
 					# Date Time
 					value = self.decode_datetime(prop)
-				elif prop.get("type") == "bool":
+				elif prop_type == "bool":
 					# Boolean
 					value = (self.decode_string(prop).upper() == "TRUE")
-				elif prop.get("type") in REGISTERED_CLASSES.keys():
+				elif prop_type in REGISTERED_CLASSES.keys():
 					# Object
 					value = REGISTERED_CLASSES[prop.get("type")]()
 					value.id = prop.text
