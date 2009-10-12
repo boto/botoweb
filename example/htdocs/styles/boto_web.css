@@ -53,3 +53,30 @@ width: 150px;
 .boto_web .field_container {
 float: left;
 }
+
+.boto_web .object {
+background: #fafafa;
+border: 1px solid #eee;
+padding: 5px;
+margin: 0 5px 5px 5px;
+font-size: .9em;
+}
+
+.boto_web .editor {
+background: #f5f5ff;
+border: 1px solid #ddf;
+padding: 5px;
+margin: 0 5px 5px 5px;
+font-size: .9em;
+}
+
+.boto_web .add {
+	padding: 0 0 0 16px;
+	background: #ddd url(/images/icons/add.png) 1px center no-repeat;
+border: 1px solid #ccc;
+color: #555;
+	cursor: pointer;
+margin: 1px 0;
+line-height: 1.75em;
+font-size: .75em;
+}

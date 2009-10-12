@@ -29,6 +29,7 @@ p {
 input, select, textarea {
 	border: 1px inset #aaa;
 	font-size: 1em;
+	background: #fafafa;
 }
 
 h1 { font-size: 1.8em; }
@@ -48,6 +49,7 @@ border: 0;
 -moz-border-radius: 10px;
 border-radius: 10px;
 margin: 5px;
+cursor: default;
 }
 
 .button:hover, button:hover {
