@@ -209,7 +209,12 @@ class XMLSerializer(object):
 
 	def decode_string(self, node):
 		"""Decode a simple string property"""
-		return node.text
+		ret = node.text
+		# Prevent "None" from being sent back as a None, instead of an empty string
+		if not ret:
+			ret = ""
+		return ret
+
 
 	def decode_datetime(self, node):
 		"""Decode a simple string property"""
