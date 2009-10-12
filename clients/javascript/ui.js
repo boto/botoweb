@@ -64,7 +64,7 @@ boto_web.ui = {
 
 		self.node = $('<div/>')
 			.attr({id: self.model.href.replace(/\//g, '_')})
-			.text('Unfinished content placeholder for ' + self.model.name + ' page.')
+			.text('')
 			.addClass('page')
 			.load(function() { boto_web.ui.heading.html(self.name) })
 			.hide()
@@ -124,6 +124,11 @@ boto_web.ui = {
 	BaseModelEditor: function(model, obj, opts) {
 		var self = this;
 
+		if (!opts)
+			opts = {};
+
+		opts = $.extend({read_only: false}, opts);
+
 		self.node = $('<div/>')
 			.addClass('editor')
 			.addClass(model.name);
@@ -146,24 +151,25 @@ boto_web.ui = {
 			switch (this._type) {
 				case 'string':
 				case 'integer':
+				case 'password':
 				case 'list':
 					if (this.choices)
 						field = new boto_web.ui.dropdown(props)
-							.read_only(false);
+							.read_only(opts.read_only);
 					else if (props.maxlength > 1024)
 						field = new boto_web.ui.textarea(props)
-							.read_only(false);
+							.read_only(opts.read_only);
 					else
 						field = new boto_web.ui.text(props)
-							.read_only(false);
+							.read_only(opts.read_only);
 					break;
 				case 'dateTime':
 					field = new boto_web.ui.date(props)
-						.read_only(false);
+						.read_only(opts.read_only);
 					break;
 				case 'object':
 					field = new boto_web.ui.picklist(props)
-						.read_only(false);
+						.read_only(opts.read_only);
 					break;
 			}
 
@@ -211,12 +217,14 @@ boto_web.ui = {
 			.addClass('clear')
 			.appendTo(self.node);
 
-		$('<input/>')
-			.attr({type: 'button'})
-			.val('Update')
-			.addClass('button')
-			.click(function() { self.submit() })
-			.appendTo(self.node);
+		if (!opts.read_only) {
+			$('<input/>')
+				.attr({type: 'button'})
+				.val('Save')
+				.addClass('button')
+				.click(function() { self.submit() })
+				.appendTo(self.node);
+		}
 
 		$('<input/>')
 			.attr({type: 'button'})
@@ -253,8 +261,14 @@ boto_web.ui = {
 
 		$('<a/>')
 			.addClass('button')
+			.text('Details')
+			.click(function() { $(obj.ui_details().node).appendTo(self.node); })
+			.appendTo(self.node);
+
+		$('<a/>')
+			.addClass('button')
 			.text('Modify')
-			.click(function() { $(obj.ui_edit().node).insertAfter(self.node); })
+			.click(function() { $(obj.ui_edit().node).appendTo(self.node); })
 			.appendTo(self.node);
 
 		$('<a/>')
@@ -280,7 +294,7 @@ boto_web.ui = {
 	_field: function(properties) {
 		var self = this;
 		this.node = $('<div/>');
-		this.label = $('<label/>').html(properties._label || '&nbsp;');
+		this.label = $('<label/>').html(properties._label || properties.name.replace(/^(.)/g, String.toUpperCase) || '&nbsp;');
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
 		this.text = $('<span/>');
 		this.fields = [this.field];
@@ -355,7 +369,7 @@ boto_web.ui = {
 				this.field.val(properties.value);
 		}
 
-		this.text.text(this.field.val());
+		this.text.html(this.field.val() || '&nbsp;');
 	},
 
 	/**
@@ -376,14 +390,20 @@ boto_web.ui = {
 		properties.size = properties.size || 50;
 		var self = this;
 
-		if (/password/.test(properties.name))
+		if (properties._type == 'password')
 			properties.type = 'password';
 
 		boto_web.ui._field.call(this, properties);
 
+		if (properties._type == 'password') {
+			this.field.val('');
+			this.text.text('******');
+		}
+
 		if (properties._type == 'list') {
-			$('<div />')
-				.text('Add')
+			$('<div/>')
+				.text('Add another value')
+				.addClass('add button')
 				.click(function() { self.add_field() })
 				.appendTo(self.field_container)
 		}
@@ -431,13 +451,19 @@ boto_web.ui = {
 
 		if (properties._label in boto_web.env.models) {
 			boto_web.env.models[properties._label].all(function(data) {
+				var value_text = '';
+
 				try {
 					self.add_choices($(data).map(function() {
+						if (this.id == properties.value)
+							value_text = this.properties.name;
+
 						return { text: this.properties.name, value: this.id };
 					}));
 				} catch (e) { }
 
 				self.field.val(properties.value);
+				self.text.text(value_text);
 			});
 		}
 	}
@@ -448,3 +474,11 @@ boto_web.ModelMeta.prototype.ui_create = function(opts) { return new boto_web.ui
 boto_web.Model.prototype.ui_edit = function(opts) { return new boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts); };
 
 boto_web.Model.prototype.ui_display = function(opts) { return new boto_web.ui.BaseModelDisplay(boto_web.env.models[this.name], this, opts); };
+boto_web.Model.prototype.ui_details = function(opts) {
+	if (!opts)
+		opts = {};
+
+	opts.read_only = true;
+
+	return new boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts);
+};
