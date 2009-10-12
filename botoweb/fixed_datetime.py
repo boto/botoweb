@@ -185,9 +185,9 @@ def _parse_iso(timestamp):
 	
 	h, min, s, us = None, None, None, 0
 	frac = 0
-	if m.group('tzempty') == None and m.group('tzh') == None:
-		raise ValueError("Not a proper ISO 8601 timestamp: " +
-				"missing timezone (Z or +hh[:mm])!")
+	#if m.group('tzempty') == None and m.group('tzh') == None:
+		#raise ValueError("Not a proper ISO 8601 timestamp: " +
+				#"missing timezone (Z or +hh[:mm])!")
 
 	if m.group('frac'):
 		frac = m.group('frac')
@@ -217,9 +217,8 @@ def _parse_iso(timestamp):
 		# and extract microseconds...
 		us = int(frac * 1000000)
 
-	if m.group('tzempty') == 'Z':
-		offsetmins = 0
-	else:
+	offsetmins = 0
+	if m.group("tzh") != None:
 		# timezone: hour diff with sign
 		offsetmins = int(m.group('tzh')) * 60
 		tzm = m.group('tzm')
