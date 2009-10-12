@@ -197,6 +197,9 @@ var boto_web = {
 				} else if (this.constructor.toString().indexOf("Class") != -1){
 					$(prop).attr("type", "Reference");
 				}
+				else {
+					$(prop).attr("type", "string");
+				}
 				obj.appendChild(prop);
 			});
 		}
@@ -212,7 +215,7 @@ var boto_web = {
 		if(method){
 			opts.type = method;
 		} else {
-			opts.method = "PUT";
+			opts.type = "PUT";
 		}
 
 		if(fnc){
@@ -431,7 +434,7 @@ var boto_web = {
 		//
 		this.del = function(id, fnc){
 			ref = this.href;
-			return boto_web.del(ref + "/" + id, fnc);
+			return boto_web.del(boto_web.env.base_url + ref + "/" + id, fnc);
 		}
 
 	},
