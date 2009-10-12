@@ -197,6 +197,9 @@ var boto_web = {
 				} else if (this.constructor.toString().indexOf("Class") != -1){
 					$(prop).attr("type", "Reference");
 				}
+				else if (/\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?/.test(this)){
+					$(prop).attr("type", "dateTime");
+				}
 				else {
 					$(prop).attr("type", "string");
 				}
