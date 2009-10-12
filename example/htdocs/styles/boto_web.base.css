@@ -28,6 +28,7 @@ p {
 
 input, select, textarea {
 	border: 1px inset #aaa;
+	font-size: 1em;
 }
 
 h1 { font-size: 1.8em; }
