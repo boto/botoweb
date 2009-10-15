@@ -203,7 +203,7 @@ class DBHandler(RequestHandler):
 		if sort_by:
 			query.order(sort_by)
 		if next_token:
-			query.next_token = next_token
+			query.next_token = next_token.replace(" ", "+")
 		return query
 
 	def create(self, obj, user):
