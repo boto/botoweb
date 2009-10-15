@@ -80,3 +80,11 @@ class TestXMLize(object):
 		assert obj.test_datetime.minute == 9
 		assert obj.test_datetime.second == 9
 		assert obj.test_datetime.tzinfo.utcoffset(obj.test_datetime) == datetime.timedelta(hours = -5)
+
+	def test_dump_list(self):
+		"""Test dumping a simple list"""
+		l = ['admin', 'test', 'developer']
+		xml = xmlize.dumps(l, 'auth_groups')
+		l2 = xmlize.loads("<result>%s</result>" % xml)
+		assert l2.auth_groups == l
+

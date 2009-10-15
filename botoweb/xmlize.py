@@ -142,21 +142,29 @@ class XMLSerializer(object):
 	}
 
 
-	def dump(self, obj):
+	def dump(self, obj, objname = None):
 		"""Dump this object to our serialization"""
 		if not isinstance(obj, object):
-			self.encode(obj.__name__, obj)
+			if not objname:
+				objname = obj.__name__
+			self.encode(objname, obj)
+		elif isinstance(obj, list) or isinstance(obj, dict):
+			if not objname:
+				objname = obj.__class__.__name__
+			self.encode(objname, obj)
 		else:
+			if not objname:
+				objname = obj.__class__.__name__
 			if hasattr(obj, "id") and obj.id:
-				self.file.write("""<%s id="%s">""" % (obj.__class__.__name__, obj.id))
+				self.file.write("""<%s id="%s">""" % (objname, obj.id))
 			else:
-				self.file.write("<%s>" % obj.__class__.__name__)
+				self.file.write("<%s>" % objname)
 			for prop_name in dir(obj):
 				if not prop_name.startswith("_") and not prop_name == "id":
 					prop_value = getattr(obj, prop_name)
 					if not type(prop_value) == type(self.dump):
 						self.encode(prop_name, prop_value)
-			self.file.write("</%s>" % obj.__class__.__name__)
+			self.file.write("</%s>" % objname)
 
 	def load(self):
 		"""Load from this file to an object or object list"""
@@ -230,17 +238,17 @@ class XMLSerializer(object):
 
 
 	
-def dump(obj, file=None):
+def dump(obj, file=None, objname=None):
 	"""Write an XML representation of *obj* to the open file object *file*
 	"""
 	enc = XMLSerializer(file)
-	enc.dump(obj)
+	enc.dump(obj, objname)
 	enc.file.seek(0)
 	return enc.file
 
-def dumps(obj):
+def dumps(obj, objname=None):
 	"""Dump the XML to a string, this is equivalent to dump(obj).read()"""
-	return dump(obj).read()
+	return dump(obj, objname=objname).read()
 
 def load(file):
 	"""Read a from the open file object *file* and interpret it as an XML serialization
