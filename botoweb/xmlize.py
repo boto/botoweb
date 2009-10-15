@@ -113,13 +113,18 @@ class XMLSerializer(object):
 		"""Encode a generic object (must have an "id" attribute)"""
 		from boto.sdb.db.query import Query
 		if isinstance(prop_value, Query):
-			return None
+			return self.encode_query(prop_name, prop_value)
 		elif hasattr(prop_value, "id"):
 			prop_value = str(prop_value.id)
 		else:
 			prop_value = str(prop_value)
 
 		self.encode_default(prop_name, prop_value, prop_value.__class__.__name__)
+
+	def encode_query(self, prop_name, prop_value):
+		"""Encode a query, this is sent as a reference"""
+		#TODO: Fix this by somehow getting the ID into the href
+		self.file.write("""<%s type="reference" href="%s"/>""" % (prop_name, prop_name))
 
 	def encode_cdata(self, string):
 		"""Return what might be a CDATA encoded string"""
@@ -128,6 +133,9 @@ class XMLSerializer(object):
 			if ch in string:
 				return "<![CDATA[ %s ]]>" % string
 		return string
+
+	def encode_bool(self, prop_name, prop_value):
+		self.encode_default(prop_name, str(prop_value), "boolean")
 
 
 	type_map = {
@@ -139,11 +147,13 @@ class XMLSerializer(object):
 		datetime: encode_datetime,
 		datetime_type: encode_datetime,
 		object: encode_object,
+		bool: encode_bool,
 	}
 
 
 	def dump(self, obj, objname = None):
 		"""Dump this object to our serialization"""
+		from boto.sdb.db.model import Model
 		if not isinstance(obj, object):
 			if not objname:
 				objname = obj.__name__
@@ -159,11 +169,15 @@ class XMLSerializer(object):
 				self.file.write("""<%s id="%s">""" % (objname, obj.id))
 			else:
 				self.file.write("<%s>" % objname)
-			for prop_name in dir(obj):
-				if not prop_name.startswith("_") and not prop_name == "id":
-					prop_value = getattr(obj, prop_name)
-					if not type(prop_value) == type(self.dump):
-						self.encode(prop_name, prop_value)
+			if isinstance(obj, Model):
+				for prop in obj.properties():
+					self.encode(prop.name, getattr(obj, prop.name))
+			else:
+				for prop_name in obj.__dict__:
+					if not prop_name.startswith("_") and not prop_name == "id":
+						prop_value = getattr(obj, prop_name)
+						if not type(prop_value) == type(self.dump):
+							self.encode(prop_name, prop_value)
 			self.file.write("</%s>" % objname)
 
 	def load(self):
