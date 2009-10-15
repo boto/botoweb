@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from botoweb.appserver.handlers import RequestHandler
+from boto.sdb.db.model import Model
 from boto.utils import find_class
 from lxml import etree
 import copy
@@ -76,15 +77,18 @@ class IndexHandler(RequestHandler):
 						for prop in model_class.properties():
 							prop_node = etree.SubElement(props_node, "property")
 							prop_node.set("name", prop.name)
-							prop_node.set("type", TYPE_NAMES.get(prop.data_type, prop.type_name.lower()))
+							if hasattr(prop, "reference_class"):
+								prop_node.set("type", prop.reference_class.__name__)
+							else:
+								prop_node.set("type", TYPE_NAMES.get(prop.data_type, prop.type_name.lower()))
 							if prop.data_type in [str, unicode]:
 								prop_node.set("max_length", "1024")
 							if prop.data_type == int:
 								prop_node.set("min", "-2147483648")
 								prop_node.set("max", "2147483647")
 							if hasattr(prop, "item_type"):
-								if hasattr(prop.item_type, "__class__"):
-									item_type = prop.item_type.__class__.__name__
+								if hasattr(prop.item_type, "__name__"):
+									item_type = prop.item_type.__name__
 								else:
 									item_type = TYPE_NAMES.get(prop.item_type, "string")
 								prop_node.set("item_type", item_type)

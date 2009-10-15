@@ -276,11 +276,16 @@ class DBHandler(RequestHandler):
 
 	def get_property(self, response, obj, property):
 		"""Return just a single property"""
-		response.content_type = "text/plain"
+		from boto.sdb.db.query import Query
 		val = getattr(obj, property)
-		if type(val) == list:
-			for v in val:
-				response.write(str(v))
-		else:
+		if type(val) in (str, unicode):
+			response.content_type = "text/plain"
 			response.write(str(val))
+		elif isinstance(val, Query):
+			response.write("<%s>" % property)
+			for o in val:
+				response.write(xmlize.dumps(o))
+			response.write("</%s>" % property)
+		else:
+			response.write("<response>%s</response>" % xmlize.dumps(val, property))
 		return response

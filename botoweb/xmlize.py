@@ -25,6 +25,7 @@ REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects i
 from botoweb.fixed_datetime import datetime
 from datetime import datetime as datetime_type
 from boto.utils import Password
+from boto.sdb.db.key import Key
 
 TYPE_NAMES = {
 	str: "string",
@@ -36,6 +37,7 @@ TYPE_NAMES = {
 	datetime_type: "dateTime",
 	object: "object",
 	Password: "password",
+	Key: "object",
 }
 
 class DefaultObject(object):
