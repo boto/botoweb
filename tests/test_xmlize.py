@@ -27,6 +27,15 @@ class ObjectTest(object):
 	"""Test Object to dump/load from XML"""
 	pass
 
+from boto.sdb.db.model import Model
+from boto.sdb.db.property import ReferenceProperty, StringProperty
+
+class ObjectTestReference(Model):
+	name = StringProperty(verbose_name="My Name")
+
+class ObjectTestReferenceSub(Model):
+	parent = ReferenceProperty(ObjectTestReference, verbose_name="Parent Object", collection_name="children")
+
 TEST_XML = """<?xml version="1.0" ?>
 <Test>
 	<test_simple>Simple String</test_simple>
@@ -88,3 +97,18 @@ class TestXMLize(object):
 		l2 = xmlize.loads("<result>%s</result>" % xml)
 		assert l2.auth_groups == l
 
+	def test_reference(self):
+		"""Test dumping a reference"""
+		xmlize.register(ObjectTestReference)
+		xmlize.register(ObjectTestReferenceSub)
+		obj = ObjectTestReference()
+		obj.name = "Parent Object"
+		obj.id = "1234567890"
+		obj_sub = ObjectTestReferenceSub()
+		obj_sub.parent = obj
+		obj_sub.id = "9378509283"
+
+		obj_xml = xmlize.dumps(obj_sub)
+		obj_loaded = xmlize.loads(obj_xml)
+		print obj_xml
+		assert obj_loaded.parent.id == obj.id

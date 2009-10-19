@@ -114,6 +114,7 @@ class XMLSerializer(object):
 	def encode_object(self, prop_name, prop_value):
 		"""Encode a generic object (must have an "id" attribute)"""
 		from boto.sdb.db.query import Query
+		prop_type = prop_value.__class__.__name__
 		if isinstance(prop_value, Query):
 			return self.encode_query(prop_name, prop_value)
 		elif hasattr(prop_value, "id"):
@@ -121,7 +122,7 @@ class XMLSerializer(object):
 		else:
 			prop_value = str(prop_value)
 
-		self.encode_default(prop_name, prop_value, prop_value.__class__.__name__)
+		self.encode_default(prop_name, prop_value, prop_type)
 
 	def encode_query(self, prop_name, prop_value):
 		"""Encode a query, this is sent as a reference"""
@@ -217,7 +218,7 @@ class XMLSerializer(object):
 				elif prop_type == "bool":
 					# Boolean
 					value = (self.decode_string(prop).upper() == "TRUE")
-				elif prop_type in REGISTERED_CLASSES.keys():
+				elif prop.get("type") in REGISTERED_CLASSES.keys():
 					# Object
 					value = REGISTERED_CLASSES[prop.get("type")]()
 					value.id = prop.text
