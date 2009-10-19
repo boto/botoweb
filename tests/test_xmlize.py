@@ -111,4 +111,4 @@ class TestXMLize(object):
 		obj_xml = xmlize.dumps(obj_sub)
 		obj_loaded = xmlize.loads(obj_xml)
 		print obj_xml
-		assert obj_loaded.parent.id == obj.id
+		assert obj_loaded.parent.__id__ == obj.id
