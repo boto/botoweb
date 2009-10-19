@@ -12,6 +12,34 @@
  * boto_web environment.
  */
 boto_web.ui = {
+	sections: [],
+
+	widgets: {},
+
+	selectors: {
+		'section':        'section',
+		'object':         'article, .bwObject',
+		'header':         'header',
+		'details':        'fieldset.details',
+		'widget':         '*[bwWidget]',
+		'relations':      '*[bwWidget=relations]',
+		'search':         '*[bwWidget=search]',
+		'search_results': '*[bwWidget=searchResults]',
+		'breadcrumbs':    '*[bwWidget=breadcrumbs]',
+		'attribute_list': '*[bwWidget=attributeList]',
+		'editing_tools':  '*[bwWidget=editingTools]',
+		'attribute':      '*[bwAttribute]',
+		'link':           'a[bwLink]'
+	},
+
+	properties: {
+		'model':          'bwModel',
+		'link':           'bwLink',
+		'attribute':      'bwAttribute',
+		'attributes':     'bwAttributes',
+		'def':        'bwDefault'
+	},
+
 	/**
 	 * Initializes the boto_web interface.
 	 *
@@ -20,23 +48,26 @@ boto_web.ui = {
 	init: function(env) {
 		var self = boto_web.ui;
 
-		self.node = $('<div/>')
-			.addClass('boto_web')
-			.appendTo('body');
-		self.header = $('<div/>')
-			.addClass('header')
-			.appendTo(self.node);
-		self.heading = $('<h1/>')
-			.text('Database Management')
-			.appendTo(self.header);
-		self.nav = $('<ul/>')
-			.addClass('nav')
-			.appendTo(self.header);
-		self.content = $('<div/>')
-			.attr({id: 'content'})
-			.appendTo(self.node);
+		if (self.use_default) {
+			self.default_ui(env);
+			return;
+		}
 
-		self.pages = {};
+		self.desktop = new boto_web.ui.Desktop();
+
+		new boto_web.ui.Object($('header'), env.models.User, {properties: env.user});
+
+		$('header nav li').addClass('ui-state-default ui-corner-top');
+		$('header nav').show();
+
+		if (document.location.hash == '')
+			document.location.href = $('header nav ul a:first').attr('href');
+
+		boto_web.ui.watch_url();
+	},
+
+	default_ui: function(env) {
+		var self = boto_web.ui;
 
 		// Merge homepage as a generated false model
 		$.each($.merge([{obj: {href: 'home', name: 'Home', home: 1}}], env.routes), function() {
@@ -45,14 +76,27 @@ boto_web.ui = {
 			if (typeof this.obj == 'string')
 				model = env.models[this.obj];
 
-			model.page = new boto_web.ui.Section(model, env);
+			model.section = new boto_web.ui.Section(model, env);
 			$('<a/>')
 				.attr({href: '#' + this.href})
 				.text(model.name)
 				.appendTo($('<li/>').appendTo(self.nav));
 
-			self.pages[model.href] = model.page;
+			self.sections[model.href] = model.section;
 		});
+	},
+
+	add_section: function(data) {
+		if (data.model)
+			model = env.models[data.model];
+
+		model.section = new boto_web.ui.Section(model, env);
+		$('<a/>')
+			.attr({href: '#' + this.href})
+			.text(model.name)
+			.appendTo($('<li/>').appendTo(self.nav));
+
+		self.sections[model.href] = model.section;
 	},
 
 	Section: function(model, env) {
@@ -121,6 +165,19 @@ boto_web.ui = {
 		}
 	},
 
+	alert: function(msg) {
+		$('<div/>')
+			.html(msg)
+			.dialog({
+				modal: true,
+				dialogClass: 'alert',
+				buttons: {
+					Ok: function() { $(this).dialog('close'); }
+				}
+			})
+			.dialog('show')
+	},
+
 	BaseModelEditor: function(model, obj, opts) {
 		var self = this;
 
@@ -132,8 +189,6 @@ boto_web.ui = {
 		self.node = $('<div/>')
 			.addClass('editor')
 			.addClass(model.name);
-
-		model.page.node.show();
 
 		self.properties = model.properties;
 		self.obj = obj;
@@ -203,11 +258,10 @@ boto_web.ui = {
 
 			self.model.save(data, function(data) {
 				if (data.status < 300) {
-					alert('The database has been updated.');
-					$(self.node).slideUp();
+					boto_web.ui.alert('The database has been updated.');
 				}
 				else {
-					alert('There was an error updating the database.');
+					boto_web.ui.alert('There was an error updating the database.');
 				}
 				// TODO data save callback
 			});
@@ -217,23 +271,59 @@ boto_web.ui = {
 			.addClass('clear')
 			.appendTo(self.node);
 
-		if (!opts.read_only) {
-			$('<input/>')
-				.attr({type: 'button'})
-				.val('Save')
-				.addClass('button')
-				.click(function() { self.submit() })
-				.appendTo(self.node);
-		}
+		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/&edit$/, '') };
+		$(self.node).dialog({
+			modal: true,
+			title: model.name + ' Editor',
+			width: 500,
+			buttons: {
+				Save: function() { self.submit(); closeFcn.call(this); },
+				Cancel: closeFcn
+			}
+		});
 
-		$('<input/>')
-			.attr({type: 'button'})
-			.val('Cancel')
-			.addClass('button')
-			.click(function() { $(self.node).slideUp(); })
-			.appendTo(self.node);
+		$(self.node).dialog('show');
 	},
 
+	BaseModelDeletor: function(model, obj, opts) {
+		var self = this;
+
+		self.model = model;
+		self.obj = obj;
+
+		if (!opts)
+			opts = {};
+
+		self.node = $('<div/>')
+			.text('Do you want to delete this ' + model.name + '?')
+			.addClass('deletor')
+			.addClass(model.name);
+
+		self.submit = function() {
+			self.model.del(self.obj.id, function(data) {
+				if (data.status < 300) {
+					boto_web.ui.alert('The database has been updated.');
+				}
+				else {
+					boto_web.ui.alert('There was an error updating the database.');
+				}
+				// TODO data save callback
+			});
+		};
+
+		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/&delete$/, '') };
+		$(self.node).dialog({
+			modal: true,
+			title: 'Please confirm',
+			dialogClass: 'confirm',
+			buttons: {
+				'Yes, delete it': function() { self.submit(); closeFcn.call(this); },
+				Cancel: closeFcn
+			}
+		});
+
+		$(self.node).dialog('show');
+	},
 
 	BaseModelDisplay: function(model, obj, opts) {
 		var self = this;
@@ -294,7 +384,7 @@ boto_web.ui = {
 	_field: function(properties) {
 		var self = this;
 		this.node = $('<div/>');
-		this.label = $('<label/>').html(properties._label || properties.name.replace(/^(.)/g, String.toUpperCase) || '&nbsp;');
+		this.label = $('<label/>').html(properties._label || properties.name.replace(/^(.)/g, function(a,b) { return b.toUpperCase() }) || '&nbsp;');
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
 		this.text = $('<span/>');
 		this.fields = [this.field];
@@ -303,6 +393,9 @@ boto_web.ui = {
 		properties.id += Math.round(Math.random() * 99999);
 
 		this.add_choices = function(choices) {
+			if (this.field.children().length == 0)
+				$('<option/>').appendTo(this.field);
+
 			for (var i in choices) {
 				choices[i].text = choices[i].text || choices[i].value;
 				var opt = $('<option/>').attr(choices[i]);
@@ -469,16 +562,86 @@ boto_web.ui = {
 	}
 };
 
-boto_web.ModelMeta.prototype.ui_create = function(opts) { return new boto_web.ui.BaseModelEditor(this, undefined, opts); };
+boto_web.ModelMeta.prototype.create = function(opts) { return new boto_web.ui.BaseModelEditor(this, undefined, opts); };
 
-boto_web.Model.prototype.ui_edit = function(opts) { return new boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts); };
+boto_web.Model.prototype.edit = function(opts) { return new boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts); };
+boto_web.Model.prototype.del = function(opts) { return new boto_web.ui.BaseModelDeletor(boto_web.env.models[this.name], this, opts); };
 
-boto_web.Model.prototype.ui_display = function(opts) { return new boto_web.ui.BaseModelDisplay(boto_web.env.models[this.name], this, opts); };
-boto_web.Model.prototype.ui_details = function(opts) {
-	if (!opts)
-		opts = {};
+// location binding system taken from:
+// http://www.bennadel.com/blog/1520-Binding-Events-To-Non-DOM-Objects-With-jQuery.htm
+// Our plugin will be defined within an immediately
+// executed method.
+boto_web.ui.watch_url = function() {
+	// Default to the current location.
+	var strLocation = window.location.href;
+	var strHash = window.location.hash;
+	var strPrevLocation = "";
+	var strPrevHash = "";
 
-	opts.read_only = true;
+	// This is how often we will be checkint for
+	// changes on the location.
+	var intIntervalTime = 100;
 
-	return new boto_web.ui.BaseModelEditor(boto_web.env.models[this.name], this, opts);
+	// This method removes the pound from the hash.
+	var fnCleanHash = function( strHash ){
+		return(
+			strHash.substring( 1, strHash.length )
+			);
+	}
+
+	// This will be the method that we use to check
+	// changes in the window location.
+	var fnCheckLocation = function(){
+		// Check to see if the location has changed.
+		if (strLocation != strPrevLocation){
+
+			// Store the new and previous locations.
+			strPrevLocation = strLocation;
+			strPrevHash = strHash;
+			strLocation = window.location.href;
+			strHash = window.location.hash;
+
+			// The location has changed. Trigger a
+			// change event on the location object,
+			// passing in the current and previous
+			// location values.
+			$( window.location ).trigger(
+				"change",
+				{
+					currentHref: strLocation,
+					currentHash: fnCleanHash( strHash ),
+					previousHref: strPrevLocation,
+					previousHash: fnCleanHash( strPrevHash )
+				}
+			);
+
+		}
+	}
+
+	// Set an interval to check the location changes.
+	setInterval( fnCheckLocation, intIntervalTime );
+
+	$(window.location).bind(
+		"change",
+		function(objEvent, objData) {
+			$.get(objData.currentHash.replace('#', ''), null, function(data) {
+				data = $(data);
+				for (var sel in boto_web.env.opts.markup) {
+					data.find(sel).each(boto_web.env.opts.markup[sel]);
+				}
+				new boto_web.ui.Page(data).activate();
+			});
+		}
+	);
+}
+
+jQuery.fn.log = function (msg) {
+	console.log("%s: %o", msg, this);
+	return this;
 };
+/*
+$.extend(jQuery.jStore.defaults, {
+	project: 'newscore'
+})
+
+*/

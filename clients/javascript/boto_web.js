@@ -64,7 +64,7 @@ var boto_web = {
 	// 		"op" must be one of the following: (=|>=|<=|!=|<|>|starts-with|ends-with|like)
 	// @param fnc: The callback function
 	//
-	query: function(url, query, fnc){
+	query: function(url, query, obj_name, fnc){
 		// Build the query string
 		parts = [];
 		for (query_num in query){
@@ -76,18 +76,18 @@ var boto_web = {
 			if(value.constructor.toString().indexOf("Array") != -1){
 				filter_parts = [];
 				for(val in value){
-					filter_parts.push("'" + name + "' " + op + " '" + value + "'");
+					filter_parts.push('"' + name + '","' + op + '","' + value + '"');
 				}
-				parts.push("[" + filter_parts.join(" OR ") + "]");
+				parts.push('[' + filter_parts.join(' OR ') + ']');
 			} else {
-				parts.push("['" + name + "' " + op + " '" + value + "']");
+				parts.push('["' + name + '","' + op + '","' + value + '"]');
 			}
 		}
 
-		url += "?query=" + escape(parts.join(" intersection "));
+		url += "?query=[" + escape(parts.join(" intersection ") + "]");
 		return $.get(url, function(xml){
 			var data = [];
-			$(xml).find("object").each(function(){
+			$(xml).find(obj_name).each(function(){
 				var obj = boto_web.parseObject(this);
 				if(obj.length > 0){
 					data.push(obj);
@@ -108,13 +108,12 @@ var boto_web = {
 
 		$(data).children().each(function(){
 			var value = null;
-			if($(this).attr("type") == "Reference"){
+			if($(this).attr("type") == "reference"){
 				value = {
-					className: $(this).find("object").attr("class"),
-					id: $(this).find("object").attr("id"),
-					fetch: function(url, fnc){
-						boto_web.get_by_id(url, this.id, fnc);
-					}
+					name: this.tagName,
+					type: 'reference',
+					href: $(this).attr("href"),
+					id: $(this).attr("id")
 				};
 			} else if ($(this).attr("type") == "List"){
 				value = [];
@@ -282,7 +281,7 @@ var boto_web = {
 	// @param base_url: The base URL that we are operating on
 	// @param fnc: Optional callback function to call after we finish loading
 	//
-	Environment: function(base_url, fnc){
+	Environment: function(base_url, fnc, opts){
 		// This is to support some weird things that
 		// jQuery does while doing ajax processing, if
 		// we ever need to refer to the Environment
@@ -290,6 +289,7 @@ var boto_web = {
 		var self = this;
 		self.base_url = base_url;
 		self.user = null;
+		self.opts = opts;
 		self.routes = [];
 		self.models = {};
 
@@ -398,7 +398,7 @@ var boto_web = {
 
 		this.query = function(query, fnc){
 			var self = this;
-			boto_web.query(boto_web.env.base_url + this.href, query, function(data){
+			boto_web.query(boto_web.env.base_url + this.href, query, this.name, function(data){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
@@ -460,7 +460,8 @@ var boto_web = {
 	//
 	// href: the location of the API root
 	//
-	init: function(href){
-		boto_web.env = new boto_web.Environment(href, boto_web.ui.init);
+	init: function(href, opts, default_ui){
+		boto_web.ui.use_default = default_ui;
+		boto_web.env = new boto_web.Environment(href, boto_web.ui.init, opts);
 	}
 };
