@@ -58,7 +58,7 @@ class DBHandler(RequestHandler):
 				(id, property) = vals
 			obj = self.read(id=id, user=request.user)
 			if property:
-				return self.get_property(response, obj, property)
+				return self.get_property(request, response, obj, property)
 			else:
 				response.write(xmlize.dumps(obj))
 		else:
@@ -158,21 +158,11 @@ class DBHandler(RequestHandler):
 				return type(value)
 		return value
 
-	###
-	# The CRUD interface, this is
-	# all you should override if you need to
-	##
-	def search(self, params, user):
-		"""
-		Search for given objects
-		@param params: The Terms to search for
-		@type params: Dictionary
-
-		@param user: the user that is searching
-		@type user: User
+	def build_query(self, params, query, user=None):
+		"""Build the query based on the parameters specified here, 
+		You must pass in the base query object to start with
 		"""
 		query_str = params.get("query", None)
-		query = self.db_class.find()
 		sort_by = params.get("sort_by", None)
 		next_token = params.get("next_token", None)
 		if query_str:
@@ -183,7 +173,7 @@ class DBHandler(RequestHandler):
 			for filter in filters:
 				query.filter("%s %s" % (filter[0], filter[1]), filter[2])
 		else:
-			properties = [p.name for p in self.db_class.properties(hidden=False)]
+			properties = [p.name for p in query.model_class.properties(hidden=False)]
 			for filter in set(params.keys()):
 				if filter in ["sort_by", "next_token"]:
 					continue
@@ -205,6 +195,22 @@ class DBHandler(RequestHandler):
 		if next_token:
 			query.next_token = next_token.replace(" ", "+")
 		return query
+
+
+	###
+	# The CRUD interface, this is
+	# all you should override if you need to
+	##
+	def search(self, params, user):
+		"""
+		Search for given objects
+		@param params: The Terms to search for
+		@type params: Dictionary
+
+		@param user: the user that is searching
+		@type user: User
+		"""
+		return self.build_query(params, query=self.db_class.find(), user=user)
 
 	def create(self, obj, user):
 		"""Create an object in the DB
@@ -241,6 +247,10 @@ class DBHandler(RequestHandler):
 			raise NotFound()
 		if not obj:
 			raise NotFound()
+		# Insurance to make sure this is actually an instance of
+		# what they're allowed to request from this handler
+		if not isinstance(obj, self.db_class):
+			raise NotFound()
 		return obj
 
 	def update(self, obj, props, user):
@@ -274,14 +284,17 @@ class DBHandler(RequestHandler):
 		obj.delete()
 		return obj
 
-	def get_property(self, response, obj, property):
+	def get_property(self, request, response, obj, property):
 		"""Return just a single property"""
 		from boto.sdb.db.query import Query
+		if not hasattr(obj, property):
+			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
 		val = getattr(obj, property)
 		if type(val) in (str, unicode):
 			response.content_type = "text/plain"
 			response.write(str(val))
 		elif isinstance(val, Query):
+			val = self.build_query(request.GET.mixed(), query=val, user=request.user)
 			response.write("<%s>" % property)
 			for o in val:
 				response.write(xmlize.dumps(o))
