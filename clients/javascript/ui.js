@@ -40,6 +40,22 @@ boto_web.ui = {
 		'def':        'bwDefault'
 	},
 
+	handlers: {
+		'edit': function(params) {
+			boto_web.env.models[params.type].get(params.id, function(obj) {
+				obj.edit();
+			});
+		},
+		'delete': function(params) {
+			boto_web.env.models[params.type].get(params.id, function(obj) {
+				obj.del();
+			});
+		},
+		'create': function(params) {
+			boto_web.env.models[params.type].create();
+		}
+	},
+
 	/**
 	 * Initializes the boto_web interface.
 	 *
@@ -54,6 +70,9 @@ boto_web.ui = {
 		}
 
 		self.desktop = new boto_web.ui.Desktop();
+
+		if (env.opts.handlers)
+			self.handlers = $.extend(self.handlers, env.opts.handlers);
 
 		new boto_web.ui.Object($('header'), env.models.User, {properties: env.user});
 
@@ -271,7 +290,7 @@ boto_web.ui = {
 			.addClass('clear')
 			.appendTo(self.node);
 
-		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/&edit$/, '') };
+		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/action=(edit|create)&?/, '') };
 		$(self.node).dialog({
 			modal: true,
 			title: model.name + ' Editor',
@@ -311,7 +330,7 @@ boto_web.ui = {
 			});
 		};
 
-		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/&delete$/, '') };
+		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/action=delete&?/, '') };
 		$(self.node).dialog({
 			modal: true,
 			title: 'Please confirm',
@@ -559,6 +578,11 @@ boto_web.ui = {
 				self.text.text(value_text);
 			});
 		}
+	},
+
+	action_handler: function(params) {
+		if (boto_web.ui.handlers[params.action])
+			boto_web.ui.handlers[params.action](params);
 	}
 };
 
@@ -624,7 +648,23 @@ boto_web.ui.watch_url = function() {
 	$(window.location).bind(
 		"change",
 		function(objEvent, objData) {
-			$.get(objData.currentHash.replace('#', ''), null, function(data) {
+			var static_url = objData.currentHash.replace(/#|\?(.*)/g, '');
+
+			if (RegExp.$1) {
+				boto_web.ui.params = {};
+				$(RegExp.$1.split('&')).each(function() {
+					boto_web.ui.params[this.split('=')[0]] = this.split('=')[1];
+				});
+
+				boto_web.ui.action_handler(boto_web.ui.params);
+			}
+
+			if (boto_web.ui.current_url != static_url)
+				boto_web.ui.current_url = static_url;
+			else
+				return;
+
+			$.get(static_url, null, function(data) {
 				data = $(data);
 				for (var sel in boto_web.env.opts.markup) {
 					data.find(sel).each(boto_web.env.opts.markup[sel]);
