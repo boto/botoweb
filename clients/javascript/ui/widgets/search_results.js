@@ -17,26 +17,26 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 		.addClass('object')
 		.clone();
 	self.node.empty();
+	self.node.parent('table').hide();
 
 	self.update = function(results) {
 		self.node.empty();
+		self.node.parent('table').show();
 
 		for (var i in results) {
 			self.node.append(new boto_web.ui.Object(self.template.clone(), self.model, results[i]).node);
 		}
 
-		self.node.parent('table').dataTable();
+		if (self.data_table) {
+			self.data_table.refresh();
+			return;
+		}
 
-		// Hide details
-		sel = boto_web.ui.selectors.details;
-
-		self.node.find(sel).each(function() {
-			$(this).find('.widget-attribute_list').hide();
-		});
+		self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'));
 	}
 
 	if (self.node.attr(boto_web.ui.properties.def) == 'all') {
-		self.model.all(function(results) { self.update(results) });
+		self.model.all(function(results) { self.update(results); });
 	}
 
 };

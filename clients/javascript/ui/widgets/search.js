@@ -15,15 +15,58 @@ boto_web.ui.widgets.Search = function(node) {
 	self.header = self.node.find(boto_web.ui.selectors.header);
 	self.model = boto_web.env.models[self.node.attr(boto_web.ui.properties.model)];
 	self.results = new boto_web.ui.widgets.SearchResults(self.node.find(boto_web.ui.selectors.search_results), self.model);
-	self.props = self.node.attr(boto_web.ui.properties.attributes) || 'all';
+	self.props = [];
 	self.fields = [];
 
-	if (self.props != 'all')
-		self.props = self.props.split(',');
+	self.get_link = function(method) {
+		var base_url = document.location.href + '';
+		base_url = base_url.replace(/\?.*/,'');
+		switch (method) {
+			case 'post':
+				return base_url + '?action=create&type=' + self.model.name;
+				break;
+		}
+	};
 
 	// Find any properties matching the search parameters
-	self.props = $.grep(self.model.properties, function(obj) {
-		return self.props == 'all' || $.inArray(obj.name, self.props) >= 0
+	$((self.node.attr(boto_web.ui.properties.attributes) || 'all').split(',')).each(function() {
+		if (this == 'all') {
+			self.props.push(self.model.properties);
+			return;
+		}
+		var name = this;
+		var prop = $.grep(self.model.properties, function(p) {
+			return p.name == name;
+		});
+
+		if (prop)
+			self.props.push(prop[0]);
+	});
+
+	// Add editing tools
+	sel = boto_web.ui.selectors.editing_tools;
+
+	self.node.find(sel).each(function() {
+		new boto_web.ui.widgets.EditingTools(this, self.model, 'create');
+	});
+
+	// Add links
+	sel = boto_web.ui.selectors.link;
+	prop =  boto_web.ui.properties.link;
+
+	self.node.find(sel).each(function() {
+		// Translate
+		var val = $(this).attr(prop);
+		var method = {'create':'post'}[val];
+
+		// Only allow create, and only if that action is allowed
+		// according to the model API.
+		if (!(method && method in self.model.methods)) {
+			$(val).log(self.model.name + ' does not support this action');
+			return;
+		}
+
+		$(this).attr('href', self.get_link(method));
 	});
 
 	$('<h2/>')
@@ -75,13 +118,15 @@ boto_web.ui.widgets.Search = function(node) {
 			if (this.fields.length > 1) {
 				val = [];
 				$(this.fields).each(function() {
-					val.push(this.val());
+					if (this.val())
+						val.push(this.val());
 				});
 			}
 			else
 				val = this.field.val();
 
-			query.push([this.field.attr('name'), 'like', '%' + val + '%']);
+			if (val)
+				query.push([this.field.attr('name'), 'like', '%' + val + '%']);
 		});
 
 		self.model.query(query, function(data) {
