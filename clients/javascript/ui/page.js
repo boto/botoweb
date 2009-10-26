@@ -17,16 +17,10 @@ boto_web.ui.Page = function(html) {
 	if (self.node.attr(boto_web.ui.properties.model)) {
 		self.node.find(boto_web.ui.selectors.object).each(function() {
 			var model = boto_web.env.models[self.node.attr(boto_web.ui.properties.model)];
-			var url = document.location.href + '';
 			var node = this;
-			var id = url.replace(/.*\?([^&]*)&?(edit|delete)?/, '$1');
+			var id = boto_web.ui.params.id;
 
 			self.id = model.name + '_' + id;
-
-			if (self.id in boto_web.ui.desktop.pages) {
-				boto_web.ui.desktop.pages[self.id].obj.do_action(RegExp.$2);
-				return;
-			}
 
 			$(node).hide();
 
