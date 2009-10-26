@@ -41,18 +41,21 @@ boto_web.ui = {
 	},
 
 	handlers: {
-		'edit': function(params) {
-			boto_web.env.models[params.type].get(params.id, function(obj) {
+		'edit': function(action) {
+			var obj = action.split('/');
+			boto_web.env.models[obj[1]].get(obj[2], function(obj) {
 				obj.edit();
 			});
 		},
-		'delete': function(params) {
-			boto_web.env.models[params.type].get(params.id, function(obj) {
+		'delete': function(action) {
+			var obj = action.split('/');
+			boto_web.env.models[obj[1]].get(obj[2], function(obj) {
 				obj.del();
 			});
 		},
-		'create': function(params) {
-			boto_web.env.models[params.type].create();
+		'create': function(action) {
+			var model = action.split('/');
+			boto_web.env.models[model[1]].create();
 		}
 	},
 
@@ -290,7 +293,7 @@ boto_web.ui = {
 			.addClass('clear')
 			.appendTo(self.node);
 
-		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/action=(edit|create)&?/, '') };
+		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/action=(edit|create)\/.*?(&|$)/, '') };
 		$(self.node).dialog({
 			modal: true,
 			title: model.name + ' Editor',
@@ -330,7 +333,7 @@ boto_web.ui = {
 			});
 		};
 
-		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/action=delete&?/, '') };
+		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/action=delete\/.*?(&|$)/, '') };
 		$(self.node).dialog({
 			modal: true,
 			title: 'Please confirm',
@@ -581,8 +584,12 @@ boto_web.ui = {
 	},
 
 	action_handler: function(params) {
-		if (boto_web.ui.handlers[params.action])
-			boto_web.ui.handlers[params.action](params);
+		if (!params.action) return;
+
+		$(params.action).each(function() {
+			if (boto_web.ui.handlers[this.replace(/\/.*/,'')])
+				boto_web.ui.handlers[this.replace(/\/.*/,'')](this);
+		});
 	}
 };
 
@@ -653,7 +660,11 @@ boto_web.ui.watch_url = function() {
 			if (RegExp.$1) {
 				boto_web.ui.params = {};
 				$(RegExp.$1.split('&')).each(function() {
-					boto_web.ui.params[this.split('=')[0]] = this.split('=')[1];
+					var pair = this.split('=');
+					if (boto_web.ui.params[pair[0]])
+						boto_web.ui.params[pair[0]].push(pair[1]);
+					else
+						boto_web.ui.params[pair[0]] = [pair[1]];
 				});
 
 				boto_web.ui.action_handler(boto_web.ui.params);

@@ -23,7 +23,7 @@ boto_web.ui.widgets.Search = function(node) {
 		base_url = base_url.replace(/\?.*/,'');
 		switch (method) {
 			case 'post':
-				return base_url + '?action=create&type=' + self.model.name;
+				return base_url + '?action=create/' + self.model.name;
 				break;
 		}
 	};

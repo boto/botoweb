@@ -22,13 +22,13 @@ boto_web.ui.Object = function(html, model, obj, action) {
 		base_url = base_url.replace(/\?.*/,'');
 		switch (method) {
 			case 'get':
-				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?action=view&id=' + self.obj.id + '&type=' + self.model.name;
+				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id;
 				break;
 			case 'put':
-				return base_url + '?action=edit&id=' + self.obj.id + '&type=' + self.model.name;
+				return base_url + '?action=edit/' + self.model.name + '/' + self.obj.id;
 				break;
 			case 'delete':
-				return base_url + '?action=delete&id=' + self.obj.id + '&type=' + self.model.name;
+				return base_url + '?action=delete/' + self.model.name + '/' + self.obj.id;
 				break;
 		}
 	};
