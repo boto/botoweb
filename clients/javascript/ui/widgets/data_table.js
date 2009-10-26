@@ -16,6 +16,7 @@ boto_web.ui.widgets.DataTable = function(table) {
 			sLengthMenu: "Show _MENU_ records per page",
 			sInfo: 'Showing _START_ to _END_ of _TOTAL_ results'
 		},
+		sDom: '<"fg-toolbar ui-widget-header ui-corner-tl ui-corner-tr ui-helper-clearfix"lTfr>t<"fg-toolbar ui-widget-header ui-corner-bl ui-corner-br ui-helper-clearfix"ip>',
 		sPaginationType: 'full_numbers'
 	});
 
