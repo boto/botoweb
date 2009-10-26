@@ -84,7 +84,7 @@ var boto_web = {
 			}
 		}
 
-		url += "?query=[" + escape(parts.join(" intersection ") + "]");
+		url += "?query=[" + escape(parts.join(",") + "]");
 		return $.get(url, function(xml){
 			var data = [];
 			$(xml).find(obj_name).each(function(){
@@ -105,6 +105,7 @@ var boto_web = {
 		var obj = {};
 		obj.length = 0;
 		obj.id = $(data).attr('id');
+		obj.model = data.tagName;
 
 		$(data).children().each(function(){
 			var value = null;
@@ -113,7 +114,8 @@ var boto_web = {
 					name: this.tagName,
 					type: 'reference',
 					href: $(this).attr("href"),
-					id: $(this).attr("id")
+					id: $(this).attr("id"),
+					object_type: $(this).attr('object_type')
 				};
 			} else if ($(this).attr("type") == "List"){
 				value = [];
@@ -263,7 +265,7 @@ var boto_web = {
 		$.ajax({
 			type: "DELETE",
 			url: url,
-			success: fnc
+			complete: fnc
 		});
 	},
 
@@ -332,6 +334,8 @@ var boto_web = {
 		self.name = xml.attr('name');
 		self.href = $('href', xml).text();
 		self.methods = {};
+		self.cache = {};
+		self.cache_timeouts = {};
 
 		// Parse method names and descriptions
 		$('methods *', xml).each(function(){ self.methods[this.nodeName] = $(this).text() });
@@ -414,9 +418,18 @@ var boto_web = {
 
 		this.get = function(id, fnc){
 			var self = this;
+			if (self.cache[id]) {
+				fnc(self.cache[id]);
+				return;
+			}
 			boto_web.get_by_id(boto_web.env.base_url + self.href, id, function(obj){
 				if(obj){
-					fnc(new boto_web.Model(self.href, self.name, obj));
+					self.cache[id] = new boto_web.Model(self.href, self.name, obj);
+					clearTimeout(self.cache_timeouts[id]);
+					self.cache_timeouts[id] = setTimeout(function() {
+						delete self.cache[id];
+					}, 60000);
+					fnc(self.cache[id]);
 				}
 			});
 		}
@@ -425,7 +438,8 @@ var boto_web = {
 			ref = boto_web.env.base_url + this.href;
 			method = "POST";
 			if("id" in data){
-				ref += ("/" + data['id']);
+				delete self.cache[data.id];
+				ref += ("/" + data.id);
 				delete(data['id']);
 				method = "PUT";
 			}
@@ -436,6 +450,7 @@ var boto_web = {
 		// Delete this object
 		//
 		this.del = function(id, fnc){
+			delete self.cache[id];
 			ref = this.href;
 			return boto_web.del(boto_web.env.base_url + ref + "/" + id, fnc);
 		}
@@ -445,10 +460,35 @@ var boto_web = {
 	// Model wrapper
 	//
 	Model: function(href, name, properties){
-		this.href = href;
-		this.name = name;
-		this.properties = properties;
-		this.id = properties.id;
+		var self = this;
+
+		self.href = href;
+		self.name = name;
+		self.properties = properties;
+		self.id = properties.id;
+
+		self.follow = function(property, fnc) {
+			if (self.properties[property].id != undefined) {
+				if (self.properties[property].object_type) {
+					var model = boto_web.env.models[self.properties[property].object_type];
+					model.get(self.properties[property].id, function(obj) {
+						fnc([obj]);
+					});
+				}
+				return;
+			}
+
+			boto_web.all(boto_web.env.base_url + self.href + '/' + self.id + '/' + self.properties[property].href, '*>*[id]', function(data) {
+				if(fnc){
+					var objects = [];
+					for(var x=0; x < data.length; x++){
+						var model = boto_web.env.models[data[x].model];
+						objects[x] = new boto_web.Model(model.href, model.name, data[x]);
+					}
+					fnc(objects);
+				}
+			});
+		}
 	},
 
 	//
