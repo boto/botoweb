@@ -17,30 +17,18 @@ boto_web.ui.Object = function(html, model, obj, action) {
 	self.node = $(html);
 	self.guid = self.model.name + '_' + self.obj.id;
 
-	/*
-	if (action == 'edit') {
-		var store = $.jStore.get('recent_edited'));
-		if ($.inArray(self.guid, store)) {
-			store.remove(self.guid);
-		}
-		else
-
-	}
-	else {
-		var store = $.jStore.get('recent_viewed'));
-	}
-	*/
-
 	self.get_link = function(method) {
+		var base_url = document.location.href + '';
+		base_url = base_url.replace(/\?.*/,'');
 		switch (method) {
 			case 'get':
-				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?' + self.obj.id;
+				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?action=view&id=' + self.obj.id + '&type=' + self.model.name;
 				break;
 			case 'put':
-				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?' + self.obj.id + '&edit';
+				return base_url + '?action=edit&id=' + self.obj.id + '&type=' + self.model.name;
 				break;
 			case 'delete':
-				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?' + self.obj.id + '&delete';
+				return base_url + '?action=delete&id=' + self.obj.id + '&type=' + self.model.name;
 				break;
 		}
 	};
@@ -49,52 +37,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 	 * Insert values from the object into the html markup.
 	 */
 	self.parse_markup = function() {
-		// Insert object attributes
-		var sel = boto_web.ui.selectors.attribute;
-		var prop = boto_web.ui.properties.attribute;
-
-		self.node.find(sel).each(function() {
-			var val = $(this).attr(prop);
-
-			// Decide whether this is a valid property.
-			if (!(val in self.obj.properties)) {
-				$(val).log(self.model.name + ' does not support this property');
-				return;
-			}
-
-			if (this.tagName.toLowerCase() == 'img')
-				$(this).attr('src', self.obj.properties[val]);
-			else
-				$(this).text(self.obj.properties[val]);
-		});
-
-		// Add editing tools
-		sel = boto_web.ui.selectors.editing_tools;
-
-		self.node.find(sel).each(function() {
-			new boto_web.ui.widgets.EditingTools(this, self.model);
-		});
-
-
-		// Add links
-		sel = boto_web.ui.selectors.link;
-		prop =  boto_web.ui.properties.link;
-
-		self.node.find(sel).each(function() {
-			// Translate
-			var val = $(this).attr(prop);
-			var method = {'view':'get', 'edit':'put', 'delete':'delete'}[val];
-
-			// Only allow view, edit, or delete and only if that action is allowed
-			// according to the model API.
-			if (!(method && method in self.model.methods)) {
-				$(val).log(self.model.name + ' does not support this action');
-				return;
-			}
-
-			$(this).attr('href', self.get_link(method));
-		});
-
+		var nested_obj_nodes = [];
 
 		// Add relational links to other objects
 		sel = boto_web.ui.selectors.relations;
@@ -114,22 +57,20 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				}
 			}
 
-			var node = $('<div/>')
-				.appendTo(this);
-			$('<br/>')
-				.addClass('clear')
-				.appendTo(this);
+			var template = $(this).contents().clone();
+			$(this).empty();
+
+			var node = $(this).clone();
+			nested_obj_nodes.push([this, node]);
 
 			for (var i in relations) {
-				$('<a/>')
-					.text(relations[i].name)
-					.appendTo($('<h3/>').appendTo(node));
-				$('<div/>')
-					.text('Related objects will be listed here.')
-					.appendTo(node);
+				self.obj.follow(relations[i].name, function(data) {
+					$(data).each(function() {
+						node.append(new boto_web.ui.Object(template, boto_web.env.models[this.name], this).node)
+					});
+					new boto_web.ui.widgets.DataTable(node.parent('table'))
+				});
 			}
-
-			node.accordion({});
 
 			// If no relations are found, return an error
 			if (props.length == 0) {
@@ -153,15 +94,57 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				$(this.parentNode).find('.widget-attribute_list').toggle();
 			});
 		});
-	};
 
-	self.do_action = function(action) {
-		if (action == 'edit')
-			self.obj.edit();
-		else if (action == 'delete')
-			self.obj.del();
+		// Insert object attributes
+		var sel = boto_web.ui.selectors.attribute;
+		var prop = boto_web.ui.properties.attribute;
+
+		self.node.find(sel).each(function() {
+			var val = $(this).attr(prop);
+
+			// Decide whether this is a valid property.
+			if (!(val in self.obj.properties)) {
+				$(val).log(self.model.name + ' does not support this property');
+				return;
+			}
+
+			if (this.tagName.toLowerCase() == 'img')
+				$(this).attr('src', self.obj.properties[val]);
+			else
+				$(this).text(self.obj.properties[val].toString());
+		});
+
+		// Add editing tools
+		sel = boto_web.ui.selectors.editing_tools;
+
+		self.node.find(sel).each(function() {
+			new boto_web.ui.widgets.EditingTools(this, self.model);
+		});
+
+		// Add links
+		sel = boto_web.ui.selectors.link;
+		prop =  boto_web.ui.properties.link;
+
+		self.node.find(sel).each(function() {
+			// Translate
+			var val = $(this).attr(prop);
+			var method = {'view':'get', 'edit':'put', 'delete':'delete'}[val];
+
+			// Only allow view, edit, or delete and only if that action is allowed
+			// according to the model API.
+			if (!(method && method in self.model.methods)) {
+				$(val).log(self.model.name + ' does not support this action');
+				return;
+			}
+
+			$(this).attr('href', self.get_link(method));
+		});
+
+		$(nested_obj_nodes).each(function() {
+			$(this[0]).replaceWith(this[1]);
+			$(this[1]).trigger('ready');
+		});
 	};
 
 	self.parse_markup();
-	self.do_action(action);
 };
