@@ -73,7 +73,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 					$(data).each(function() {
 						node.append(new boto_web.ui.Object(template, boto_web.env.models[this.name], this).node)
 					});
-					new boto_web.ui.widgets.DataTable(node.parent('table'))
+					new boto_web.ui.widgets.DataTable(node.parent('table'));
 				});
 			}
 

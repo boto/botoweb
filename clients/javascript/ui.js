@@ -223,7 +223,7 @@ boto_web.ui = {
 			if (typeof obj != 'undefined')
 				props = $.extend(this, {value: obj.properties[this.name]});
 
-			if ($.inArray('write', props._perm) == -1)
+			if (props._perm && $.inArray('write', props._perm) == -1)
 				return;
 
 			var field;
