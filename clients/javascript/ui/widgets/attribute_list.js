@@ -20,6 +20,9 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 		if (typeof obj != 'undefined')
 			props = $.extend(this, {value: obj.properties[this.name]});
 
+		if ($.inArray('read', props._perm) == -1)
+			return;
+
 		var field;
 
 		switch (this._type) {
@@ -36,6 +39,9 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 				break;
 			case 'dateTime':
 				field = new boto_web.ui.date(props);
+				break;
+			case 'blob':
+				field = new boto_web.ui.file(props);
 				break;
 			case 'object':
 				field = new boto_web.ui.picklist(props);

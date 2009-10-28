@@ -19,16 +19,21 @@ boto_web.ui.Object = function(html, model, obj, action) {
 
 	self.get_link = function(method) {
 		var base_url = document.location.href + '';
-		base_url = base_url.replace(/\?.*/,'');
+		base_url = base_url.replace(/action=.*?(&|$)/,'');
+		if (base_url.indexOf('?') == -1)
+			base_url += '?';
+		else
+			base_url += '&';
+
 		switch (method) {
 			case 'get':
 				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id;
 				break;
 			case 'put':
-				return base_url + '?action=edit/' + self.model.name + '/' + self.obj.id;
+				return base_url + 'action=edit/' + self.model.name + '/' + self.obj.id;
 				break;
 			case 'delete':
-				return base_url + '?action=delete/' + self.model.name + '/' + self.obj.id;
+				return base_url + 'action=delete/' + self.model.name + '/' + self.obj.id;
 				break;
 		}
 	};
@@ -102,8 +107,11 @@ boto_web.ui.Object = function(html, model, obj, action) {
 		self.node.find(sel).each(function() {
 			var val = $(this).attr(prop);
 
+			if (val in self.model.properties)
+				alert($.dump(self.model.properties[val].perms));
+
 			// Decide whether this is a valid property.
-			if (!(val in self.obj.properties)) {
+			if (!(val in self.obj.properties) || (val in self.model.properties && $.inArray('read', self.model.properties[val].perms == -1))) {
 				$(val).log(self.model.name + ' does not support this property');
 				return;
 			}

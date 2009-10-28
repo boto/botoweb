@@ -223,6 +223,9 @@ boto_web.ui = {
 			if (typeof obj != 'undefined')
 				props = $.extend(this, {value: obj.properties[this.name]});
 
+			if ($.inArray('write', props._perm) == -1)
+				return;
+
 			var field;
 
 			switch (this._type) {
@@ -244,6 +247,9 @@ boto_web.ui = {
 					field = new boto_web.ui.date(props)
 						.read_only(opts.read_only);
 					break;
+				case 'blob':
+					field = new boto_web.ui.file(props)
+						.read_only(opts.read_only);
 				case 'object':
 					field = new boto_web.ui.picklist(props)
 						.read_only(opts.read_only);
@@ -293,7 +299,7 @@ boto_web.ui = {
 			.addClass('clear')
 			.appendTo(self.node);
 
-		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/action=(edit|create)\/.*?(&|$)/, '') };
+		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/&?action=(edit|create)\/[^&]*/, '') };
 		$(self.node).dialog({
 			modal: true,
 			title: model.name + ' Editor',
@@ -333,7 +339,7 @@ boto_web.ui = {
 			});
 		};
 
-		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/action=delete\/.*?(&|$)/, '') };
+		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/&?action=delete\/[^&]*/, '') };
 		$(self.node).dialog({
 			modal: true,
 			title: 'Please confirm',
@@ -548,6 +554,14 @@ boto_web.ui = {
 			changeYear: true,
 			constrainInput: false
 		});
+	},
+
+	/**
+	 * @param {Object} properties HTML node properties.
+	 */
+	file: function(properties) {
+		properties._type = 'file';
+		boto_web.ui._field.call(this, properties);
 	},
 
 	/**
