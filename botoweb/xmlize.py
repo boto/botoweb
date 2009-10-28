@@ -32,7 +32,7 @@ TYPE_NAMES = {
 	unicode: "string",
 	int: "integer",
 	list: "list",
-	dict: "map",
+	dict: "complexType",
 	datetime: "dateTime",
 	datetime_type: "dateTime",
 	object: "object",
@@ -120,7 +120,7 @@ class XMLSerializer(object):
 		elif hasattr(prop_value, "id"):
 			prop_value = str(prop_value.id)
 		else:
-			prop_value = str(prop_value)
+			return
 		self.file.write("""<%s type="reference" object_type="%s" id="%s" href="%s"/>""" % (prop_name, prop_type, prop_value, prop_name))
 
 	def encode_query(self, prop_name, prop_value):
@@ -208,7 +208,7 @@ class XMLSerializer(object):
 				prop_type = (prop.get("type") or "string").lower()
 				if prop_type == "string":
 					value = self.decode_string(prop)
-				elif prop_type in ('complex', 'complextype'):
+				elif prop_type in ('complex', 'complextype', 'dict'):
 					# Dictionary
 					pass
 				elif prop_type in ('date', 'datetime', 'time'):

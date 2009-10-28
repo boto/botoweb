@@ -75,6 +75,8 @@ class IndexHandler(RequestHandler):
 					if model_class:
 						props_node = etree.SubElement(api_node, "properties")
 						for prop in model_class.properties():
+							if not hasattr(prop, "verbose_name") or prop.verbose_name == None or not isinstance(prop.verbose_name, str):
+								continue
 							prop_node = etree.SubElement(props_node, "property")
 							prop_node.set("name", prop.name)
 							if hasattr(prop, "reference_class"):
@@ -93,8 +95,7 @@ class IndexHandler(RequestHandler):
 								else:
 									item_type = TYPE_NAMES.get(prop.item_type, "string")
 								prop_node.set("item_type", item_type)
-							if hasattr(prop, "verbose_name") and prop.verbose_name != None and isinstance(prop.verbose_name, str):
-								etree.SubElement(prop_node, "description").text = str(prop.verbose_name)
+							etree.SubElement(prop_node, "description").text = str(prop.verbose_name)
 							if hasattr(prop, "default"):
 								default_node = etree.SubElement(prop_node, "default")
 							if hasattr(prop, "choices") and prop.choices:
