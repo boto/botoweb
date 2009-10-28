@@ -27,6 +27,9 @@ boto_web.ui.Page = function(html) {
 			model.get(id, (function(action) { return function(obj) {
 				self.obj = new boto_web.ui.Object(node, model, obj, action);
 				$(node).show();
+
+				self.title = self.node.find('h1').text();
+				document.title = self.title || document.title;
 			};})(RegExp.$2));
 		});
 	}
@@ -44,6 +47,6 @@ boto_web.ui.Page = function(html) {
 		boto_web.ui.desktop.activate(self);
 	}
 
-	// Parse valid elements in the html but outside the <section>
-	document.title = self.node.attr('title') || document.title;
+	self.title = self.node.find('h1').text();
+	document.title = self.title || document.title;
 };
