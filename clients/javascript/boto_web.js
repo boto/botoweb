@@ -350,13 +350,17 @@ var boto_web = {
 				_type: 'type',
 				maxlength: 'max_length',
 				min_value: 'min',
-				max_value: 'max'
+				max_value: 'max',
+				_perm: 'perm'
 			};
 
 			for (var i in map) {
 				if (xml.attr(map[i]) == undefined) continue;
 				property[i] = xml.attr(map[i]);
 			}
+
+			if (property._perm)
+				property._perm = property._perm.split(' ');
 
 			// Pull text content of children of the property node
 			map = {

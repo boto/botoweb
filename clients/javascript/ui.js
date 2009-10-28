@@ -410,6 +410,7 @@ boto_web.ui = {
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
 		this.text = $('<span/>');
 		this.fields = [this.field];
+		this.perms = properties._perms || [];
 
 		properties.id = properties.id || 'field_' + properties.name;
 		properties.id += Math.round(Math.random() * 99999);
