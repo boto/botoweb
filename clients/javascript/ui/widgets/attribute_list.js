@@ -20,7 +20,7 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 		if (typeof obj != 'undefined')
 			props = $.extend(this, {value: obj.properties[this.name]});
 
-		if ($.inArray('read', props._perm) == -1)
+		if (props._perm && $.inArray('read', props._perm) == -1)
 			return;
 
 		var field;
