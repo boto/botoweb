@@ -11,7 +11,7 @@
 boto_web.ui.Page = function(html) {
 	var self = this;
 
-	self.node = $(html).find(boto_web.ui.selectors.section);
+	self.node = $(html).is(boto_web.ui.selectors.section) ? $(html) : $(html).find(boto_web.ui.selectors.section);
 	self.id = self.node.id || 'section_' + boto_web.ui.desktop.num_pages;
 
 	if (self.node.attr(boto_web.ui.properties.model)) {
@@ -45,5 +45,5 @@ boto_web.ui.Page = function(html) {
 	}
 
 	// Parse valid elements in the html but outside the <section>
-	document.title = $(html).find('title').html() || document.title;
+	document.title = self.node.attr('title') || document.title;
 };
