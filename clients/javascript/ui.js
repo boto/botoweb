@@ -250,6 +250,7 @@ boto_web.ui = {
 				case 'blob':
 					field = new boto_web.ui.file(props)
 						.read_only(opts.read_only);
+					break;
 				case 'object':
 					field = new boto_web.ui.picklist(props)
 						.read_only(opts.read_only);
@@ -262,15 +263,21 @@ boto_web.ui = {
 			field.node.appendTo(self.node)
 		});
 
-		self.submit = function() {
+		self.submit = function(closeFcn) {
 			var self = this;
 			var data = {};
+			var uploads = [];
 
 			if (self.obj)
 				data.id = self.obj.id;
 
 			$(self.fields).each(function() {
 				var val;
+
+				if (this.field.attr('type') == 'file') {
+					uploads.push(this);
+					return;
+				}
 
 				if (this.fields.length > 1) {
 					val = [];
@@ -286,13 +293,25 @@ boto_web.ui = {
 
 			self.model.save(data, function(data) {
 				if (data.status < 300) {
-					boto_web.ui.alert('The database has been updated.');
+					if (uploads.length) {
+						$(uploads).each(function() {
+							$(this.field.node)
+								.uploadifySettings('script', boto_web.env.base_url + $(data.responseXML).attr('href') + '/input')
+								.uploadifyUpload();
+						});
+					}
+					else
+						boto_web.ui.alert('The database has been updated.');
 				}
 				else {
 					boto_web.ui.alert('There was an error updating the database.');
 				}
 				// TODO data save callback
 			});
+
+			if (uploads.length)
+				return false;
+			return true;
 		};
 
 		$('<br/>')
@@ -305,7 +324,7 @@ boto_web.ui = {
 			title: model.name + ' Editor',
 			width: 500,
 			buttons: {
-				Save: function() { self.submit(); closeFcn.call(this); },
+				Save: function() { if (self.submit(closeFcn)) closeFcn.call(this); },
 				Cancel: closeFcn
 			}
 		});
@@ -560,8 +579,19 @@ boto_web.ui = {
 	 * @param {Object} properties HTML node properties.
 	 */
 	file: function(properties) {
-		properties._type = 'file';
+		properties.type = 'file';
 		boto_web.ui._field.call(this, properties);
+
+		var self = this;
+
+		setTimeout(function() {
+			$(self.field).uploadify({
+				uploader: '/swf/uploadify.swf',
+				cancelImg: '/images/cancel.png',
+				auto: false,
+				buttonText: 'Choose File'
+			});
+		}, 50);
 	},
 
 	/**
