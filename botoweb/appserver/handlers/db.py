@@ -4,6 +4,7 @@ from botoweb.appserver.handlers import RequestHandler
 
 import boto
 from boto.utils import find_class, Password
+from boto.sdb.db.blob import Blob
 from boto.sdb.db.model import Model
 from boto.sdb.db.key import Key
 
@@ -295,7 +296,7 @@ class DBHandler(RequestHandler):
 		if not hasattr(obj, property):
 			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
 		val = getattr(obj, property)
-		if type(val) in (str, unicode):
+		if type(val) in (str, unicode) or isinstance(val, Blob):
 			response.content_type = "text/plain"
 			response.write(str(val))
 		elif isinstance(val, Query):
