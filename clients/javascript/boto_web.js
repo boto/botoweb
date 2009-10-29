@@ -44,7 +44,8 @@ var boto_web = {
 			url += filter + "=" + filters[filter] + "&";
 		}
 
-		return $.get(url, function(xml){
+		var page = 0;
+		var process = function(xml){
 			var data = [];
 			$(xml).find(obj_name).each(function(){
 				var obj = boto_web.parseObject(this);
@@ -52,8 +53,14 @@ var boto_web = {
 					data.push(obj);
 				}
 			});
-			fnc(data);
-		});
+			url = $(xml).find('link[rel=next]').attr('href');
+
+			// Get the next page
+			if (fnc(data, page++) && url)
+				$.get(url, process);
+		}
+
+		return $.get(url, process);
 	},
 
 	//
@@ -393,26 +400,26 @@ var boto_web = {
 
 		this.find = function(filters, fnc){
 			var self = this;
-			boto_web.find(boto_web.env.base_url + this.href, filters, this.name, function(data){
+			boto_web.find(boto_web.env.base_url + this.href, filters, this.name, function(data, page){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
 						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
 					}
-					fnc(objects);
+					return fnc(objects, page);
 				}
 			});
 		}
 
 		this.query = function(query, fnc){
 			var self = this;
-			boto_web.query(boto_web.env.base_url + this.href, query, this.name, function(data){
+			boto_web.query(boto_web.env.base_url + this.href, query, this.name, function(data, page){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
 						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
 					}
-					fnc(objects);
+					return fnc(objects, page);
 				}
 			});
 		}
@@ -433,7 +440,7 @@ var boto_web = {
 					self.cache_timeouts[id] = setTimeout(function() {
 						delete self.cache[id];
 					}, 60000);
-					fnc(self.cache[id]);
+					return fnc(self.cache[id]);
 				}
 			});
 		}
@@ -476,7 +483,7 @@ var boto_web = {
 				if (self.properties[property].object_type) {
 					var model = boto_web.env.models[self.properties[property].object_type];
 					model.get(self.properties[property].id, function(obj) {
-						fnc([obj]);
+						return fnc([obj]);
 					});
 				}
 				return;
@@ -489,7 +496,7 @@ var boto_web = {
 						var model = boto_web.env.models[data[x].model];
 						objects[x] = new boto_web.Model(model.href, model.name, data[x]);
 					}
-					fnc(objects);
+					return fnc(objects);
 				}
 			});
 		}

@@ -20,33 +20,27 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 	self.node.parent('table').hide();
 	self.def = self.node.attr(boto_web.ui.properties.def);
 
-	self.update = function(results) {
-		self.node.empty();
+	self.update = function(results, append) {
 		self.node.parent('table').show();
+		if (!self.data_table)
+			self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'));
 
 		for (var i in results) {
-			self.node.append(new boto_web.ui.Object(self.template.clone(), self.model, results[i]).node);
+			self.data_table.append(new boto_web.ui.Object(self.template.clone(), self.model, results[i]).node);
 		}
-
-		if (self.data_table) {
-			self.data_table.refresh();
-			return;
-		}
-
-		self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'));
 	}
 
 	if (self.def == 'all') {
-		self.model.all(function(results) { self.update(results); });
+		self.model.all(function(results, page) { self.update(results, page); return page < 10; });
 	}
 	else if (self.def) {
 		// Evaluate JSON search filters
 		eval('self.def = ' + self.def);
 
 		if ($.isArray(self.def))
-			self.model.query(self.def, function(results) { self.update(results); });
+			self.model.query(self.def, function(results, page) { self.update(results, page); });
 		else
-			self.model.find(self.def, function(results) { self.update(results); });
+			self.model.find(self.def, function(results, page) { self.update(results, page); });
 	}
 
 };
