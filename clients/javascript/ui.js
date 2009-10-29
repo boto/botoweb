@@ -294,10 +294,15 @@ boto_web.ui = {
 			self.model.save(data, function(data) {
 				if (data.status < 300) {
 					if (uploads.length) {
-						$(uploads).each(function() {
-							$(this.field.node)
-								.uploadifySettings('script', boto_web.env.base_url + $(data.responseXML).attr('href') + '/input')
-								.uploadifyUpload();
+						self.model.get(data.getResponseHeader('Location'), function(obj) {
+							$(uploads).each(function() {
+								$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
+								$(this.field).uploadifySettings('onComplete', function() {
+									closeFcn();
+									boto_web.ui.alert('The database has been updated.');
+								});
+								$(this.field).uploadifyUpload();
+							});
 						});
 					}
 					else
