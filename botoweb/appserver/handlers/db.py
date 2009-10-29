@@ -91,11 +91,16 @@ class DBHandler(RequestHandler):
 
 
 	def _post(self, request, response, id=None):
-		"""Create a new resource"""
+		"""Create a new resource, or update a single property on an object"""
 		if id:
-			obj = self.db_class.get_by_ids(id)
-			if obj:
-				raise Conflict("Object %s already exists" % id)
+			vals = id.split("/",1)
+			if len(vals) > 1:
+				obj = self.db_class.get_by_ids(vals[0])
+				return self.update_property(request, response, obj, vals[1])
+			else:
+				obj = self.db_class.get_by_ids(id)
+				if obj:
+					raise Conflict("Object %s already exists" % id)
 
 		new_obj = xmlize.loads(request.body)
 		new_obj.__id__ = id
@@ -299,6 +304,22 @@ class DBHandler(RequestHandler):
 			for o in val:
 				response.write(xmlize.dumps(o))
 			response.write("</%s>" % property)
-		else:
+		elif val:
 			response.write("<response>%s</response>" % xmlize.dumps(val, property))
+		else:
+			response.set_status(204)
+		return response
+
+	def update_property(self, request, response, obj, property):
+		"""Update the property via a POST to the specific property,
+		Typically this means we're putting up a BLOB"""
+		if not hasattr(obj, property):
+			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
+		val = request.POST.get(property)
+		if hasattr(val, "file"):
+			val = val.file.read()
+		setattr(obj, property, val)
+		obj.put()
+		log.info("Updated %s<%s>.%s" % (obj.__class__.__name__, obj.id, property))
+		response.set_status(204)
 		return response
