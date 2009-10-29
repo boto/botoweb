@@ -591,8 +591,8 @@ boto_web.ui = {
 
 		setTimeout(function() {
 			$(self.field).uploadify({
-				uploader: '/swf/uploadify.swf',
-				cancelImg: '/images/cancel.png',
+				uploader: 'swf/uploadify.swf',
+				cancelImg: 'images/cancel.png',
 				auto: false,
 				buttonText: 'Choose File'
 			});
