@@ -73,18 +73,24 @@ boto_web.ui.widgets.DataTable = function(table) {
 			$(this).addClass('row_selected');
 	});
 
-	this.refresh = function() {
-		this.data_table.fnGatherData();
-		this.data_table.fnDraw();
+	this.append = function(row) {
+		var data = [];
+		$(row).find('td').each(function() {
+			data.push($(this).html().replace(/^\s*|\s*$/g, ''));
+		});
+		this.data_table.fnAddData(data);
 	}
 };
 
+(function() {
+	var sort_regex = new RegExp('<[^>]*>|[^\\w\\s\\d]|\\b(the|a|an)\\s+', 'gi');
+	var sort_regex2 = new RegExp('^\\s*');
 /**
  * Sorts strings while ignoring case, special characters, and HTML
  */
 jQuery.fn.dataTableExt.oSort['string-asc']  = function(x,y) {
-	x = x.replace(/<.*?>|[^\w\s\d]/g, '').toLowerCase();
-	y = y.replace(/<.*?>|[^\w\s\d]/g, '').toLowerCase();
+	x = x.replace(sort_regex, '').replace(sort_regex2, '').toLowerCase();
+	y = y.replace(sort_regex, '').replace(sort_regex2, '').toLowerCase();
 	return ((x < y) ? -1 : ((x > y) ?  1 : 0));
 };
 
@@ -92,7 +98,8 @@ jQuery.fn.dataTableExt.oSort['string-asc']  = function(x,y) {
  * Sorts strings while ignoring case, special characters, and HTML
  */
 jQuery.fn.dataTableExt.oSort['string-desc'] = function(x,y) {
-	x = x.replace(/<.*?>|[^\w\s\d]/g, '').toLowerCase();
-	y = y.replace(/<.*?>|[^\w\s\d]/g, '').toLowerCase();
+	x = x.replace(sort_regex, '').replace(sort_regex2, '').toLowerCase();
+	y = y.replace(sort_regex, '').replace(sort_regex2, '').toLowerCase();
 	return ((x < y) ?  1 : ((x > y) ? -1 : 0));
 };
+})();
