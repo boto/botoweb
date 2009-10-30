@@ -30,7 +30,7 @@ class UserHandler(DBHandler):
 		"""Admin only function"""
 		if not user or not user.has_auth_group("admin"):
 			raise Unauthorized()
-		obj = DBHandler.create(self, params, user)
+		obj = DBHandler.create(self, params, user, request)
 		if obj.password == "":
 			# Send them a password
 			obj.send_password(request.real_host_url)
