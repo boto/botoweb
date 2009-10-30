@@ -33,7 +33,7 @@ class UserHandler(DBHandler):
 		obj = DBHandler.create(self, params, user)
 		if obj.password == "":
 			# Send them a password
-			obj.send_password(request.real_host_url + request.base_url)
+			obj.send_password(request.real_host_url)
 		return obj
 
 	def update(self, obj, props, user, request):
@@ -58,6 +58,6 @@ class UserHandler(DBHandler):
 		if obj.password == "":
 			# Password reset
 			print "Sending Password"
-			obj.send_password(request.real_host_url + request.base_url)
+			obj.send_password(request.real_host_url)
 		return obj
 
