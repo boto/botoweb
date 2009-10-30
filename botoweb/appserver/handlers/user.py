@@ -30,9 +30,13 @@ class UserHandler(DBHandler):
 		"""Admin only function"""
 		if not user or not user.has_auth_group("admin"):
 			raise Unauthorized()
-		return DBHandler.create(self, params, user)
+		obj = DBHandler.create(self, params, user)
+		if obj.password == "":
+			# Send them a password
+			obj.send_password(request.real_host_url + request.base_url)
+		return obj
 
-	def update(self, obj, props, user):
+	def update(self, obj, props, user, request):
 		"""You can only update this object if it is you or you are an admin, 
 		Only admins can modify auth_groups"""
 
@@ -49,8 +53,11 @@ class UserHandler(DBHandler):
 		else:
 			for prop_name in props:
 				prop_val = props[prop_name]
-				#print "%s: %s" % (prop_name, prop_val)
 				setattr(obj, prop_name, prop_val)
 		obj.put()
+		if obj.password == "":
+			# Password reset
+			print "Sending Password"
+			obj.send_password(request.real_host_url + request.base_url)
 		return obj
 

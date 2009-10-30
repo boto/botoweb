@@ -127,7 +127,7 @@ class DBHandler(RequestHandler):
 			prop_value = getattr(new_obj, prop)
 			if not prop.startswith("_"):
 				props[prop] = prop_value
-		content =  self.update(obj, props, request.user)
+		content =  self.update(obj, props, request.user, request)
 
 		response.content_type = "text/xml"
 		content.to_xml().writexml(response)
@@ -259,18 +259,22 @@ class DBHandler(RequestHandler):
 			raise NotFound()
 		return obj
 
-	def update(self, obj, props, user):
+	def update(self, obj, props, user, request):
 		"""
 		Update our object
 
-		@param obj: Object to update
-		@type obj: self.db_class
+		:param obj: Object to update
+		:type obj: self.db_class
 
-		@param props: A hash of properties to update
-		@type props: hash
+		:param props: A hash of properties to update
+		:type props: hash
 
-		@param user: The user making these changes
-		@type user: User
+		:param user: The user making these changes
+		:type user: User
+
+		:param request: The request object
+		:type request: botoweb.request.Request
+
 		"""
 		boto.log.debug("===========================")
 		boto.log.info("Update %s" % obj.__class__.__name__)

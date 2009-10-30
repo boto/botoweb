@@ -84,7 +84,7 @@ class Config(ConfigParser.SafeConfigParser):
 		return int(self.get_user(name, default))
 
 	def get_value(self, section, name, default=None):
-		return self.get(name, default)
+		return self.get(section, name, default)
 
 	def getint(self, section, name, default=0):
 		return int(self.get(section, name, default))
