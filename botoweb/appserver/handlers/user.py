@@ -57,7 +57,6 @@ class UserHandler(DBHandler):
 		obj.put()
 		if obj.password == "":
 			# Password reset
-			print "Sending Password"
 			obj.send_password(request.real_host_url)
 		return obj
 
