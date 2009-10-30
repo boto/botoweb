@@ -273,6 +273,7 @@ boto_web.ui = {
 
 			$(self.fields).each(function() {
 				var val;
+				var name = this.field.attr('name');
 
 				if (this.field.attr('type') == 'file') {
 					uploads.push(this);
@@ -288,7 +289,8 @@ boto_web.ui = {
 				else
 					val = this.field.val();
 
-				data[this.field.attr('name')] = val;
+				if (!self.obj || self.obj.properties[name] != val)
+					data[name] = val;
 			});
 
 			self.model.save(data, function(data) {

@@ -80,6 +80,10 @@ boto_web.ui.widgets.DataTable = function(table) {
 		});
 		this.data_table.fnAddData(data);
 	}
+
+	this.reset = function() {
+		this.data_table.fnClearTable();
+	}
 };
 
 (function() {

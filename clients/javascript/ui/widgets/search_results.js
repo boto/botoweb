@@ -30,6 +30,10 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 		}
 	}
 
+	self.reset = function() {
+		self.data_table.reset();
+	}
+
 	if (self.def == 'all') {
 		self.model.all(function(results, page) { self.update(results, page); return page < 10; });
 	}
