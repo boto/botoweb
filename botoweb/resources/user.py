@@ -18,13 +18,20 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+PASSWORD_TEMPLATE = """<html>
+	<body>
+		<h3>%(name)s, your %(appname)s password has been reset!</h3>
+		<p>Your username is: <b>%(username)s</b></p>
+		<p>Your new password is: <b>%(password)s</b></p>
+		<p>You can log in at: <a href="%(applink)s">%(applink)s</a></p>
+	</body>
+</html>
+"""
 from boto.sdb.db.model import Model
 from boto.sdb.db import property
 
 class User(Model):
-	"""
-	Simple user object
-	"""
+	"""Simple user object"""
 	username = property.StringProperty(verbose_name="Username", unique=True)
 	name = property.StringProperty(verbose_name="Name")
 	email = property.StringProperty(verbose_name="Email Adress")
@@ -35,8 +42,7 @@ class User(Model):
 		return self.name
 
 	def notify(self, subject, body=''):
-		"""
-		Send notification to this user
+		"""Send notification to this user
 
 		@param subject: Subject for this notification
 		@type subject: str
@@ -44,28 +50,36 @@ class User(Model):
 		@param body: The message to send you
 		@type body: str
 		"""
-		from_string = boto.config.get('Notification', 'smtp_from', 'botoweb')
-		msgRoot = MIMEMultipart('related')
-		msgRoot['Subject'] = subject
-		msgRoot['From'] = from_string
-		msgRoot['To'] = self.email
-		msgRoot.preamble = 'This is a multi-part message in MIME format.'
-		if isinstance(body, MIMEMultipart):
-			msg = body
-		else:
-			msg = MIMEText(body, 'html')
+		import boto.utils
+		boto.utils.notify(subject=subject, html_body=body, to_string=self.email, append_instance_id=False)
 
-		msgRoot.attach(msg)
+	def generate_password(self, length=10):
+		"""Generate and return a random password
+		:param length: the optional length of the password (default 10
+		:type length: int
+		"""
+		import boto, urllib2
+		url = "https://www.random.org/cgi-bin/randstring?num=1&len=%s&digits=on&upperalpha=on&loweralpha=on&unique=on&format=text&rnd=new" % (length)
+		headers = {"User-Agent": "%s %s (%s)" % (boto.config.get("app", "name", "botoweb"), boto.config.get("app", "version", "0.1"), boto.config.get("app", "admin_email", ""))}
+		req = urllib2.Request(url, None, headers)
+		hand = urllib2.urlopen(req)
+		return hand.read().strip()
 
-		smtp_host = boto.config.get('Notification', 'smtp_host', 'localhost')
-		server = smtplib.SMTP(smtp_host)
-		smtp_user = boto.config.get('Notification', 'smtp_user', '')
-		smtp_pass = boto.config.get('Notification', 'smtp_pass', '')
-		if smtp_user:
-			server.login(smtp_user, smtp_pass)
-		server.sendmail(from_string, self.email, msgRoot.as_string())
-		server.quit()
 
+	def send_password(self, app_link):
+		"""Send the user a random password"""
+		import boto
+		passwd = self.generate_password()
+		self.password = passwd
+		self.put()
+		args = {
+			"appname": boto.config.get("app", "name", "botoweb"),
+			"applink": app_link,
+			"password": passwd,
+			"name": self.name,
+			"username": self.username
+		}
+		self.notify("[%s] Password Reset" % boto.config.get("app", "name", "botoweb"), PASSWORD_TEMPLATE % args)
 
 	def has_auth_group(self, group):
 		return (group in self.auth_groups)
