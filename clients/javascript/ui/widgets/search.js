@@ -129,9 +129,12 @@ boto_web.ui.widgets.Search = function(node) {
 				query.push([this.field.attr('name'), 'like', '%' + val + '%']);
 		});
 
-		self.model.query(query, function(data) {
+		self.model.query(query, function(results, page) {
 			if (data.length) {
-				self.results.update(data);
+				self.results.reset();
+				self.results.update(data, page);
+
+				return page < 10;
 			}
 			else {
 				boto_web.ui.alert('The search did not return any results.');
