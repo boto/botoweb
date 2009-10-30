@@ -29,7 +29,7 @@ class User(Model):
 	name = property.StringProperty(verbose_name="Name")
 	email = property.StringProperty(verbose_name="Email Adress")
 	auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
-	password = property.PasswordProperty()
+	password = property.PasswordProperty(verbose_name="Password")
 
 	def __str__(self):
 		return self.name
