@@ -26,7 +26,7 @@ class UserHandler(DBHandler):
 	"""Specific permissions on top of a DB hander for 
 	modifying users"""
 
-	def create(self, params, user):
+	def create(self, params, user, request):
 		"""Admin only function"""
 		if not user or not user.has_auth_group("admin"):
 			raise Unauthorized()

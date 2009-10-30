@@ -105,7 +105,7 @@ class DBHandler(RequestHandler):
 
 		new_obj = xmlize.loads(request.body)
 		new_obj.__id__ = id
-		obj = self.create(new_obj, request.user)
+		obj = self.create(new_obj, request.user, request)
 		response.set_status(201)
 		response.headers['Location'] = obj.id
 		return response
@@ -218,7 +218,7 @@ class DBHandler(RequestHandler):
 		"""
 		return self.build_query(params, query=self.db_class.find(), user=user)
 
-	def create(self, obj, user):
+	def create(self, obj, user, request):
 		"""Create an object in the DB
 		:param obj: an object with all the properties to create
 		:type obj: botoweb.xmlize.ProxyObject
