@@ -23,31 +23,26 @@ from botoweb.appserver.handlers.db import DBHandler
 from botoweb.exceptions import Unauthorized
 
 class UserHandler(DBHandler):
-	"""
-	Specific permissions on top of a DB hander for 
-	modifying users
-	"""
+	"""Specific permissions on top of a DB hander for 
+	modifying users"""
 
 	def create(self, params, user):
-		"""
-		Admin only function
-		"""
+		"""Admin only function"""
 		if not user or not user.has_auth_group("admin"):
 			raise Unauthorized()
 		return DBHandler.create(self, params, user)
 
 	def update(self, obj, props, user):
-		"""
-		you can only update this object if it is you or you are an admin, 
-		Only admins can modify auth_groups
-		"""
+		"""You can only update this object if it is you or you are an admin, 
+		Only admins can modify auth_groups"""
+
 		if not user:
 			raise Unauthorized()
 		if not user.has_auth_group("admin"):
 			if user.id == obj.id:
 				for prop_name in props:
 					prop_val = props[prop_name]
-					if prop_name and prop_name in ("name", "password"):
+					if prop_name and prop_name in ("name", "password", "email"):
 						setattr(obj, prop_name, prop_val)
 			else:
 				raise Unauthorized()
