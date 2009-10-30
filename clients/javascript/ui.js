@@ -297,10 +297,10 @@ boto_web.ui = {
 						self.model.get(data.getResponseHeader('Location'), function(obj) {
 							$(uploads).each(function() {
 								$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
-								$(this.field).uploadifySettings('onComplete', function() {
+								/*$(this.field).uploadifySettings('onComplete', function() {
 									closeFcn();
 									boto_web.ui.alert('The database has been updated.');
-								});
+								});*/
 								$(this.field).uploadifyUpload();
 							});
 						});
@@ -457,11 +457,11 @@ boto_web.ui = {
 			}
 		}
 
-		this.add_field = function() {
+		this.add_field = function(value) {
 			var field = this.field.clone()
-				.css('display', 'block')
-				.val('')
-				.insertAfter(this.fields[this.fields.length - 1])
+				.attr('id', this.field.attr('id') + '_' + this.fields.length)
+				.val(value || '')
+				.insertAfter($('<br />').insertAfter(this.fields[this.fields.length - 1]))
 				.focus()
 
 			this.fields.push(field);
@@ -506,9 +506,11 @@ boto_web.ui = {
 
 		if (properties.value) {
 			if ($.isArray(properties.value)) {
-				this.field.val(properties.value.shift());
-				$(properties.value).each(function() {
-					self.add_field().val(this);
+				$(properties.value).each(function(i ,prop) {
+					if (i == 0)
+						self.field.val(prop);
+					else
+						self.add_field(prop);
 				});
 			}
 			else
@@ -516,6 +518,14 @@ boto_web.ui = {
 		}
 
 		this.text.html(this.field.val() || '&nbsp;');
+
+		if (properties._type == 'list') {
+			$('<div/>')
+				.text('Add another value')
+				.addClass('add button')
+				.click(function() { self.add_field() })
+				.appendTo(self.field_container)
+		}
 	},
 
 	/**
@@ -544,14 +554,6 @@ boto_web.ui = {
 		if (properties._type == 'password') {
 			this.field.val('');
 			this.text.text('******');
-		}
-
-		if (properties._type == 'list') {
-			$('<div/>')
-				.text('Add another value')
-				.addClass('add button')
-				.click(function() { self.add_field() })
-				.appendTo(self.field_container)
 		}
 	},
 

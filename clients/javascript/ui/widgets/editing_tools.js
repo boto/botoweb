@@ -11,6 +11,9 @@
 boto_web.ui.widgets.EditingTools = function(node, model, actions) {
 	var self = this;
 
+	if (node.tagName != 'UL')
+		node = $('<ul />').appendTo(node);
+
 	self.node = $(node).addClass('widget-editing_tools');
 	self.model = model;
 
