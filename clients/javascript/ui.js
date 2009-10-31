@@ -761,7 +761,8 @@ boto_web.ui = {
 							}));
 						} catch (e) { }
 
-						self.field.val(properties.value);
+						if (self.properties.value)
+							self.field.val(self.properties.value.id);
 						self.text.text(value_text);
 
 						return page < 10;
@@ -774,6 +775,14 @@ boto_web.ui = {
 					$('<span/>')
 						.addClass('ui-icon ui-icon-search')
 						.appendTo(self.field_container);
+
+					var add_selection = function(id, name) {
+						$('<div/>')
+							.addClass('clear')
+							.attr('id', 'selection_' + id)
+							.html('<span class="ui-icon ui-icon-closethick" onclick="$(this).parent().remove()"></span> ' + name)
+							.appendTo(self.field_container.find('.selections'))
+					}
 
 					$('<input/>')
 						.addClass('search_field')
@@ -797,11 +806,7 @@ boto_web.ui = {
 											if (properties._type != 'list')
 												node.siblings('.selections').empty();
 
-											$('<div/>')
-												.addClass('clear')
-												.attr('id', 'selection_' + obj[i].id)
-												.html('<span class="ui-icon ui-icon-closethick" onclick="$(this).parent().remove()"></span> ' + $(this).html())
-												.appendTo(node.siblings('.selections'))
+											add_selection($(this).attr('id').replace('search_option_',''), $(this).html());
 											e.preventDefault();
 										})
 										.appendTo(node.siblings('.search_results'))
@@ -821,6 +826,14 @@ boto_web.ui = {
 					$('<div/>')
 						.addClass('selections')
 						.appendTo(self.field_container);
+
+					if (self.properties.value) {
+						$(self.properties.value).each(function() {
+							self.model.get(this.id, function(obj) {
+								add_selection(obj.id, obj.properties.name);
+							});
+						});
+					}
 				}
 			});
 		}
