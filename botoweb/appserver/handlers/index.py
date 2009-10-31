@@ -81,7 +81,7 @@ class IndexHandler(RequestHandler):
 							prop_node.set("name", prop.name)
 							if hasattr(prop, "reference_class"):
 								prop_node.set("type", "reference")
-								prop_node.set("object_type", prop.reference_class.__name__)
+								prop_node.set("item_type", prop.reference_class.__name__)
 							else:
 								prop_node.set("type", TYPE_NAMES.get(prop.data_type, prop.type_name.lower()))
 							if prop.data_type in [str, unicode]:

@@ -124,7 +124,7 @@ class XMLSerializer(object):
 			prop_value = str(prop_value.id)
 		else:
 			return
-		self.file.write("""<%s type="reference" object_type="%s" id="%s" href="%s"/>""" % (prop_name, prop_type, prop_value, prop_name))
+		self.file.write("""<%s type="reference" item_type="%s" id="%s" href="%s"/>""" % (prop_name, prop_type, prop_value, prop_name))
 
 	def encode_query(self, prop_name, prop_value):
 		"""Encode a query, this is sent as a reference"""
@@ -227,7 +227,7 @@ class XMLSerializer(object):
 				elif prop_type == "reference":
 					# Object (new style)
 					value = ProxyObject()
-					value.__name__ = prop.get("object_type")
+					value.__name__ = prop.get("item_type")
 					value.__id__ = prop.get("id")
 				elif prop.get("type") in REGISTERED_CLASSES.keys():
 					# Object (old style)
