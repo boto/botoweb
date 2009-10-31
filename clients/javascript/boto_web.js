@@ -118,24 +118,8 @@ var boto_web = {
 					type: 'reference',
 					href: $(this).attr("href"),
 					id: $(this).attr("id"),
-					object_type: $(this).attr('object_type')
+					item_type: $(this).attr('item_type')
 				};
-			} else if ($(this).attr("type") == "List"){
-				value = [];
-				$(this).find("item").each(function(){
-					var val_obj = $(this).find("object")[0];
-					if(val_obj){
-						value.push({
-							className: $(val_obj).attr("class"),
-							id: $(val_obj).attr("id"),
-							fetch: function(url, fnc){
-								boto_web.get_by_id(url, this.id, fnc);
-							}
-						});
-					} else {
-						value.push($(this).text());
-					}
-				});
 			} else {
 				value = $(this).text();
 			}
@@ -334,6 +318,7 @@ var boto_web = {
 		var self = this;
 		xml = $(xml);
 
+		self._DEBUG_MODEL_INSTANCE = 1;
 		self.name = xml.attr('name');
 		self.href = $('href', xml).text();
 		self.methods = {};
@@ -349,9 +334,9 @@ var boto_web = {
 
 			// Pull attributes from the property node
 			var map = {
+				_DEBUG_MODEL_PROPERTIES: 1,
 				name: 'name',
 				_type: 'type',
-				_object_type: 'object_type',
 				_item_type: 'item_type',
 				maxlength: 'max_length',
 				min_value: 'min',
@@ -363,11 +348,6 @@ var boto_web = {
 				if (xml.attr(map[i]) == undefined) continue;
 				property[i] = xml.attr(map[i]);
 			}
-
-			if (property._object_type)
-				property._item_type = property._object_type;
-			else
-				property._object_type = property._item_type;
 
 			if (property._perm)
 				property._perm = property._perm.split(' ');
@@ -407,7 +387,7 @@ var boto_web = {
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
-						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
+						objects[x] = self.cache(new boto_web.Model(self.href, self.name, data[x]));
 					}
 					return fnc(objects, page);
 				}
@@ -420,7 +400,7 @@ var boto_web = {
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
-						objects[x] = new boto_web.Model(self.href, self.name, data[x]);
+						objects[x] = self.cache(new boto_web.Model(self.href, self.name, data[x]));
 					}
 					return fnc(objects, page);
 				}
@@ -428,6 +408,15 @@ var boto_web = {
 		}
 		this.all = function(fnc){
 			return this.find([], fnc);
+		}
+
+		this.cache = function(obj) {
+			self.cache[obj.id] = obj;
+			clearTimeout(self.cache_timeouts[obj.id]);
+			self.cache_timeouts[obj.id] = setTimeout(function() {
+				delete self.cache[obj.id];
+			}, 60000);
+			return self.cache[obj.id];
 		}
 
 		this.get = function(id, fnc){
@@ -438,12 +427,7 @@ var boto_web = {
 			}
 			boto_web.get_by_id(boto_web.env.base_url + self.href, id, function(obj){
 				if(obj){
-					self.cache[id] = new boto_web.Model(self.href, self.name, obj);
-					clearTimeout(self.cache_timeouts[id]);
-					self.cache_timeouts[id] = setTimeout(function() {
-						delete self.cache[id];
-					}, 60000);
-					return fnc(self.cache[id]);
+					return fnc(self.cache(new boto_web.Model(self.href, self.name, obj)));
 				}
 			});
 		}
@@ -476,6 +460,7 @@ var boto_web = {
 	Model: function(href, name, properties){
 		var self = this;
 
+		self._DEBUG_OBJECT_INSTANCE = 1;
 		self.href = href;
 		self.name = name;
 		self.properties = properties;
@@ -483,9 +468,8 @@ var boto_web = {
 
 		self.follow = function(property, fnc) {
 			if (self.properties[property].id != undefined) {
-				if (self.properties[property].object_type) {
-					var model = boto_web.env.models[self.properties[property].object_type];
-					model.get(self.properties[property].id, function(obj) {
+				if (self.properties[property].item_type) {
+					boto_web.env.models[self.properties[property].item_type].get(self.properties[property].id, function(obj) {
 						return fnc([obj]);
 					});
 				}
