@@ -12,11 +12,19 @@ boto_web.ui.Page = function(html) {
 	var self = this;
 
 	self.node = $(html).is(boto_web.ui.selectors.section) ? $(html) : $(html).find(boto_web.ui.selectors.section);
-	self.id = self.node.id || 'section_' + boto_web.ui.desktop.num_pages;
+	self.id = self.node.attr('id') || 'section_' + boto_web.ui.desktop.num_pages;
+
+	if (self.id in boto_web.ui.desktop.pages) {
+		return boto_web.ui.desktop.pages[self.id];
+	}
+
 	self.node
 		.attr('id', '');
 	self.node = $('<div/>')
-		.attr('id', self.id)
+		.attr({
+			id: self.id,
+			bwModel: self.node.attr('bwModel')
+		})
 		.append(self.node);
 
 	if (self.node.attr(boto_web.ui.properties.model)) {
