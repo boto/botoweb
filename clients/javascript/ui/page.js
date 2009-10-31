@@ -37,6 +37,10 @@ boto_web.ui.Page = function(html) {
 		self.node.find(boto_web.ui.selectors.search).each(function() {
 			new boto_web.ui.widgets.Search(this);
 		});
+
+		self.node.find(boto_web.ui.selectors.report).each(function() {
+			new boto_web.ui.widgets.Report(this);
+		});
 	}
 
 	if (self.id in boto_web.ui.desktop.pages) {
