@@ -39,39 +39,43 @@ boto_web.ui.widgets.DataTable = function(table) {
 			)
 	);
 
-	table.find('tr').mousedown(function(e) {
-		if (e.shiftKey) {
-			if (boto_web.ui.last_row) {
-				var rows = $(this).parent().children();
-				var i1 = rows.index($(this));
-				var i2 = rows.index(boto_web.ui.last_row);
+	this.add_events = function() {
+		table.find('tr:not(.selectable)')
+			.addClass('selectable')
+			.mousedown(function(e) {
+				if (e.shiftKey) {
+					if (boto_web.ui.last_row) {
+						var rows = $(this).parent().children();
+						var i1 = rows.index($(this));
+						var i2 = rows.index(boto_web.ui.last_row);
 
-				rows.slice(Math.min(i1, i2), Math.max(i1, i2) + 1).each(function() {
-					if (e.ctrlKey)
-						$(this).removeClass('row_selected');
-					else
-						$(this).addClass('row_selected');
-				});
-			}
-			e.preventDefault();
-		}
-		else if (e.ctrlKey) {
-			e.preventDefault();
-		}
-		else {
-			$(this).siblings('tr').removeClass('row_selected');
-		}
+						rows.slice(Math.min(i1, i2), Math.max(i1, i2) + 1).each(function() {
+							if (e.ctrlKey)
+								$(this).removeClass('row_selected');
+							else
+								$(this).addClass('row_selected');
+						});
+					}
+					e.preventDefault();
+				}
+				else if (e.ctrlKey) {
+					e.preventDefault();
+				}
+				else {
+					$(this).siblings('tr').removeClass('row_selected');
+				}
 
-		boto_web.ui.last_row = this;
+				boto_web.ui.last_row = this;
 
-		if (e.shiftKey)
-			return;
+				if (e.shiftKey)
+					return;
 
-		if ($(this).hasClass('row_selected'))
-			$(this).removeClass('row_selected');
-		else
-			$(this).addClass('row_selected');
-	});
+				if ($(this).hasClass('row_selected'))
+					$(this).removeClass('row_selected');
+				else
+					$(this).addClass('row_selected');
+			});
+	}
 
 	this.append = function(row) {
 		var data = [];
@@ -79,6 +83,7 @@ boto_web.ui.widgets.DataTable = function(table) {
 			data.push($(this).html().replace(/^\s*|\s*$/g, ''));
 		});
 		this.data_table.fnAddData(data);
+		this.add_events();
 	}
 
 	this.reset = function() {
