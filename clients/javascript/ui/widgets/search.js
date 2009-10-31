@@ -109,6 +109,11 @@ boto_web.ui.widgets.Search = function(node) {
 		self.fields.push(field);
 	}
 
+	$(self.header).find('input').keyup(function(e) {
+		if (e.keyCode == 13)
+			self.submit();
+	});
+
 	self.submit = function() {
 		var query = [];
 
@@ -130,9 +135,9 @@ boto_web.ui.widgets.Search = function(node) {
 		});
 
 		self.model.query(query, function(results, page) {
-			if (data.length) {
+			if (results.length) {
 				self.results.reset();
-				self.results.update(data, page);
+				self.results.update(results, page);
 
 				return page < 10;
 			}
