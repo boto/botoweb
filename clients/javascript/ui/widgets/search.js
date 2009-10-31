@@ -138,7 +138,8 @@ boto_web.ui.widgets.Search = function(node) {
 
 		self.model.query(query, function(results, page) {
 			if (results.length) {
-				self.results.reset();
+				if (page == 0)
+					self.results.reset();
 				self.results.update(results, page);
 
 				return page < 10;
