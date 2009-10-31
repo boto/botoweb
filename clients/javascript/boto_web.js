@@ -355,6 +355,8 @@ var boto_web = {
 			var map = {
 				name: 'name',
 				_type: 'type',
+				_object_type: 'object_type',
+				_item_type: 'item_type',
 				maxlength: 'max_length',
 				min_value: 'min',
 				max_value: 'max',
@@ -365,6 +367,11 @@ var boto_web = {
 				if (xml.attr(map[i]) == undefined) continue;
 				property[i] = xml.attr(map[i]);
 			}
+
+			if (property._object_type)
+				property._item_type = property._object_type;
+			else
+				property._object_type = property._item_type;
 
 			if (property._perm)
 				property._perm = property._perm.split(' ');
