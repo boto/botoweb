@@ -23,6 +23,7 @@ boto_web.ui = {
 		'details':        'fieldset.details',
 		'widget':         '*[bwWidget]',
 		'relations':      '*[bwWidget=relations]',
+		'report':         '*[bwWidget=report]',
 		'search':         '*[bwWidget=search]',
 		'search_results': '*[bwWidget=searchResults]',
 		'breadcrumbs':    '*[bwWidget=breadcrumbs]',
@@ -213,26 +214,56 @@ boto_web.ui = {
 			.addClass(model.name);
 
 		self.properties = model.properties;
+		self.num_properties = $.grep(self.properties, function(o) { return $.inArray('write', o._perm) }).length;
 		self.obj = obj;
 		self.model = model;
 		self.fields = [];
 
-		$(self.properties).each(function() {
-			var props = this;
+		if (self.num_properties > 20) {
+			self.per_column = Math.ceil(self.num_properties / 3);
+			self.columns = [
+				$('<div/>')
+					.addClass('al p33')
+					.appendTo(self.node),
+				$('<div/>')
+					.addClass('al p33')
+					.appendTo(self.node),
+				$('<div/>')
+					.addClass('al p33')
+					.appendTo(self.node)
+			]
+		}
+		else if (self.num_properties > 10) {
+			self.per_column = Math.ceil(self.num_properties / 2);
+			self.columns = [
+				$('<div/>')
+					.addClass('al p50')
+					.appendTo(self.node),
+				$('<div/>')
+					.addClass('al p50')
+					.appendTo(self.node)
+			]
+		}
+		else {
+			self.per_column = self.num_properties;
+			self.columns = [self.node];
+		}
+
+		$(self.properties).each(function(num, props) {
 
 			if (typeof obj != 'undefined')
-				props = $.extend(this, {value: obj.properties[this.name]});
+				props = $.extend(props, {value: obj.properties[props.name]});
 
 			if (props._perm && $.inArray('write', props._perm) == -1)
 				return;
 
 			var field;
 
-			switch (this._type) {
+			switch ((props._type == 'list') ? (props._object_type || props._item_type) : props._type) {
 				case 'string':
+				case 'str':
 				case 'integer':
 				case 'password':
-				case 'list':
 					if (this.choices)
 						field = new boto_web.ui.dropdown(props)
 							.read_only(opts.read_only);
@@ -247,11 +278,15 @@ boto_web.ui = {
 					field = new boto_web.ui.date(props)
 						.read_only(opts.read_only);
 					break;
+				case 'boolean':
+					field = new boto_web.ui.bool(props)
+						.read_only(opts.read_only);
+					break;
 				case 'blob':
 					field = new boto_web.ui.file(props)
 						.read_only(opts.read_only);
 					break;
-				case 'object':
+				default:
 					field = new boto_web.ui.picklist(props)
 						.read_only(opts.read_only);
 					break;
@@ -260,7 +295,8 @@ boto_web.ui = {
 			if (typeof field == 'undefined') return;
 
 			self.fields.push(field);
-			field.node.appendTo(self.node)
+			field.node.addClass(num % 2 ? 'even' : 'odd');
+			field.node.appendTo(self.columns[Math.floor(num / self.per_column)]);
 		});
 
 		self.submit = function(closeFcn) {
@@ -278,6 +314,12 @@ boto_web.ui = {
 				if (this.field.attr('type') == 'file') {
 					uploads.push(this);
 					return;
+				}
+				else if (this.field.attr('type') == 'password') {
+					if (this.reset.is(':checked'))
+						val = ''
+					else if (this.field.val() == '')
+						return;
 				}
 
 				if (this.fields.length > 1) {
@@ -329,7 +371,7 @@ boto_web.ui = {
 		$(self.node).dialog({
 			modal: true,
 			title: model.name + ' Editor',
-			width: 500,
+			width: 300 * self.columns.length,
 			buttons: {
 				Save: function() { if (self.submit(closeFcn)) closeFcn.call(this); },
 				Cancel: closeFcn
@@ -437,8 +479,8 @@ boto_web.ui = {
 	 */
 	_field: function(properties) {
 		var self = this;
-		this.node = $('<div/>');
-		this.label = $('<label/>').html(properties._label || properties.name.replace(/^(.)/g, function(a,b) { return b.toUpperCase() }) || '&nbsp;');
+		this.node = $('<dl/>');
+		this.label = $('<dt/>').html(properties._label || properties.name.replace(/^(.)/g, function(a,b) { return b.toUpperCase() }) || '&nbsp;');
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
 		this.text = $('<span/>');
 		this.fields = [this.field];
@@ -502,7 +544,7 @@ boto_web.ui = {
 			return this;
 		}
 
-		this.field_container = $('<span/>').addClass('field_container').append(this.field);
+		this.field_container = $('<dd/>').addClass('field_container').append(this.field);
 		this.node.append(this.label, this.field_container, this.text);
 		this.read_only();
 
@@ -522,12 +564,24 @@ boto_web.ui = {
 		this.text.html(this.field.val() || '&nbsp;');
 
 		if (properties._type == 'list') {
-			$('<div/>')
-				.text('Add another value')
-				.addClass('add button')
-				.click(function() { self.add_field() })
-				.appendTo(self.field_container)
+			$('<span/>')
+				.html('<span class="ui-icon ui-icon-triangle-1-s"></span>Add another value')
+				.addClass('ui-button ui-state-default ui-corner-all')
+				.click(function(e) { self.add_field(); e.preventDefault(); })
+				.appendTo(self.field_container);
 		}
+
+		if (properties._object_type in boto_web.env.models) {
+			$('<span/>')
+				.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + properties._object_type)
+				.addClass('ui-button ui-state-default ui-corner-all')
+				.click(function(e) { boto_web.env.models[properties._object_type].create(); e.preventDefault(); })
+				.appendTo(self.field_container);
+		}
+
+		$('<br/>')
+			.addClass('clear')
+			.appendTo(self.field_container);
 	},
 
 	/**
@@ -544,8 +598,34 @@ boto_web.ui = {
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
+	bool: function(properties) {
+		properties.type = 'radio';
+		boto_web.ui._field.call(this, properties);
+
+		var no_field = this.add_field();
+
+		this.field_container.find('br').remove();
+
+		this.field.value = '1';
+		no_field.value = '';
+
+		$('<label/>')
+			.css('display', 'inline')
+			.html(' Yes &nbsp; &nbsp; ')
+			.attr({htmlFor: this.field.attr('id')})
+			.insertAfter(this.field);
+
+		$('<label/>')
+			.css('display', 'inline')
+			.html(' No')
+			.attr({htmlFor: no_field.attr('id')})
+			.insertAfter(no_field);
+	},
+
+	/**
+	 * @param {Object} properties HTML node properties.
+	 */
 	text: function(properties) {
-		properties.size = properties.size || 50;
 		var self = this;
 
 		if (properties._type == 'password')
@@ -555,6 +635,15 @@ boto_web.ui = {
 
 		if (properties._type == 'password') {
 			this.field.val('');
+			$('<br/>').appendTo(this.field_container);
+			this.reset = $('<input/>')
+				.attr({ type: 'checkbox', id: this.field.id + '_reset' })
+				.appendTo(this.field_container);
+			$('<label/>')
+				.css('display', 'inline')
+				.attr({'htmlFor': this.reset.id})
+				.text(' Send password reset email')
+				.appendTo(this.field_container);
 			this.text.text('******');
 		}
 	},
@@ -606,7 +695,7 @@ boto_web.ui = {
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	picklist: function(properties, data) {
+	picklist: function(properties) {
 		properties._tagName = 'select';
 		properties.choices = [];
 
@@ -614,12 +703,8 @@ boto_web.ui = {
 
 		var self = this;
 
-		if (properties._type == 'list') {
-			this.field.attr({cols: 5, multiple: 'multiple'});
-		}
-
-		if (properties._label in boto_web.env.models) {
-			boto_web.env.models[properties._label].all(function(data) {
+		if (properties._object_type in boto_web.env.models) {
+			boto_web.env.models[properties._object_type].all(function(data) {
 				var value_text = '';
 
 				try {
