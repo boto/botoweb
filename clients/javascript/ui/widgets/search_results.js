@@ -17,14 +17,9 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 		.addClass('object')
 		.clone();
 	self.node.empty();
-	self.node.parent('table').hide();
 	self.def = self.node.attr(boto_web.ui.properties.def);
 
 	self.update = function(results, append) {
-		self.node.parent('table').show();
-		if (!self.data_table)
-			self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'));
-
 		for (var i in results) {
 			self.data_table.append(new boto_web.ui.Object(self.template.clone(), self.model, results[i]).node);
 		}
@@ -47,4 +42,8 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 			self.model.find(self.def, function(results, page) { self.update(results, page); });
 	}
 
+	setTimeout(function() {
+		self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'));
+		self.update();
+	}, 10);
 };
