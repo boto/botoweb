@@ -188,7 +188,7 @@ var boto_web = {
 
 				var prop = doc.createElement(pname);
 				prop.appendChild(boto_web.encode_prop(this, doc));
-				$(prop).attr("type", boto_web.env.models[obj_name].prop_map[pname]._type);
+				$(prop).attr("type", boto_web.env.models[obj_name].prop_map[pname]._item_type || boto_web.env.models[obj_name].prop_map[pname]._type);
 				/*
 				if(this.constructor.toString().indexOf("Array") != -1){
 					$(prop).attr("type", "List");
