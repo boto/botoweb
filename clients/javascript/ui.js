@@ -259,7 +259,7 @@ boto_web.ui = {
 
 			var field;
 
-			switch ((props._type == 'list') ? (props._object_type || props._item_type) : props._type) {
+			switch ((props._type == 'list') ? (props._item_type) : props._type) {
 				case 'string':
 				case 'str':
 				case 'integer':
@@ -367,7 +367,7 @@ boto_web.ui = {
 			.addClass('clear')
 			.appendTo(self.node);
 
-		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/&?action=(edit|create)\/[^&]*/, '') };
+		var closeFcn = function() { $(this).dialog("destroy"); $(this).empty(); document.location.href = document.location.href.replace(/&?action=(edit|create)\/[^&]*/, '') };
 		$(self.node).dialog({
 			modal: true,
 			title: model.name + ' Editor',
@@ -407,7 +407,7 @@ boto_web.ui = {
 			});
 		};
 
-		var closeFcn = function() { $(this).dialog("close"); document.location.href = document.location.href.replace(/&?action=delete\/[^&]*/, '') };
+		var closeFcn = function() { $(this).dialog("destroy"); $(this).empty(); document.location.href = document.location.href.replace(/&?action=delete\/[^&]*/, '') };
 		$(self.node).dialog({
 			modal: true,
 			title: 'Please confirm',
@@ -563,6 +563,10 @@ boto_web.ui = {
 
 		this.text.html(this.field.val() || '&nbsp;');
 
+		$('<br/>')
+			.addClass('clear')
+			.appendTo(self.field_container);
+
 		if (properties._type == 'list') {
 			$('<span/>')
 				.html('<span class="ui-icon ui-icon-triangle-1-s"></span>Add another value')
@@ -571,11 +575,11 @@ boto_web.ui = {
 				.appendTo(self.field_container);
 		}
 
-		if (properties._object_type in boto_web.env.models) {
+		if (properties._item_type in boto_web.env.models) {
 			$('<span/>')
-				.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + properties._object_type)
+				.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + properties._item_type)
 				.addClass('ui-button ui-state-default ui-corner-all')
-				.click(function(e) { boto_web.env.models[properties._object_type].create(); e.preventDefault(); })
+				.click(function(e) { boto_web.env.models[properties._item_type].create(); e.preventDefault(); })
 				.appendTo(self.field_container);
 		}
 
@@ -664,12 +668,19 @@ boto_web.ui = {
 		var self = this;
 
 		this.datepicker = $(this.field).datepicker({
-			showOn: 'both',
+			showOn: 'button',
+			duration: '',
 			dateFormat: 'yy-mm-dd',
+			showTime: true,
+			time24h: true,
 			altField: this.field,
 			changeMonth: true,
 			changeYear: true,
-			constrainInput: false
+			constrainInput: false,
+			onClose: function(dateText, inst) {
+				dateText = dateText + ' GMT';
+				this.val(dateText);
+			}
 		});
 	},
 
@@ -703,8 +714,8 @@ boto_web.ui = {
 
 		var self = this;
 
-		if (properties._object_type in boto_web.env.models) {
-			boto_web.env.models[properties._object_type].all(function(data) {
+		if (properties._item_type in boto_web.env.models) {
+			boto_web.env.models[properties._item_type].all(function(data) {
 				var value_text = '';
 
 				try {
