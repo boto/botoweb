@@ -40,7 +40,7 @@ boto_web.ui.widgets.DataTable = function(table) {
 	);
 
 	this.add_events = function() {
-		table.find('tr:not(.selectable)')
+		table.find('tr')
 			.addClass('selectable')
 			.mousedown(function(e) {
 				if (e.shiftKey) {
@@ -77,13 +77,23 @@ boto_web.ui.widgets.DataTable = function(table) {
 			});
 	}
 
-	this.append = function(row) {
+	this.append = function(rows) {
+		if (!$.isArray(rows))
+			return;
+
 		var data = [];
-		$(row).find('td').each(function() {
-			data.push($(this).html().replace(/^\s*|\s*$/g, ''));
+		$(rows).each(function() {
+			var item = [];
+			$(this).find('td').each(function() {
+				item.push($(this).html().replace(/^\s*|\s*$/g, ''));
+			});
+			data.push(item);
 		});
-		this.data_table.fnAddData(data);
-		this.add_events();
+
+		if (data.length > 0) {
+			this.data_table.fnAddData(data);
+			this.add_events();
+		}
 	}
 
 	this.reset = function() {
