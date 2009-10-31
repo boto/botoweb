@@ -81,11 +81,7 @@ var boto_web = {
 			value = query_part[2];
 
 			if(value.constructor.toString().indexOf("Array") != -1){
-				filter_parts = [];
-				for(val in value){
-					filter_parts.push('"' + name + '","' + op + '","' + value + '"');
-				}
-				parts.push('[' + filter_parts.join(' OR ') + ']');
+				parts.push('["' + name + '","' + op + '",["' + value.join('","') + '"]]');
 			} else {
 				parts.push('["' + name + '","' + op + '","' + value + '"]');
 			}

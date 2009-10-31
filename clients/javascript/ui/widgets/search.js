@@ -130,7 +130,9 @@ boto_web.ui.widgets.Search = function(node) {
 			else
 				val = this.field.val();
 
-			if (val)
+			if ($.isArray(val))
+				query.push([this.field.attr('name'), 'like', $.map(val, function(v) { return '%' + v + '%'; })]);
+			else if (val)
 				query.push([this.field.attr('name'), 'like', '%' + val + '%']);
 		});
 
