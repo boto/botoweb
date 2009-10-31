@@ -216,6 +216,7 @@ boto_web.ui = {
 		self.properties = model.properties;
 		self.num_properties = $.grep(self.properties, function(o) { return $.inArray('write', o._perm) }).length;
 		self.obj = obj;
+		self.opts = opts;
 		self.model = model;
 		self.fields = [];
 
@@ -369,6 +370,10 @@ boto_web.ui = {
 					}
 					else
 						boto_web.ui.alert('The database has been updated.');
+
+					if (opts.callback) {
+						opts.callback();
+					}
 				}
 				else {
 					boto_web.ui.alert('There was an error updating the database:<br />' + data.responseText);
@@ -598,7 +603,7 @@ boto_web.ui = {
 			$('<span/>')
 				.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + properties._item_type)
 				.addClass('ui-button ui-state-default ui-corner-all')
-				.click(function(e) { boto_web.env.models[properties._item_type].create(); e.preventDefault(); })
+				.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); })
 				.appendTo(self.field_container);
 		}
 
@@ -745,16 +750,21 @@ boto_web.ui = {
 
 		var self = this;
 
-		if (properties._item_type in boto_web.env.models) {
-			self.model = boto_web.env.models[properties._item_type];
+		self.init = function() {
+			if (!(self.properties._item_type in boto_web.env.models))
+				return;
+
+			self.model = boto_web.env.models[self.properties._item_type];
 			self.model.count(function(count) {
 				if (count < 100) {
+					self.field.empty();
+
 					self.model.all(function(data, page) {
 						var value_text = '';
 
 						try {
 							self.add_choices($(data).map(function() {
-								if (this.id == properties.value)
+								if (this.id == self.properties.value)
 									value_text = this.properties.name;
 
 								return { text: this.properties.name, value: this.id };
@@ -803,7 +813,7 @@ boto_web.ui = {
 										.attr({id: 'search_option_' + obj[i].id, href: '#'})
 										.text(obj[i].properties.name)
 										.click(function(e){
-											if (properties._type != 'list')
+											if (self.properties._type != 'list')
 												node.siblings('.selections').empty();
 
 											add_selection($(this).attr('id').replace('search_option_',''), $(this).html());
@@ -821,10 +831,20 @@ boto_web.ui = {
 						.appendTo(self.field_container);
 
 					$('<strong/>')
-						.text('Your selection' + ((properties._type == 'list') ? 's' : '') + ':')
+						.text('Your selection' + ((self.properties._type == 'list') ? 's' : '') + ':')
 						.appendTo(self.field_container);
 					$('<div/>')
 						.addClass('selections')
+						.appendTo(self.field_container);
+
+					$('<span/>')
+						.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + self.properties._item_type)
+						.addClass('ui-button ui-state-default ui-corner-all')
+						.click(function(e) { boto_web.env.models[self.properties._item_type].create(); e.preventDefault(); })
+						.appendTo(self.field_container);
+
+					$('<br/>')
+						.addClass('clear')
 						.appendTo(self.field_container);
 
 					if (self.properties.value) {
@@ -837,6 +857,8 @@ boto_web.ui = {
 				}
 			});
 		}
+
+		self.init();
 	},
 
 	action_handler: function(params) {
