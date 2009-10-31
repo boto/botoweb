@@ -88,7 +88,9 @@ var boto_web = {
 		}
 
 		url += "?query=[" + escape(parts.join(",") + "]");
-		return $.get(url, function(xml){
+
+		var page = 0;
+		var process = function(xml){
 			var data = [];
 			$(xml).find(obj_name).each(function(){
 				var obj = boto_web.parseObject(this);
@@ -96,8 +98,14 @@ var boto_web = {
 					data.push(obj);
 				}
 			});
-			fnc(data);
-		});
+			url = $(xml).find('link[rel=next]').attr('href');
+
+			// Get the next page
+			if (fnc(data, page++) && url)
+				$.get(url, process);
+		}
+
+		return $.get(url, process);
 	},
 
 	//
@@ -180,6 +188,8 @@ var boto_web = {
 
 				var prop = doc.createElement(pname);
 				prop.appendChild(boto_web.encode_prop(this, doc));
+				$(prop).attr("type", boto_web.env.models[obj_name].prop_map[pname]._type);
+				/*
 				if(this.constructor.toString().indexOf("Array") != -1){
 					$(prop).attr("type", "List");
 				} else if (this.constructor.toString().indexOf("Class") != -1){
@@ -191,6 +201,7 @@ var boto_web = {
 				else {
 					$(prop).attr("type", "string");
 				}
+				*/
 				obj.appendChild(prop);
 			});
 		}
@@ -253,6 +264,16 @@ var boto_web = {
 			type: "DELETE",
 			url: url,
 			complete: fnc
+		});
+	},
+
+	count: function(url, fnc){
+		$.ajax({
+			type: "HEAD",
+			url: url,
+			complete: function(data) {
+				fnc(data.getResponseHeader('Count'));
+			}
 		});
 	},
 
@@ -324,6 +345,7 @@ var boto_web = {
 		self.methods = {};
 		self.cache = {};
 		self.cache_timeouts = {};
+		self.prop_map = {};
 
 		// Parse method names and descriptions
 		$('methods *', xml).each(function(){ self.methods[this.nodeName] = $(this).text() });
@@ -378,6 +400,8 @@ var boto_web = {
 				});
 			}
 
+			self.prop_map[property.name] = property;
+
 			return property;
 		});
 
@@ -408,6 +432,16 @@ var boto_web = {
 		}
 		this.all = function(fnc){
 			return this.find([], fnc);
+		}
+
+		this.count = function(fnc){
+			if (self.obj_count)
+				return fnc(self.obj_count);
+
+			boto_web.count(boto_web.env.base_url + this.href, function(count) {
+				self.obj_count = count;
+				fnc(count);
+			});
 		}
 
 		this.cache = function(obj) {
