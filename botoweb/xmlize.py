@@ -14,7 +14,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
 # ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
@@ -221,7 +221,7 @@ class XMLSerializer(object):
 				elif prop_type in ('date', 'datetime', 'time'):
 					# Date Time
 					value = self.decode_datetime(prop)
-				elif prop_type == "bool":
+				elif prop_type in ('bool', 'boolean'):
 					# Boolean
 					value = (self.decode_string(prop).upper() == "TRUE")
 				elif prop_type == "reference":
@@ -265,7 +265,7 @@ class XMLSerializer(object):
 
 
 
-	
+
 def dump(obj, file=None, objname=None):
 	"""Write an XML representation of *obj* to the open file object *file*
 	"""
@@ -300,7 +300,7 @@ def register(cls, name=None):
 	@param cls: Class to register
 	@type cls: class
 
-	@param name: An optional conanical name to use for this class, the default is to use 
+	@param name: An optional conanical name to use for this class, the default is to use
 		just the name of the class
 	@type name: str
 	"""
