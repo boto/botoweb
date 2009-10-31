@@ -308,12 +308,30 @@ boto_web.ui = {
 				data.id = self.obj.id;
 
 			$(self.fields).each(function() {
-				var val;
+				var val = '';
 				var name = this.field.attr('name');
 
-				if (this.field.attr('type') == 'file') {
+				if (this.has_search) {
+					val = [];
+
+					this.field_container.find('.selections div').each(function() {
+						val.push(this.id.replace('selection_', ''));
+					});
+
+					if (val.length == 1)
+						val = val[0];
+					if (val.length == 0)
+						val = '';
+				}
+				else if (this.field.attr('type') == 'file') {
 					uploads.push(this);
 					return;
+				}
+				else if (this.properties._type == 'dateTime') {
+					val = this.field.val().replace(/(\d+-\d+-\d+) (\d+:\d+).*/,'$1T$2:00Z');
+				}
+				else if (this.properties._type == 'boolean') {
+					val = this.field.is(':checked') ? 'True' : 'False';
 				}
 				else if (this.field.attr('type') == 'password') {
 					if (this.reset.is(':checked'))
@@ -322,7 +340,7 @@ boto_web.ui = {
 						return;
 				}
 
-				if (this.fields.length > 1) {
+				else if (this.fields.length > 1) {
 					val = [];
 					$(this.fields).each(function() {
 						val.push(this.val());
@@ -331,7 +349,7 @@ boto_web.ui = {
 				else
 					val = this.field.val();
 
-				if (!self.obj || self.obj.properties[name] != val)
+				if (!self.obj || !$.equals((self.obj.properties[name] || ''), val))
 					data[name] = val;
 			});
 
@@ -353,7 +371,7 @@ boto_web.ui = {
 						boto_web.ui.alert('The database has been updated.');
 				}
 				else {
-					boto_web.ui.alert('There was an error updating the database.');
+					boto_web.ui.alert('There was an error updating the database:<br />' + data.responseText);
 				}
 				// TODO data save callback
 			});
@@ -485,13 +503,16 @@ boto_web.ui = {
 		this.text = $('<span/>');
 		this.fields = [this.field];
 		this.perms = properties._perms || [];
+		this.properties = properties;
 
 		properties.id = properties.id || 'field_' + properties.name;
 		properties.id += Math.round(Math.random() * 99999);
 
 		this.add_choices = function(choices) {
-			if (this.field.children().length == 0)
+			if (!this.has_options) {
+				this.has_options = true;
 				$('<option/>').appendTo(this.field);
+			}
 
 			for (var i in choices) {
 				choices[i].text = choices[i].text || choices[i].value;
@@ -548,18 +569,16 @@ boto_web.ui = {
 		this.node.append(this.label, this.field_container, this.text);
 		this.read_only();
 
-		if (properties.value) {
-			if ($.isArray(properties.value)) {
-				$(properties.value).each(function(i ,prop) {
-					if (i == 0)
-						self.field.val(prop);
-					else
-						self.add_field(prop);
-				});
-			}
-			else
-				this.field.val(properties.value);
+		if ($.isArray(properties.value)) {
+			$(properties.value).each(function(i ,prop) {
+				if (i == 0)
+					self.field.val(prop);
+				else
+					self.add_field(prop);
+			});
 		}
+		else
+			this.field.val(properties.value || '');
 
 		this.text.html(this.field.val() || '&nbsp;');
 
@@ -611,7 +630,12 @@ boto_web.ui = {
 		this.field_container.find('br').remove();
 
 		this.field.value = '1';
-		no_field.value = '';
+		no_field.value = '0';
+
+		if (properties.value == 'True')
+			this.field.attr('checked', true);
+		else
+			no_field.attr('checked', true);
 
 		$('<label/>')
 			.css('display', 'inline')
@@ -678,10 +702,17 @@ boto_web.ui = {
 			changeYear: true,
 			constrainInput: false,
 			onClose: function(dateText, inst) {
-				dateText = dateText + ' GMT';
-				this.val(dateText);
+				dateText = dateText.replace(' GMT', '') + ' GMT';
+				this.value = dateText;
 			}
 		});
+
+		this.field.val(this.field.val().replace('T', ' ').replace(/(\d+:\d+)(:\d+)?Z?.*/, '$1 GMT'));
+
+		$('<div/>')
+			.addClass('small')
+			.text('format: yyyy-mm-dd hh:mm:ss GMT')
+			.appendTo(this.field_container);
 	},
 
 	/**
@@ -715,20 +746,82 @@ boto_web.ui = {
 		var self = this;
 
 		if (properties._item_type in boto_web.env.models) {
-			boto_web.env.models[properties._item_type].all(function(data) {
-				var value_text = '';
+			self.model = boto_web.env.models[properties._item_type];
+			self.model.count(function(count) {
+				if (count < 100) {
+					self.model.all(function(data, page) {
+						var value_text = '';
 
-				try {
-					self.add_choices($(data).map(function() {
-						if (this.id == properties.value)
-							value_text = this.properties.name;
+						try {
+							self.add_choices($(data).map(function() {
+								if (this.id == properties.value)
+									value_text = this.properties.name;
 
-						return { text: this.properties.name, value: this.id };
-					}));
-				} catch (e) { }
+								return { text: this.properties.name, value: this.id };
+							}));
+						} catch (e) { }
 
-				self.field.val(properties.value);
-				self.text.text(value_text);
+						self.field.val(properties.value);
+						self.text.text(value_text);
+
+						return page < 10;
+					});
+				}
+				else {
+					self.has_search = true;
+					self.field_container.empty();
+
+					$('<span/>')
+						.addClass('ui-icon ui-icon-search')
+						.appendTo(self.field_container);
+
+					$('<input/>')
+						.addClass('search_field')
+						.keyup(function(e) {
+							if (e.keyCode != 13) return;
+
+							var node = $(this);
+							var val = node.val();
+							node.siblings('.search_results').empty();
+							self.model.query([
+								//TODO enable searching by id
+								//['id', '=', val],
+								['name', 'like', '%' + val + '%']
+							], function(obj, page) {
+								for (var i in obj) {
+									$('<a/>')
+										.css('display', 'block')
+										.attr({id: 'search_option_' + obj[i].id, href: '#'})
+										.text(obj[i].properties.name)
+										.click(function(e){
+											if (properties._type != 'list')
+												node.siblings('.selections').empty();
+
+											$('<div/>')
+												.addClass('clear')
+												.attr('id', 'selection_' + obj[i].id)
+												.html('<span class="ui-icon ui-icon-closethick" onclick="$(this).parent().remove()"></span> ' + $(this).html())
+												.appendTo(node.siblings('.selections'))
+											e.preventDefault();
+										})
+										.appendTo(node.siblings('.search_results'))
+								}
+								return page < 10;
+							});
+						})
+						.appendTo(self.field_container);
+
+					$('<div/>')
+						.addClass('search_results')
+						.appendTo(self.field_container);
+
+					$('<strong/>')
+						.text('Your selection' + ((properties._type == 'list') ? 's' : '') + ':')
+						.appendTo(self.field_container);
+					$('<div/>')
+						.addClass('selections')
+						.appendTo(self.field_container);
+				}
 			});
 		}
 	},
@@ -846,3 +939,17 @@ $.extend(jQuery.jStore.defaults, {
 })
 
 */
+
+$.equals = function(o, compareTo) {
+  if (!compareTo || !compareTo.length || o.length!=compareTo.length)
+  {
+    return o==compareTo;
+  }
+  for (var i=0; i<o.length; i++) {
+    if (o[i]!==compareTo[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
