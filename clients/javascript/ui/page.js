@@ -13,6 +13,11 @@ boto_web.ui.Page = function(html) {
 
 	self.node = $(html).is(boto_web.ui.selectors.section) ? $(html) : $(html).find(boto_web.ui.selectors.section);
 	self.id = self.node.id || 'section_' + boto_web.ui.desktop.num_pages;
+	self.node
+		.attr('id', '');
+	self.node = $('<div/>')
+		.attr('id', self.id)
+		.append(self.node);
 
 	if (self.node.attr(boto_web.ui.properties.model)) {
 		self.node.find(boto_web.ui.selectors.object).each(function() {
