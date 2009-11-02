@@ -45,7 +45,7 @@ boto_web.ui.widgets.Report = function(node) {
 				.each(function() {
 					var seen = {};
 					var links = $.map(boto_web.env.models[name].properties, function(p){
-						if (p._type == 'reference' && !seen[p._item_type]) {
+						if ((p._type == 'reference' || p._type == 'query') && !seen[p._item_type]) {
 							seen[p._item_type] = 1;
 							return p._item_type;
 						}
