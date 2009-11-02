@@ -211,40 +211,46 @@ class XMLSerializer(object):
 
 			props = {}
 			for prop in node:
-				value = None
-				prop_type = (prop.get("type") or "string").lower()
-				if prop_type == "string":
-					value = self.decode_string(prop)
-				elif prop_type in ('complex', 'complextype', 'dict'):
-					# Dictionary
-					pass
-				elif prop_type in ('date', 'datetime', 'time'):
-					# Date Time
-					value = self.decode_datetime(prop)
-				elif prop_type in ('bool', 'boolean'):
-					# Boolean
-					value = (self.decode_string(prop).upper() == "TRUE")
-				elif prop_type == "reference":
-					# Object (new style)
-					value = ProxyObject()
-					value.__name__ = prop.get("item_type")
-					value.__id__ = prop.get("id")
-				elif prop.get("type") in REGISTERED_CLASSES.keys():
-					# Object (old style)
-					value = REGISTERED_CLASSES[prop.get("type")]()
-					value.id = prop.text
-				else:
-					# By default we assume it's a string
-					value = self.decode_string(prop)
+				value = self.decode_prop(prop)
 				if not props.has_key(prop.tag):
 					props[prop.tag] = []
 				props[prop.tag].append(value)
+
 			for prop_name in props:
 				val = props[prop_name]
 				if len(val) == 1:
 					val = val[0]
 				setattr(obj, prop_name, val)
 			return obj
+
+	def decode_prop(self, prop):
+		"""Decode a single property node"""
+		value = None
+		prop_type = (prop.get("type") or "string").lower()
+		if prop_type == "string":
+			value = self.decode_string(prop)
+		elif prop_type in ('complex', 'complextype', 'dict'):
+			# Dictionary
+			value = self.decode_dict(prop)
+		elif prop_type in ('date', 'datetime', 'time'):
+			# Date Time
+			value = self.decode_datetime(prop)
+		elif prop_type in ('bool', 'boolean'):
+			# Boolean
+			value = (self.decode_string(prop).upper() == "TRUE")
+		elif prop_type == "reference":
+			# Object (new style)
+			value = ProxyObject()
+			value.__name__ = prop.get("item_type")
+			value.__id__ = prop.get("id")
+		elif prop.get("type") in REGISTERED_CLASSES.keys():
+			# Object (old style)
+			value = REGISTERED_CLASSES[prop.get("type")]()
+			value.id = prop.text
+		else:
+			# By default we assume it's a string
+			value = self.decode_string(prop)
+		return value
 
 
 	def decode_string(self, node):
@@ -262,6 +268,14 @@ class XMLSerializer(object):
 		if not date_str or len(date_str) == 0:
 			return None
 		return datetime.parseisoformat(date_str)
+
+	def decode_dict(self, node):
+		"""Decode a dictionary (complexType)"""
+		r = {}
+		for k in node:
+			r[k.tag] = self.decode_prop(k)
+			print "r[%s] = %s" % (k.tag, r[k.tag])
+		return r
 
 
 

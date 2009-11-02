@@ -6,36 +6,32 @@ import time
 from botoweb.appserver.handlers.db import DBHandler
 from boto.sdb.db.model import Model
 from boto.sdb.db.property import StringProperty
+from botoweb.environment import Environment
 
 class SimpleObject(Model):
-	"""
-	Simple test object
-	"""
+	"""Simple test object"""
 	name = StringProperty()
 
 
 class TestDBHandler:
-	"""
-	Test the DBHandler
-	"""
+	"""Test the DBHandler"""
+
 	def setup_class(cls):
-		"""
-		Setup this class
-		"""
-		cls.handler = DBHandler(config={"db_class": "%s.SimpleObject" % SimpleObject.__module__})
+		"""Setup this class"""
+		import sys
+		sys.path.append(".")
+		sys.path.append("../")
+		env = Environment("example")
+		cls.handler = DBHandler(env, config={"db_class": "%s.SimpleObject" % SimpleObject.__module__})
 
 	def teardown_class(cls):
-		"""
-		Cleanup
-		"""
+		"""Cleanup"""
 		for obj in SimpleObject.all():
 			obj.delete()
 		del(cls.handler)
 
 	def test_create(self):
-		"""
-		Test creating something
-		"""
+		"""Test creating something"""
 		obj = self.handler.create(params={"name": "TestObject"})
 		assert(obj.name == "TestObject")
 		time.sleep(1)

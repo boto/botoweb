@@ -112,3 +112,12 @@ class TestXMLize(object):
 		obj_loaded = xmlize.loads(obj_xml)
 		print obj_xml
 		assert obj_loaded.parent.__id__ == obj.id
+
+
+	def test_map(self):
+		"""Test dumping and loading a map (dict/complexType)"""
+		d = {"bar":"biz", "foo":"fiz"}
+		xml = xmlize.dumps(d, "map")
+		d2  = xmlize.loads("<result>%s</result>" % xml)
+		print xml
+		assert d2.map == d
