@@ -243,6 +243,10 @@ class DBHandler(RequestHandler):
 					setattr(newobj, prop, prop_value)
 				except Exception, e:
 					raise BadRequest("Invalid value for %s" % prop)
+
+				# Set an index, if it exists
+				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
+					setattr(newobj, "_indexed_%s" % prop, prop_value.upper())
 		newobj.put()
 		return newobj
 
@@ -287,6 +291,9 @@ class DBHandler(RequestHandler):
 			prop_val = props[prop_name]
 			boto.log.debug("%s = %s" % (prop_name, prop_val))
 			setattr(obj, prop_name, prop_val)
+			if hasattr(obj, "_indexed_%s" % prop_name) and prop_value:
+				setattr(obj, "_indexed_%s" % prop_name, prop_value.upper())
+				boto.log.debug("Indexed: %s" % prop_name)
 		boto.log.debug("===========================")
 		obj.put()
 		return obj
