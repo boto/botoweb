@@ -388,6 +388,9 @@ var boto_web = {
 				property[i] = node.text();
 			}
 
+			if (!property._label)
+				property._label = property.name;
+
 			// Get key value maps for multiple choice properties
 			map = {
 				choices: 'choice'
