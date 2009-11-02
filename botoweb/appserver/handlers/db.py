@@ -177,7 +177,12 @@ class DBHandler(RequestHandler):
 			except:
 				raise BadRequest("Bad query string")
 			for filter in filters:
-				query.filter("%s %s" % (filter[0], filter[1]), filter[2])
+				param_name = filter[0]
+				prop_value = filter[2]
+				if hasattr(self.db_class, "_indexed_%s" % param_name):
+					param_name = "_indexed_%s" % param_name
+					prop_value = prop_value.upper()
+				query.filter("%s %s" % (param_name, filter[1]), prop_value)
 		else:
 			properties = [p.name for p in query.model_class.properties(hidden=False)]
 			for filter in set(params.keys()):

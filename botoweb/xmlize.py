@@ -180,7 +180,8 @@ class XMLSerializer(object):
 				self.file.write("<%s>" % objname)
 			if isinstance(obj, Model):
 				for prop in obj.properties():
-					self.encode(prop.name, getattr(obj, prop.name))
+					if not prop.name.startswith("_"):
+						self.encode(prop.name, getattr(obj, prop.name))
 			else:
 				for prop_name in obj.__dict__:
 					if not prop_name.startswith("_") and not prop_name == "id":

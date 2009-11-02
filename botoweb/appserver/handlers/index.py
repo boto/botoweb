@@ -75,6 +75,8 @@ class IndexHandler(RequestHandler):
 					if model_class:
 						props_node = etree.SubElement(api_node, "properties")
 						for prop in model_class.properties():
+							if prop.name.startswith("_"):
+								continue
 							prop_node = etree.SubElement(props_node, "property")
 							prop_node.set("name", prop.name)
 							if hasattr(prop, "reference_class"):
