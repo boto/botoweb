@@ -19,24 +19,28 @@ boto_web.ui.widgets.Report = function(node) {
 
 	self.step_1 = function() {
 		self.node.empty();
+		self.filters = [];
+		self.columns = [];
 
 		self.template.find('#step_1').clone()
 			.appendTo(self.node);
+		var models = [];
 
-		/*var choices = $('<select/>')
-			.appendTo(self.node.find('.new_report'));*/
+		for (var name in boto_web.env.models)
+			models.push(name);
 
-		for (var name in boto_web.env.models) {
-			/*$('<option/>')
-				.attr({value: name, text: name})
-				.appendTo(choices);*/
+		models = models.sort(self.sort_props);
+
+		$.map(models, function(name) {
 			$('<div/>')
 				.addClass('ui-button ui-state-default ui-corner-all')
 				.html('<strong>' + name + '</strong>')
-				.click(function() {
+				.click(function(name){ return function() {
 					self.model = boto_web.env.models[name];
+					document.title = name + ' Report';
+					$('h1').text(document.title);
 					self.step_2();
-				})
+				}}(name))
 				.appendTo(self.node.find('.new_report'))
 				.each(function() {
 					var seen = {};
@@ -55,16 +59,7 @@ boto_web.ui.widgets.Report = function(node) {
 					}
 				})
 				.append($('<br class="clear"/>'));
-		}
-
-		/*$('<div/>')
-			.addClass('ui-button ui-state-default ui-corner-all')
-			.html('<span class="ui-icon ui-icon-arrowthick-1-e"></span>Next')
-			.click(function() {
-				self.model = boto_web.env.models[choices.val()];
-				self.step_2();
-			})
-			.appendTo(self.node.find('.new_report'));*/
+		});
 		boto_web.ui.decorate(self.node);
 	}
 
@@ -79,19 +74,15 @@ boto_web.ui.widgets.Report = function(node) {
 					var input = this;
 
 					if (input.value) {
-						self.node.find('label').each(function() {
-							if ($(this).text().toLowerCase().indexOf(input.value.toLowerCase()) >= 0) {
-								$(this).show()
-								$('#' + $(this).attr('for')).show();
-							}
-							else {
+						self.node.find('.attribute').each(function() {
+							if ($(this).text().toLowerCase().indexOf(input.value.toLowerCase()) >= 0)
+								$(this).show();
+							else
 								$(this).hide();
-								$('#' + $(this).attr('for')).hide();
-							}
 						});
 					}
 					else {
-						self.node.find('label, input').show();
+						self.node.find('.filter').show();
 					}
 				})
 				.appendTo(self.node.find('.attributes'));
@@ -101,35 +92,38 @@ boto_web.ui.widgets.Report = function(node) {
 
 		var add_filter = function(e, property) {
 			$('<div/>')
-				.addClass('filter')
+				.addClass('filter editor ui-button ui-state-default ui-corner-all')
 				.appendTo(self.node.find('.filters'))
 				.append(
 					$('<select/>')
-						.addClass('property')
+						.addClass('operator ar')
 						.each(function() {
 							var select = this;
-							$(self.model.properties.sort(function(a,b) {
-								return a._label.toLowerCase() > b._label.toLowerCase() ? 1 : -1;
-							})).each(function() {
-								$('<option/>').attr({text: this._label, value: this.name}).appendTo(select);
-							})
-						})
-						.val(property),
-					$('<select/>')
-						.addClass('operator')
-						.each(function() {
-							var select = this;
-							$(['is', 'is not', 'contains', 'starts with', 'ends with', '>', '<', '>=', '<=']).each(function() {
+							var operators = ['contains', 'starts with', 'ends with', 'is', 'is not', '>', '<', '>=', '<='];
+							if (property._type == 'reference')
+								operators = ['is', 'is not'];
+							if (property._type == 'boolean')
+								operators = ['is'];
+							if (property._type == 'dateTime')
+								operators = ['is', 'is not', '>', '<', '>=', '<='];
+							$(operators).each(function() {
 								$('<option/>').attr({text: this, value: this}).appendTo(select);
 							})
 						}),
-					$('<input/>')
-						.attr('type', 'text')
-						.keydown(function(e) {
-							if (e.keyCode == 40)
-								add_filter(e);
-						}).focus()
-				);
+					$('<h3/>')
+						.addClass('property')
+						.attr('id', 'property_' + property.name)
+						.text(property._label)
+						.prepend($('<span/>')
+							.addClass('ui-icon ui-icon-closethick')
+							.click(function() {
+								$(this).parents('.filter').remove()
+							})
+						),
+					$('<br class="clear" />'),
+					$(boto_web.ui.property_field(property).field_container)
+				)
+				.find('.ui-button').remove();
 			e.preventDefault();
 		};
 
@@ -137,9 +131,9 @@ boto_web.ui.widgets.Report = function(node) {
 			var filter_columns = {name: 1};
 			self.filters = [];
 			self.node.find('.filter').each(function() {
-				var prop = $(this).find('.property').val();
+				var prop = $(this).find('.property').attr('id').replace('property_', '');
 				var op = $(this).find('.operator').val();
-				var val = $(this).find('input').val();
+				var val = $(this).find('.field_container').data('get_value')();
 				op = {'is': '=', 'is not': '!=', 'contains': 'like'}[op] || op;
 
 				if (op == 'like')
@@ -165,14 +159,14 @@ boto_web.ui.widgets.Report = function(node) {
 			}
 		};
 
-		$.map(self.model.properties, function(p) {
+		$.map(self.model.properties.sort(self.sort_props), function(p) {
 			if ($.inArray('read', p._perm) < 0) return null;
 
 			$('<div/>')
-				.addClass('ui-button ui-state-default ui-corner-all')
+				.addClass('attribute ui-button ui-state-default ui-corner-all')
 				.html(p._label)
 				.click(function(e) {
-					add_filter(e, p.name)
+					add_filter(e, p)
 				})
 				.appendTo(self.node.find('.attributes'));
 		});
@@ -189,17 +183,15 @@ boto_web.ui.widgets.Report = function(node) {
 
 		$('<br/>')
 			.addClass('clear')
-			.appendTo(self.node.find('.filters'));
+			.appendTo(self.node.find('.results'));
 
-		$('<div/>')
-			.addClass('ui-button ui-state-default ui-corner-all')
-			.html('<span class="ui-icon ui-icon-arrowthick-1-e"></span>Next')
+		$('#next_step')
+			.show()
 			.click(function() {
 				get_filters();
-
 				self.step_3();
 			})
-			.appendTo(self.node.find('.filters'));
+			.find('em').html('<strong>Modify the report</strong> by choosing the appropriate columns.');
 
 		boto_web.ui.decorate(self.node);
 	}
@@ -246,6 +238,13 @@ boto_web.ui.widgets.Report = function(node) {
 			}
 		};
 
+		var get_columns = function() {
+			self.columns = [];
+			self.node.find('.columns ul li').each(function() {
+				self.columns.push({name: this.id.replace('column_', ''), _label: $(this).text()});
+			});
+		}
+
 		$(self.model.properties).each(function() {
 			if ($.inArray('read', this._perm) < 0) return;
 
@@ -283,15 +282,29 @@ boto_web.ui.widgets.Report = function(node) {
 
 		$('<div/>')
 			.addClass('ui-button ui-state-default ui-corner-all')
-			.html('<span class="ui-icon ui-icon-arrowthick-1-e"></span>Next')
+			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview')
 			.click(function() {
-				self.columns = [];
-				self.node.find('.columns ul li').each(function() {
-					self.columns.push({name: this.id.replace('column_', ''), _label: $(this).text()});
-				});
-				self.step_4();
+				get_columns();
+				self.node.find('.results').empty();
+				self.step_4(true);
 			})
-			.appendTo(self.node.find('.columns'));
+			.insertBefore(self.node.find('.results'));
+
+		$('<br/>')
+			.addClass('clear')
+			.appendTo(self.node.find('.results'));
+
+		$('#next_step')
+			.show()
+			.unbind()
+			.click(function() {
+				get_columns();
+				self.step_4();
+				document.location.href += 'model=' + self.model.name
+					+ '&filters=' + escape($.toJSON(self.filters))
+					+ '&columns=' + escape($.toJSON(self.columns));
+			})
+			.find('em').html('<strong>Generate the report</strong> and export the results.');
 	}
 
 	self.step_4 = function(preview) {
@@ -326,10 +339,29 @@ boto_web.ui.widgets.Report = function(node) {
 		self.results = new boto_web.ui.widgets.SearchResults(tbody, self.model);
 
 		self.model.query(self.filters, function(data, page) {
-			self.results.update(data, !preview);
-			return true;
+			self.results.update(data, page);
+			return !preview;
 		});
 	}
 
-	self.step_1();
+	self.update = function() {
+		if (/model=(.*?)&filters=(.*?)&columns=(.*?)(&|$)/.test(document.location.href)) {
+			self.model = boto_web.env.models[RegExp.$1];
+			self.filters = $.evalJSON(unescape(RegExp.$2));
+			self.columns = $.evalJSON(unescape(RegExp.$3));
+			self.step_4();
+		}
+		else if (/step=(\d+)/.test(document.location.href)) {
+			self['step_' + RegExp.$1]();
+		}
+		else {
+			self.step_1();
+		}
+	}
+
+	self.sort_props = function(a,b) {
+		return (a._label || a.name || a).toLowerCase() > (b._label || b.name || b).toLowerCase() ? 1 : -1;
+	}
+
+	self.update();
 };
