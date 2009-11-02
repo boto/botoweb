@@ -199,7 +199,7 @@ class DBHandler(RequestHandler):
 		if sort_by:
 			query.order(sort_by)
 		if next_token:
-			query.next_token = next_token.replace(" ", "+")
+			query.next_token = urllib.unquote(next_token.strip()).replace(" ", "+")
 		return query
 
 
