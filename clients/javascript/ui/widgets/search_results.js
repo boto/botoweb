@@ -22,7 +22,7 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 	self.update = function(results, append) {
 		var nodes = []
 		for (var i in results) {
-			nodes.push(new boto_web.ui.Object(self.template.clone(), self.model, results[i]).node);
+			nodes.push(new boto_web.ui.Object(self.template.clone(), boto_web.env.models[results[i].properties.model], results[i]).node);
 		}
 		self.data_table.append(nodes);
 	}

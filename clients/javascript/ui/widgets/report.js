@@ -314,6 +314,8 @@ boto_web.ui.widgets.Report = function(node) {
 				.appendTo(self.node);
 		}
 
+		$('#next_step').hide();
+
 		var thead = $('<thead/>');
 		var tbody = $('<tbody/>');
 		var trhead = $('<tr/>').appendTo(thead);

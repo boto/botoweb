@@ -412,11 +412,12 @@ var boto_web = {
 
 		this.find = function(filters, fnc){
 			var self = this;
-			boto_web.find(boto_web.env.base_url + this.href, filters, this.name, function(data, page){
+			boto_web.find(boto_web.env.base_url + this.href, filters, $.map(boto_web.env.routes, function(m) { return m.obj }).join(', '), function(data, page){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
-						objects[x] = self.cache(new boto_web.Model(self.href, self.name, data[x]));
+						var model = boto_web.env.models[data[x].model];
+						objects[x] = model.cache(new boto_web.Model(model.href, model.name, data[x]));
 					}
 					return fnc(objects, page);
 				}
@@ -425,11 +426,12 @@ var boto_web = {
 
 		this.query = function(query, fnc){
 			var self = this;
-			boto_web.query(boto_web.env.base_url + this.href, query, this.name, function(data, page){
+			boto_web.query(boto_web.env.base_url + this.href, query, $.map(boto_web.env.routes, function(m) { return m.obj }).join(', '), function(data, page){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
-						objects[x] = self.cache(new boto_web.Model(self.href, self.name, data[x]));
+						var model = boto_web.env.models[data[x].model];
+						objects[x] = model.cache(new boto_web.Model(model.href, model.name, data[x]));
 					}
 					return fnc(objects, page);
 				}
