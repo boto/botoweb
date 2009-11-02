@@ -188,6 +188,16 @@ boto_web.ui = {
 		}
 	},
 
+	decorate: function(node) {
+		node.find('.ui-state-default')
+			.hover(function() {
+				$(this).addClass('ui-state-hover')
+			},
+			function() {
+				$(this).removeClass('ui-state-hover')
+			})
+	},
+
 	alert: function(msg) {
 		$('<div/>')
 			.html(msg)

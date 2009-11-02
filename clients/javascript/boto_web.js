@@ -373,6 +373,8 @@ var boto_web = {
 
 			if (property._perm)
 				property._perm = property._perm.split(' ');
+			else
+				property._perm = [];
 
 			// Pull text content of children of the property node
 			map = {

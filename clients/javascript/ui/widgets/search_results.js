@@ -46,6 +46,5 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 
 	setTimeout(function() {
 		self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'));
-		self.update();
 	}, 10);
 };
