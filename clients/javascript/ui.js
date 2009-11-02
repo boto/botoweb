@@ -256,12 +256,11 @@ boto_web.ui = {
 			]
 		}
 		else {
-			self.per_column = self.num_properties;
+			self.per_column = self.num_properties + 1;
 			self.columns = [self.node];
 		}
 
 		$(self.properties).each(function(num, props) {
-
 			if (typeof obj != 'undefined')
 				props = $.extend(props, {value: obj.properties[props.name]});
 
@@ -644,6 +643,7 @@ boto_web.ui = {
 		boto_web.ui._field.call(this, properties);
 
 		var no_field = this.add_field();
+		var self = this;
 
 		this.field_container.find('br').remove();
 
