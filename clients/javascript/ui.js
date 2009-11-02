@@ -268,40 +268,7 @@ boto_web.ui = {
 			if (props._perm && $.inArray('write', props._perm) == -1)
 				return;
 
-			var field;
-
-			switch ((props._type == 'list') ? (props._item_type) : props._type) {
-				case 'string':
-				case 'str':
-				case 'integer':
-				case 'password':
-					if (this.choices)
-						field = new boto_web.ui.dropdown(props)
-							.read_only(opts.read_only);
-					else if (props.maxlength > 1024)
-						field = new boto_web.ui.textarea(props)
-							.read_only(opts.read_only);
-					else
-						field = new boto_web.ui.text(props)
-							.read_only(opts.read_only);
-					break;
-				case 'dateTime':
-					field = new boto_web.ui.date(props)
-						.read_only(opts.read_only);
-					break;
-				case 'boolean':
-					field = new boto_web.ui.bool(props)
-						.read_only(opts.read_only);
-					break;
-				case 'blob':
-					field = new boto_web.ui.file(props)
-						.read_only(opts.read_only);
-					break;
-				default:
-					field = new boto_web.ui.picklist(props)
-						.read_only(opts.read_only);
-					break;
-			}
+			var field = boto_web.ui.property_field(props, opts);
 
 			if (typeof field == 'undefined') return;
 
@@ -505,6 +472,38 @@ boto_web.ui = {
 	},
 
 
+	property_field: function(props, opts) {
+		if (!opts) opts = {read_only: false};
+		switch ((props._type == 'list') ? (props._item_type) : props._type) {
+			case 'string':
+			case 'str':
+			case 'integer':
+			case 'password':
+				if (this.choices)
+					return new boto_web.ui.dropdown(props)
+						.read_only(opts.read_only);
+				else if (props.maxlength > 1024)
+					return new boto_web.ui.textarea(props)
+						.read_only(opts.read_only);
+				else
+					return new boto_web.ui.text(props)
+						.read_only(opts.read_only);
+			case 'dateTime':
+				return new boto_web.ui.date(props)
+					.read_only(opts.read_only);
+			case 'boolean':
+				return new boto_web.ui.bool(props)
+					.read_only(opts.read_only);
+			case 'blob':
+				return new boto_web.ui.file(props)
+					.read_only(opts.read_only);
+			default:
+				return new boto_web.ui.picklist(props)
+					.read_only(opts.read_only);
+		}
+	},
+
+
 	/**
 	 * Generic interface for all field types.
 	 *
@@ -583,6 +582,10 @@ boto_web.ui = {
 		this.field_container = $('<dd/>').addClass('field_container').append(this.field);
 		this.node.append(this.label, this.field_container, this.text);
 		this.read_only();
+
+		this.field_container.data('get_value', function() {
+			return self.field.val();
+		});
 
 		if ($.isArray(properties.value)) {
 			$(properties.value).each(function(i ,prop) {
@@ -663,6 +666,10 @@ boto_web.ui = {
 			.html(' No')
 			.attr({htmlFor: no_field.attr('id')})
 			.insertAfter(no_field);
+
+		self.field_container.data('get_value', function() {
+			return self.field.is(':checked') ? 'True' : 'False';
+		});
 	},
 
 	/**
@@ -728,6 +735,10 @@ boto_web.ui = {
 			.addClass('small')
 			.text('format: yyyy-mm-dd hh:mm:ss GMT')
 			.appendTo(this.field_container);
+
+		self.field_container.data('get_value', function() {
+			return self.field.val().replace(/(\d+-\d+-\d+) (\d+:\d+).*/,'$1T$2:00Z');
+		});
 	},
 
 	/**
@@ -864,6 +875,21 @@ boto_web.ui = {
 							});
 						});
 					}
+
+					self.field_container.data('get_value', function() {
+						var val = [];
+
+						self.field_container.find('.selections div').each(function() {
+							val.push(this.id.replace('selection_', ''));
+						});
+
+						if (val.length == 1)
+							val = val[0];
+						if (val.length == 0)
+							val = '';
+
+						return val;
+					});
 				}
 			});
 		}
@@ -975,7 +1001,7 @@ boto_web.ui.watch_url = function() {
 }
 
 jQuery.fn.log = function (msg) {
-	console.log("%s: %o", msg, this);
+	//console.log("%s: %o", msg, this);
 	return this;
 };
 /*
