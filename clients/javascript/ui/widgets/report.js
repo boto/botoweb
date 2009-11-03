@@ -312,9 +312,9 @@ boto_web.ui.widgets.Report = function(node) {
 			self.node.empty();
 			self.template.find('#step_4').clone()
 				.appendTo(self.node);
-		}
 
-		$('#next_step').hide();
+			$('#next_step').hide();
+		}
 
 		var thead = $('<thead/>');
 		var tbody = $('<tbody/>');
