@@ -71,7 +71,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			for (var i in relations) {
 				self.obj.follow(relations[i].name, function(data) {
 					$(data).each(function() {
-						node.append(new boto_web.ui.Object(template, boto_web.env.models[this.name], this).node)
+						node.append(new boto_web.ui.Object(template.clone(), boto_web.env.models[this.name], this).node)
 					});
 					new boto_web.ui.widgets.DataTable(node.parent('table'));
 				});
