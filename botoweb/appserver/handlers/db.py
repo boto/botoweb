@@ -188,8 +188,6 @@ class DBHandler(RequestHandler):
 			for filter in set(params.keys()):
 				if filter in ["sort_by", "next_token"]:
 					continue
-				if not filter in properties:
-					raise BadRequest("Property not found: '%s'" % filter)
 				filter_value = params[filter]
 				filter_args = filter.split(".")
 				if len(filter_args) > 1:
@@ -291,8 +289,8 @@ class DBHandler(RequestHandler):
 			prop_val = props[prop_name]
 			boto.log.debug("%s = %s" % (prop_name, prop_val))
 			setattr(obj, prop_name, prop_val)
-			if hasattr(obj, "_indexed_%s" % prop_name) and prop_value:
-				setattr(obj, "_indexed_%s" % prop_name, prop_value.upper())
+			if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
+				setattr(obj, "_indexed_%s" % prop_name, prop_val.upper())
 				boto.log.debug("Indexed: %s" % prop_name)
 		boto.log.debug("===========================")
 		obj.put()
