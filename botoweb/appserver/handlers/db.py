@@ -336,6 +336,13 @@ class DBHandler(RequestHandler):
 		if hasattr(val, "file"):
 			val = val.file.read()
 		setattr(obj, property, val)
+		# Fire off any "on_set" instructions
+		if hasattr(obj, "on_set_%s" % property):
+			log.info("Firing off on_set_%s" % property)
+			try:
+				getattr(obj, "on_set_%s" % property)()
+			except:
+				log.exception("Exception triggering on_set_%s" % property)
 		obj.put()
 		log.info("Updated %s<%s>.%s" % (obj.__class__.__name__, obj.id, property))
 		response.set_status(204)
