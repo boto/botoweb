@@ -81,12 +81,16 @@ class XMLSerializer(object):
 			return self.encode_object(prop_name, prop_value)
 		return self.encode_default(prop_name, prop_value, prop_type.__name__)
 
-	def encode_default(self, prop_name, prop_value, prop_type):
+	def encode_default(self, prop_name, prop_value, prop_type, **params):
 		"""Encode Default encoding property"""
 		if prop_type == "str":
 			prop_type = "string"
-		args = {"prop_name": prop_name, "prop_value": self.encode_cdata(prop_value), "prop_type": str(prop_type)}
-		self.file.write("""<%(prop_name)s type="%(prop_type)s">%(prop_value)s</%(prop_name)s>""" % args)
+		args = {"prop_name": prop_name, "prop_value": self.encode_cdata(prop_value)}
+		params["type"] =  str(prop_type)
+		args['params'] = ""
+		for k in params:
+			args['params'] += '%s="%s" ' % (str(k), str(params[k]))
+		self.file.write("""<%(prop_name)s %(params)s>%(prop_value)s</%(prop_name)s>""" % args)
 
 	def encode_str(self, prop_name, prop_value):
 		return self.encode_default(prop_name, str(prop_value), "string")
@@ -101,10 +105,11 @@ class XMLSerializer(object):
 
 	def encode_dict(self, prop_name, prop_value):
 		"""Encode a dict by encoding each element individually with a name="" param"""
+		#TODO: make this support more then just strings
 		self.file.write("""<%s type="complexType">""" % prop_name)
 		for k in prop_value.keys():
 			v = prop_value[k]
-			self.encode(str(k), v)
+			self.encode_default(prop_name, v, "string", name=str(k))
 		self.file.write("""</%s>""" % prop_name)
 
 	def encode_datetime(self, prop_name, prop_value):
