@@ -279,8 +279,7 @@ class XMLSerializer(object):
 		"""Decode a dictionary (complexType)"""
 		r = {}
 		for k in node:
-			r[k.tag] = self.decode_prop(k)
-			print "r[%s] = %s" % (k.tag, r[k.tag])
+			r[k.get("name")] = self.decode_prop(k)
 		return r
 
 
