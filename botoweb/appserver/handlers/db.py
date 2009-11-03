@@ -96,10 +96,10 @@ class DBHandler(RequestHandler):
 		if id:
 			vals = id.split("/",1)
 			if len(vals) > 1:
-				obj = self.db_class.get_by_ids(vals[0])
+				obj = self.db_class.get_by_id(vals[0])
 				return self.update_property(request, response, obj, vals[1])
 			else:
-				obj = self.db_class.get_by_ids(id)
+				obj = self.db_class.get_by_id(id)
 				if obj:
 					raise Conflict("Object %s already exists" % id)
 
@@ -116,7 +116,7 @@ class DBHandler(RequestHandler):
 		content = None
 		obj = None
 		if id:
-			obj = self.db_class.get_by_ids(id)
+			obj = self.db_class.get_by_id(id)
 
 		if not obj:
 			raise NotFound()
@@ -150,7 +150,7 @@ class DBHandler(RequestHandler):
 		"""
 		if value:
 			if Model in type.mro():
-				return type.get_by_ids(value)
+				return type.get_by_id(value)
 			elif type == bool:
 				if value.lower() == 'true':
 					return True
@@ -255,7 +255,7 @@ class DBHandler(RequestHandler):
 		"""
 		obj = None
 		try:
-			obj = self.db_class.get_by_ids(id)
+			obj = self.db_class.get_by_id(id)
 		except:
 			raise NotFound()
 		if not obj:
@@ -333,6 +333,7 @@ class DBHandler(RequestHandler):
 		val = request.POST.get(property)
 		if hasattr(val, "file"):
 			val = val.file.read()
+			val = val.replace("\r\n", "\n").replace("\r", "\n")
 		setattr(obj, property, val)
 		# Fire off any "on_set" instructions
 		if hasattr(obj, "on_set_%s" % property):
