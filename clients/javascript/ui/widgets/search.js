@@ -69,10 +69,6 @@ boto_web.ui.widgets.Search = function(node) {
 		$(this).attr('href', self.get_link(method));
 	});
 
-	$('<h2/>')
-		.text('Search')
-		.appendTo(self.header);
-
 	for (var i in self.props) {
 		var prop = self.props[i];
 		var field;
