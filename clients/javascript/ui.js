@@ -29,6 +29,7 @@ boto_web.ui = {
 		'breadcrumbs':    '*[bwWidget=breadcrumbs]',
 		'attribute_list': '*[bwWidget=attributeList]',
 		'editing_tools':  '*[bwWidget=editingTools]',
+		'date_time':      '*[bwWidget=dateTime]',
 		'attribute':      '*[bwAttribute]',
 		'link':           'a[bwLink]'
 	},
@@ -85,6 +86,16 @@ boto_web.ui = {
 
 		if (document.location.hash == '')
 			document.location.href = $('header nav ul a:first').attr('href');
+
+		if ($('#global_search')) {
+			$('#global_search input')
+				.keyup(function(e) {
+					if (e.keyCode == 13) {
+						document.location.href = $('#global_search').attr('action') + '?q=' + this.value;
+						this.value = '';
+					}
+				})
+		}
 
 		boto_web.ui.watch_url();
 	},
@@ -315,6 +326,8 @@ boto_web.ui = {
 						val = ''
 					else if (this.field.val() == '')
 						return;
+					else
+						val = this.field.val();
 				}
 
 				else if (this.fields.length > 1) {
