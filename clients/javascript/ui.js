@@ -79,7 +79,7 @@ boto_web.ui = {
 		if (env.opts.handlers)
 			self.handlers = $.extend(self.handlers, env.opts.handlers);
 
-		new boto_web.ui.Object($('header'), env.models.User, {properties: env.user});
+		new boto_web.ui.Object($('header'), env.models.User, {id: env.user.id, properties: env.user});
 
 		$('header nav li').addClass('ui-state-default ui-corner-top');
 		$('header nav').show();
