@@ -140,7 +140,7 @@ boto_web.ui.widgets.Search = function(node) {
 
 				return page < 10;
 			}
-			else {
+			else if (page == 0){
 				boto_web.ui.alert('The search did not return any results.');
 			}
 			// TODO data save callback
