@@ -119,6 +119,13 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				$(this).text(self.obj.properties[val].toString());
 		});
 
+		// Insert object attributes
+		var sel = boto_web.ui.selectors.date_time;
+
+		self.node.find(sel).each(function() {
+			new boto_web.ui.widgets.DateTime(this);
+		});
+
 		// Add editing tools
 		sel = boto_web.ui.selectors.editing_tools;
 
