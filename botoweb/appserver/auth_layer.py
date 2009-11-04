@@ -48,8 +48,16 @@ class AuthLayer(WSGILayer):
 			log.info("Checking auth: %s" % auth)
 			if not req.user:
 				raise Unauthorized()
-			elif auth.has_key("group") and not req.user.has_auth_group(auth['group']):
-				raise Unauthorized()
+			elif auth.has_key("group"):
+				groups = auth['group']
+				authed = False
+				if not isinstance(groups, list):
+					groups = [groups]
+				for group in groups:
+					if req.user.has_auth_group(group):
+						authed = True
+				if not authed:
+					raise Unauthorized()
 		if self.app:
 			response = self.app.handle(req, response)
 		return response
@@ -67,7 +75,7 @@ class AuthLayer(WSGILayer):
 				if not re.match(rule['url'], path):
 					continue
 			if rule.has_key("method"):
-				if rule['method'] != method:
+				if rule['method'].lower().strip() != method.lower().strip():
 					continue
 			match = rule
 			break
