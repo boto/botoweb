@@ -115,6 +115,8 @@ boto_web.ui.Object = function(html, model, obj, action) {
 
 			if (this.tagName.toLowerCase() == 'img')
 				$(this).attr('src', self.obj.properties[val]);
+			else if (self.obj.properties[val].type == "reference")
+				$(this).text(self.obj.properties[val].id) // TODO: Make this the name of the object
 			else
 				$(this).text(self.obj.properties[val].toString());
 		});
