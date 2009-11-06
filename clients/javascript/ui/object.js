@@ -84,6 +84,56 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			}
 		});
 
+		// Insert object attributes
+		var sel = boto_web.ui.selectors.attribute;
+		var prop = boto_web.ui.properties.attribute;
+
+		self.node.find(sel).each(function() {
+			var val = $(this).attr(prop).split('.');
+			var follow_props;
+
+			// Allow a.b.c reference attribute following
+			if (val.length > 1) {
+				follow_props = val.splice(1);
+				val = val[0];
+			}
+			else
+				val = val[0];
+
+			// Decide whether this is a valid property.
+			if (!(val in self.obj.properties) || (val in self.model.properties && self.model.properties[val]._perm && $.inArray('read', self.model.properties[val]._perm) == -1)) {
+				$(val).log(self.model.name + ' does not support this property');
+				$(this).empty();
+				return;
+			}
+
+			if (this.tagName.toLowerCase() == 'img')
+				$(this).attr('src', self.obj.properties[val]);
+			// Load nested objects
+			else if (self.obj.properties[val].type in {reference:1,query:1}) {
+				var container = $('<span/>');
+				var node = $(this).clone();
+				nested_obj_nodes.push([this, container]);
+				$(this).empty();
+
+				if (!follow_props && !node.html())
+					follow_props = ['name'];
+				if (follow_props)
+					node.attr(boto_web.ui.properties.attribute, follow_props.join('.'));
+				else
+					node.attr(boto_web.ui.properties.attribute, '');
+
+				self.obj.follow(val, function(objs) {
+					$(objs).each(function() {
+						var n = $('<span/>').append(node.clone()).appendTo(container);
+						new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this);
+					});
+				});
+			}
+			else
+				$(this).text(self.obj.properties[val].toString());
+		});
+
 		// Add attribute lists
 		sel = boto_web.ui.selectors.attribute_list;
 
@@ -100,28 +150,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			});
 		});
 
-		// Insert object attributes
-		var sel = boto_web.ui.selectors.attribute;
-		var prop = boto_web.ui.properties.attribute;
-
-		self.node.find(sel).each(function() {
-			var val = $(this).attr(prop);
-
-			// Decide whether this is a valid property.
-			if (!(val in self.obj.properties) || (val in self.model.properties && self.model.properties[val]._perm && $.inArray('read', self.model.properties[val]._perm) == -1)) {
-				$(val).log(self.model.name + ' does not support this property');
-				return;
-			}
-
-			if (this.tagName.toLowerCase() == 'img')
-				$(this).attr('src', self.obj.properties[val]);
-			else if (self.obj.properties[val].type == "reference")
-				$(this).text(self.obj.properties[val].id) // TODO: Make this the name of the object
-			else
-				$(this).text(self.obj.properties[val].toString());
-		});
-
-		// Insert object attributes
+		// Insert datetimes
 		var sel = boto_web.ui.selectors.date_time;
 
 		self.node.find(sel).each(function() {
