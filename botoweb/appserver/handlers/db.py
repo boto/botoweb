@@ -87,7 +87,7 @@ class DBHandler(RequestHandler):
 		just means they want to know the count of how many results would be
 		returned if they'd run this query"""
 		objs = self.search(params=request.GET.mixed(), user=request.user)
-		response.headers['Count'] = objs.count()
+		response.headers['X-Result-Count'] = str(objs.count())
 		return response
 
 
