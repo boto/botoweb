@@ -544,3 +544,12 @@ var boto_web = {
 		boto_web.env = new boto_web.Environment(href, boto_web.ui.init, opts);
 	}
 };
+
+// 
+// Global Ajax retrying on 408
+//
+$(document).ajaxError(function(e, request, opts, err){
+	if(request.status == 408){
+		$.ajax(opts);
+	}
+});
