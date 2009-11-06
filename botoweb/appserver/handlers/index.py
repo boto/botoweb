@@ -99,8 +99,9 @@ class IndexHandler(RequestHandler):
 							if hasattr(prop, "verbose_name") and prop.verbose_name != None:
 								etree.SubElement(prop_node, "description").text = str(prop.verbose_name)
 
-							if hasattr(prop, "default"):
+							if hasattr(prop, "default") and prop.default:
 								default_node = etree.SubElement(prop_node, "default")
+								default_node.text = str(prop.default)
 							if hasattr(prop, "choices") and prop.choices:
 								choices_node = etree.SubElement(prop_node, "choices")
 								for choice in prop.choices:
