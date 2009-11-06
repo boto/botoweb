@@ -117,7 +117,7 @@ boto_web.ui.widgets.Search = function(node) {
 	});
 
 	self.submit = function() {
-		var query = self.def;
+		var query = self.def.slice();
 
 		$(self.fields).each(function() {
 			var val;
