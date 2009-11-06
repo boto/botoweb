@@ -15,8 +15,14 @@ boto_web.ui.widgets.Search = function(node) {
 	self.header = self.node.find(boto_web.ui.selectors.header);
 	self.model = boto_web.env.models[self.node.attr(boto_web.ui.properties.model)];
 	self.results = new boto_web.ui.widgets.SearchResults(self.node.find(boto_web.ui.selectors.search_results), self.model);
+	self.def = self.node.attr(boto_web.ui.properties.def);
 	self.props = [];
 	self.fields = [];
+
+	// Evaluate JSON search defaults
+	if (self.def)
+		eval('self.def = ' + self.def);
+
 
 	self.get_link = function(method) {
 		var base_url = document.location.href + '';
@@ -111,7 +117,7 @@ boto_web.ui.widgets.Search = function(node) {
 	});
 
 	self.submit = function() {
-		var query = [];
+		var query = self.def;
 
 		$(self.fields).each(function() {
 			var val;
