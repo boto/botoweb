@@ -97,6 +97,8 @@ boto_web.ui = {
 				})
 		}
 
+		$('<iframe name="server" class="hidden"/>').appendTo('body');
+
 		boto_web.ui.watch_url();
 	},
 
@@ -348,12 +350,13 @@ boto_web.ui = {
 					if (uploads.length) {
 						self.model.get(data.getResponseHeader('Location'), function(obj) {
 							$(uploads).each(function() {
-								$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
+								$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
+								//$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
 								/*$(this.field).uploadifySettings('onComplete', function() {
 									closeFcn();
 									boto_web.ui.alert('The database has been updated.');
 								});*/
-								$(this.field).uploadifyUpload();
+								//$(this.field).uploadifyUpload();
 							});
 						});
 					}
@@ -506,6 +509,8 @@ boto_web.ui = {
 			case 'boolean':
 				return new boto_web.ui.bool(props)
 					.read_only(opts.read_only);
+			case 'complexType':
+				return;
 			case 'blob':
 				return new boto_web.ui.file(props)
 					.read_only(opts.read_only);
@@ -763,14 +768,24 @@ boto_web.ui = {
 
 		var self = this;
 
-		setTimeout(function() {
+		$('<form/>')
+			.attr({method: 'post', enctype: 'multipart/form-data', target: 'server'})
+			.append(self.field.remove())
+			.appendTo(self.field_container);
+
+		$('iframe[name=server]').load(function() {
+			alert('upload complete');
+		});
+
+/*		setTimeout(function() {
 			$(self.field).uploadify({
 				uploader: 'swf/uploadify.swf',
 				cancelImg: 'images/cancel.png',
 				auto: false,
+				method: 'POST',
 				buttonText: 'Choose File'
 			});
-		}, 50);
+		}, 50);*/
 	},
 
 	/**
