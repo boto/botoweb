@@ -29,7 +29,7 @@ boto_web.ui.widgets.Report = function(node) {
 		for (var name in boto_web.env.models)
 			models.push(name);
 
-		models = models.sort(self.sort_props);
+		models = models.sort(boto_web.ui.sort_props);
 
 		$.map(models, function(name) {
 			$('<div/>')
@@ -159,7 +159,7 @@ boto_web.ui.widgets.Report = function(node) {
 			}
 		};
 
-		$.map(self.model.properties.sort(self.sort_props), function(p) {
+		$.map(self.model.properties.sort(boto_web.ui.sort_props), function(p) {
 			if ($.inArray('read', p._perm) < 0) return null;
 
 			$('<div/>')
@@ -359,10 +359,6 @@ boto_web.ui.widgets.Report = function(node) {
 		else {
 			self.step_1();
 		}
-	}
-
-	self.sort_props = function(a,b) {
-		return (a._label || a.name || a).toLowerCase() > (b._label || b.name || b).toLowerCase() ? 1 : -1;
 	}
 
 	self.update();
