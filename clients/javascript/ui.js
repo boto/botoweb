@@ -280,6 +280,15 @@ boto_web.ui = {
 			if (props._perm && $.inArray('write', props._perm) == -1)
 				return;
 
+			// TODO Generalize complexType options
+			if (props._type == 'complexType') {
+				opts.choices = [];
+				$(boto_web.env.models[self.obj.properties.target_class_name].properties).each(function() {
+					opts.choices.push({text: this._label, value: this.name});
+				});
+				opts.choices.sort(function(a,b) { return (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : -1; });
+			}
+
 			var field = boto_web.ui.property_field(props, opts);
 
 			if (typeof field == 'undefined') return;
@@ -510,7 +519,8 @@ boto_web.ui = {
 				return new boto_web.ui.bool(props)
 					.read_only(opts.read_only);
 			case 'complexType':
-				return;
+				return new boto_web.ui.complex(props, opts.choices)
+					.read_only(opts.read_only);
 			case 'blob':
 				return new boto_web.ui.file(props)
 					.read_only(opts.read_only);
@@ -687,6 +697,43 @@ boto_web.ui = {
 
 		self.field_container.data('get_value', function() {
 			return self.field.is(':checked') ? 'True' : 'False';
+		});
+	},
+
+	/**
+	 * @param {Object} properties HTML node properties.
+	 */
+	complex: function(properties, choices) {
+		boto_web.ui._field.call(this, properties);
+
+		var self = this;
+
+		this.field_container.empty();
+
+		$(properties.value).each(function() {
+			$('<dl/>')
+				.addClass('mapping')
+				.append(
+					$('<dt/>')
+						.text(this.name),
+					$('<dd/>').append(
+						//$('<input/>')
+						//	.text(this.name)
+						new boto_web.ui.dropdown({name: this.name, choices: choices}).field
+					)
+				)
+				.appendTo(self.field_container);
+		});
+
+		self.field_container.data('get_value', function() {
+			var value = [];
+			$(this).find('mapping').each(function() {
+				value.append({
+					name: $(this).find('dt').text(),
+					value: $(this).find('input').val()
+				});
+			});
+			return value;
 		});
 	},
 
@@ -932,6 +979,10 @@ boto_web.ui = {
 			if (boto_web.ui.handlers[this.replace(/\/.*/,'')])
 				boto_web.ui.handlers[this.replace(/\/.*/,'')](this);
 		});
+	},
+
+	sort_props: function(a,b) {
+		return (a._label || a.name || a).toLowerCase() > (b._label || b.name || b).toLowerCase() ? 1 : -1;
 	}
 };
 
