@@ -128,7 +128,18 @@ var boto_web = {
 					id: $(this).attr("id"),
 					item_type: $(this).attr('item_type')
 				};
-			} else {
+			}
+			else if($(this).attr("type") == "complexType"){
+				value = [];
+				$(this).children().each(function() {
+					value.push({
+						name: $(this).attr('name'),
+						type: $(this).attr('type'),
+						value: $(this).text()
+					});
+				});
+			}
+			else {
 				value = $(this).text();
 			}
 			if (obj[this.tagName]) {
@@ -175,6 +186,8 @@ var boto_web = {
 			if (pval == undefined)
 				continue;
 
+			var type = boto_web.env.models[obj_name].prop_map[pname]._type;
+
 			var list = true;
 
 			if(pval.constructor.toString().indexOf("Array") == -1){
@@ -182,13 +195,22 @@ var boto_web = {
 				list = false;
 			}
 
+			// Force entire complexType to be encoded at once
+			if (type == 'complexType')
+				pval = [pval];
+			else
+				type = boto_web.env.models[obj_name].prop_map[pname]._item_type || type;
+
 			$(pval).each(function() {
 				if (list && this == '')
 					return;
 
 				var prop = doc.createElement(pname);
-				prop.appendChild(boto_web.encode_prop(this, doc));
-				$(prop).attr("type", boto_web.env.models[obj_name].prop_map[pname]._item_type || boto_web.env.models[obj_name].prop_map[pname]._type);
+
+				// Modifies prop in place
+				boto_web.encode_prop(this, prop, type);
+
+				$(prop).attr("type", type);
 				/*
 				if(this.constructor.toString().indexOf("Array") != -1){
 					$(prop).attr("type", "List");
@@ -207,7 +229,9 @@ var boto_web = {
 		}
 
 		//DEBUG
-		// alert((new XMLSerializer()).serializeToString(doc));
+		//alert((new XMLSerializer()).serializeToString(doc));
+
+		return;
 
 		opts = {
 			url: url,
@@ -230,29 +254,37 @@ var boto_web = {
 	// Function: encode_prop
 	// Encode the property into an XML document object
 	//
-	encode_prop: function(prop, doc){
+	encode_prop: function(prop, doc, type){
 		var ret = null;
 		if (prop == undefined)
 			return null;
-		if(prop.constructor.toString().indexOf("Array") != -1){
-			ret = doc.createElement("items");
+		if(type == 'complexType') {
+			var items = [];
 			for(var x=0; x < prop.length; x++){
 				item = prop[x];
-				var prop_item = doc.createElement("item");
-				prop_item.appendChild(boto_web.encode_prop(item, doc));
-				ret.appendChild(prop_item);
+				var prop_item = $(doc).clone();
+				boto_web.encode_prop(item, prop_item);
+				items.push(prop_item);
 			}
-		} else if (prop.constructor.toString().indexOf("Object") != -1){
-			ret = doc.createElement("object");
-			$(ret).attr("id", prop.id);
-			if(prop.className){
-				$(ret).attr("class", prop.className);
-			}
-		} else {
-			ret = doc.createTextNode(prop.toString());
-			$(ret).attr("type", "string");
+			$(items).each(function() { $(doc).append(this); });
 		}
-		return ret;
+		else if(prop.constructor.toString().indexOf("Array") != -1){
+			ret = $('<items/>').appendTo(doc);
+			for(var x=0; x < prop.length; x++){
+				item = prop[x];
+				var prop_item = $("<item/>").appendTo(ret);
+				boto_web.encode_prop(item, prop_item);
+			}
+		}
+		else if(prop.constructor.toString().indexOf("Object") != -1){
+			$(doc).text(prop.value.toString());
+			$(doc).attr({type: "string", name: prop.name});
+		}
+		else {
+			$(doc).text(prop.toString());
+			$(doc).attr("type", "string");
+		}
+		return $(doc);
 	},
 
 	//
@@ -327,6 +359,7 @@ var boto_web = {
 					self.user = obj;
 				}
 			});
+
 			if(fnc){ fnc(self); }
 		});
 	},
@@ -545,7 +578,7 @@ var boto_web = {
 	}
 };
 
-// 
+//
 // Global Ajax retrying on 408
 //
 $(document).ajaxError(function(e, request, opts, err){
