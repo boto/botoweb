@@ -231,8 +231,6 @@ var boto_web = {
 		//DEBUG
 		//alert((new XMLSerializer()).serializeToString(doc));
 
-		return;
-
 		opts = {
 			url: url,
 			processData: false,
