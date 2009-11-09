@@ -357,7 +357,7 @@ boto_web.ui = {
 			self.model.save(data, function(data) {
 				if (data.status < 300) {
 					if (uploads.length) {
-						self.model.get(data.getResponseHeader('Location'), function(obj) {
+						var upload_fnc = function(obj) {
 							$(uploads).each(function() {
 								$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
 								//$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
@@ -367,7 +367,12 @@ boto_web.ui = {
 								});*/
 								//$(this.field).uploadifyUpload();
 							});
-						});
+						};
+
+						if (self.obj)
+							upload_fnc(self.obj);
+						else
+							self.model.get(data.getResponseHeader('Location'), upload_fnc);
 					}
 					else
 						boto_web.ui.alert('The database has been updated.');
