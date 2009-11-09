@@ -20,6 +20,46 @@ boto_web.ui.widgets.DataTable = function(table) {
 		sPaginationType: 'full_numbers'
 	});
 
+	var settings = this.data_table.fnSettings();
+	$(settings.aoColumns).each(function() {
+		// Sort on raw value, not HTML markup
+		this.bUseRendered = false;
+		var col_class = false;
+
+		// Expose dataTables functionality through classNames on the TH element
+		//if (/\bno-sort\b/.test(this.nTh.className))
+		//	this.bSortable = false;
+		if (/\bno-search\b/.test(this.nTh.className))
+			this.bSearchable = false;
+		if (/\bhidden\b/.test(this.nTh.className))
+			this.bVisible = false;
+		if (/\b(col-\S+)\b/.test(this.nTh.className)) {
+			col_class = true;
+			this.sClass = RegExp.$1;
+		}
+
+		// For some reason the bSortable option is not handled very well by
+		// dataTables, so this removes the sort functionality from the UI
+		if (/\bno-sort\b/.test(this.nTh.className)) {
+			$(this.nTh)
+				.unbind()
+				.css('cursor', 'default')
+				.find('span').remove()
+		}
+
+		// Works opposite of how a rendering function should, but this is required
+		// to function without modifying dataTables. Returns the original HTML after
+		// setting the column's value to its text-only form.
+		this.fnRender = function(t) {
+			var html = t.aData[t.iDataColumn];
+			var text = html.replace(/<[^>]*>/g, '');
+			t.oSettings.aoData[t.iDataRow]._aData[t.iDataColumn] = text;
+			if (col_class)
+				t.nTd.className = 'cell-' + text.replace(/\s.*/, '');
+			return html;
+		}
+	});
+
 	this.data_table.parent().find('.fg-toolbar.ui-corner-bl').append(
 		$('<div/>')
 			.addClass('selection-buttons')
@@ -89,9 +129,12 @@ boto_web.ui.widgets.DataTable = function(table) {
 			});
 			data.push(item);
 		});
+		var raw_data = $.map(data, function(cols) {
+			return [$.map(cols, function(col) { return col.replace(/<[^>]*>/g, ''); })]
+		});
 
 		if (data.length > 0) {
-			this.data_table.fnAddData(data);
+			this.data_table.fnAddData(data, true);
 			this.add_events();
 		}
 	}
@@ -101,8 +144,9 @@ boto_web.ui.widgets.DataTable = function(table) {
 	}
 };
 
+
 (function() {
-	var sort_regex = new RegExp('<[^>]*>|[^\\w\\s\\d]|\\b(the|a|an)\\s+', 'gi');
+	var sort_regex = new RegExp('[^\\w\\s\\d]|\\b(the|a|an)\\s+', 'gi');
 	var sort_regex2 = new RegExp('^\\s*');
 /**
  * Sorts strings while ignoring case, special characters, and HTML
