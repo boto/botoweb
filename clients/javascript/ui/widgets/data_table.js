@@ -98,7 +98,7 @@ boto_web.ui.widgets.DataTable = function(table) {
 					}
 					e.preventDefault();
 				}
-				else if (e.ctrlKey) {
+				else if (e.ctrlKey || e.metaKey) {
 					e.preventDefault();
 				}
 				else {
