@@ -296,7 +296,10 @@ boto_web.ui = {
 				if (!self.obj) {
 					return;
 				}
-				opts.choices = [];
+				opts.choices = [{text: 'ID', value: 'id'}];
+				if (self.obj.properties.primary_key && self.obj.properties.primary_key != 'id')
+					opts.choices.push({text: self.obj.properties.primary_key, value: self.obj.properties.primary_key});
+
 				$(boto_web.env.models[self.obj.properties.target_class_name].properties).each(function() {
 					if ($.inArray('write', this._perm) >= 0)
 						opts.choices.push({text: this._label, value: this.name});
