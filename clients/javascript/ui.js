@@ -298,7 +298,8 @@ boto_web.ui = {
 				}
 				opts.choices = [];
 				$(boto_web.env.models[self.obj.properties.target_class_name].properties).each(function() {
-					opts.choices.push({text: this._label, value: this.name});
+					if ($.inArray('write', this._perm))
+						opts.choices.push({text: this._label, value: this.name});
 				});
 				opts.choices.sort(function(a,b) { return (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : -1; });
 			}
@@ -738,7 +739,7 @@ boto_web.ui = {
 					$('<dd/>').append(
 						//$('<input/>')
 						//	.text(this.name)
-						new boto_web.ui.dropdown({name: this.name, choices: choices}).field
+						new boto_web.ui.dropdown({name: this.name, choices: choices}).field.val(this.value)
 					)
 				)
 				.appendTo(self.field_container);
