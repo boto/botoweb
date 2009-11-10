@@ -325,48 +325,18 @@ boto_web.ui = {
 				data.id = self.obj.id;
 
 			$(self.fields).each(function() {
-				var val = '';
+				var val;
 				var name = this.field.attr('name');
 
-				if (this.has_search) {
-					val = [];
-
-					this.field_container.find('.selections div').each(function() {
-						val.push(this.id.replace('selection_', ''));
-					});
-
-					if (val.length == 1)
-						val = val[0];
-					if (val.length == 0)
-						val = '';
-				}
-				else if (this.field.attr('type') == 'file') {
+				if (this.field.attr('type') == 'file') {
 					uploads.push(this);
 					return;
 				}
-				else if (this.properties._type == 'dateTime') {
-					val = this.field.val().replace(/(\d+-\d+-\d+) (\d+:\d+).*/,'$1T$2:00Z');
-				}
-				else if (this.properties._type == 'boolean') {
-					val = this.field.is(':checked') ? 'True' : 'False';
-				}
-				else if (this.field.attr('type') == 'password') {
-					if (this.reset.is(':checked'))
-						val = ''
-					else if (this.field.val() == '')
-						return;
-					else
-						val = this.field.val();
-				}
 
-				else if (this.fields.length > 1) {
-					val = [];
-					$(this.fields).each(function() {
-						val.push(this.val());
-					});
-				}
-				else
-					val = this.field.val();
+				val = this.field_container.data('get_value')()
+
+				if (typeof val == 'undefined')
+					return;
 
 				if (!self.obj || !$.equals((self.obj.properties[name] || ''), val))
 					data[name] = val;
@@ -635,6 +605,13 @@ boto_web.ui = {
 		this.read_only();
 
 		this.field_container.data('get_value', function() {
+			if (self.fields.length > 1) {
+				var val = [];
+				$(self.fields).each(function() {
+					val.push(this.val());
+				});
+				return val;
+			}
 			return self.field.val();
 		});
 
@@ -751,10 +728,11 @@ boto_web.ui = {
 
 		self.field_container.data('get_value', function() {
 			var value = [];
-			$(this).find('mapping').each(function() {
-				value.append({
+			$(self.field_container).find('.mapping').each(function() {
+				value.push({
 					name: $(this).find('dt').text(),
-					value: $(this).find('input').val()
+					value: $(this).find('input, select').val(),
+					type: 'string'
 				});
 			});
 			return value;
@@ -784,6 +762,15 @@ boto_web.ui = {
 				.text(' Send password reset email')
 				.appendTo(this.field_container);
 			this.text.text('******');
+
+			self.field_container.data('get_value', function() {
+				if (self.reset.is(':checked'))
+					return '';
+				else if (self.field.val() == '')
+					return;
+				else
+					return self.field.val();
+			});
 		}
 	},
 
@@ -1111,15 +1098,33 @@ $.extend(jQuery.jStore.defaults, {
 */
 
 $.equals = function(o, compareTo) {
-  if (!compareTo || !compareTo.length || o.length!=compareTo.length)
-  {
-    return o==compareTo;
-  }
-  for (var i=0; i<o.length; i++) {
-    if (o[i]!==compareTo[i]) {
-      return false;
-    }
-  }
-  return true;
-}
+	if (typeof o != typeof compareTo)
+		return false;
 
+	if ($.isArray(o)) {
+		if (o.length != compareTo.length)
+			return false;
+
+		for (var i=0; i<o.length; i++) {
+			if (!$.equals(o[i], compareTo[i]))
+				return false;
+		}
+
+		return true;
+	}
+	else if (typeof o == 'object') {
+		for (var i in o) {
+			if (!(i in compareTo) || o[i] !== compareTo[i]) {
+				return false;
+			}
+		}
+		for (var i in compareTo) {
+			if (!(i in o) || o[i] !== compareTo[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	return o === compareTo;
+}
