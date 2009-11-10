@@ -242,6 +242,15 @@ class DBHandler(RequestHandler):
 				except Exception, e:
 					raise BadRequest("Invalid value for %s" % prop)
 
+				# Fire off any "on_set" instructions
+				if hasattr(obj, "on_set_%s" % prop):
+					log.info("Firing off on_set_%s" % prop)
+					try:
+						getattr(obj, "on_set_%s" % prop)()
+					except:
+						log.exception("Exception triggering on_set_%s" % prop)
+
+
 				# Set an index, if it exists
 				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
 					setattr(newobj, "_indexed_%s" % prop, prop_value.upper())
@@ -289,6 +298,15 @@ class DBHandler(RequestHandler):
 			prop_val = props[prop_name]
 			boto.log.debug("%s = %s" % (prop_name, prop_val))
 			setattr(obj, prop_name, prop_val)
+
+			# Fire off any "on_set" instructions
+			if hasattr(obj, "on_set_%s" % prop_name):
+				log.info("Firing off on_set_%s" % prop_name)
+				try:
+					getattr(obj, "on_set_%s" % prop_name)()
+				except:
+					log.exception("Exception triggering on_set_%s" % prop_name)
+
 			if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
 				setattr(obj, "_indexed_%s" % prop_name, prop_val.upper())
 				boto.log.debug("Indexed: %s" % prop_name)
@@ -342,6 +360,11 @@ class DBHandler(RequestHandler):
 				getattr(obj, "on_set_%s" % property)()
 			except:
 				log.exception("Exception triggering on_set_%s" % property)
+
+		if hasattr(obj, "_indexed_%s" % property) and val:
+			setattr(obj, "_indexed_%s" % property, val.upper())
+			boto.log.debug("Indexed: %s" % property)
+
 		obj.put()
 		log.info("Updated %s<%s>.%s" % (obj.__class__.__name__, obj.id, property))
 		response.set_status(204)

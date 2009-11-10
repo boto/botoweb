@@ -93,6 +93,8 @@ class XMLSerializer(object):
 		self.file.write("""<%(prop_name)s %(params)s>%(prop_value)s</%(prop_name)s>""" % args)
 
 	def encode_str(self, prop_name, prop_value):
+		if isinstance(prop_value, unicode) or isinstance(prop_value, str):
+			prop_value = prop_value.encode("utf-8", "ignore")
 		return self.encode_default(prop_name, str(prop_value), "string")
 
 	def encode_int(self, prop_name, prop_value):
