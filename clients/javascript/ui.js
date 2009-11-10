@@ -49,6 +49,17 @@ boto_web.ui = {
 				obj.edit();
 			});
 		},
+		'update': function(action, params) {
+			var data;
+			var obj = action.split('/');
+			eval('data = ' + unescape(params.data));
+			data.id = obj[2];
+			boto_web.env.models[obj[1]].save(data, function() {
+				boto_web.ui.alert('The database has been updated.');
+			});
+			var href = '' + document.location.href;
+			document.location.href = href.replace(/(&|\?)action=update[^&]*&data=[^&]*/, '');
+		},
 		'delete': function(action) {
 			var obj = action.split('/');
 			boto_web.env.models[obj[1]].get(obj[2], function(obj) {
@@ -981,7 +992,7 @@ boto_web.ui = {
 
 		$(params.action).each(function() {
 			if (boto_web.ui.handlers[this.replace(/\/.*/,'')])
-				boto_web.ui.handlers[this.replace(/\/.*/,'')](this);
+				boto_web.ui.handlers[this.replace(/\/.*/,'')](this, params);
 		});
 	},
 

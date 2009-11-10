@@ -17,7 +17,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 	self.node = $(html);
 	self.guid = self.model.name + '_' + self.obj.id;
 
-	self.get_link = function(method) {
+	self.get_link = function(method, data) {
 		var base_url = document.location.href + '';
 		base_url = base_url.replace(/action=.*?(&|$)/,'');
 		if (base_url.indexOf('?') == -1)
@@ -26,11 +26,14 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			base_url += '&';
 
 		switch (method) {
-			case 'get':
+			case 'create':
 				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id;
 				break;
-			case 'put':
+			case 'edit':
 				return base_url + 'action=edit/' + self.model.name + '/' + self.obj.id;
+				break;
+			case 'auto_update':
+				return base_url + 'action=update/' + self.model.name + '/' + self.obj.id + '&data=' + escape(data);
 				break;
 			case 'delete':
 				return base_url + 'action=delete/' + self.model.name + '/' + self.obj.id;
@@ -173,10 +176,10 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			var val = $(this).attr(prop);
 			var auto_update;
 			if (/update\((.*)\)/.test(val)) {
-				val = 'edit';
-				eval('auto_update = ' + RegExp.$1);
+				val = 'auto_update';
+				auto_update = RegExp.$1;
 			}
-			var method = {'view':'get', 'edit':'put', 'delete':'delete'}[val];
+			var method = {'view':'get', 'auto_update':'put', 'edit':'put', 'delete':'delete'}[val];
 
 			// Only allow view, edit, or delete and only if that action is allowed
 			// according to the model API.
@@ -185,18 +188,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				return;
 			}
 
-			$(this).attr('href', self.get_link(method));
-
-			if (auto_update && typeof auto_update == 'object') {
-				auto_update.id = self.obj.id;
-				$(this).click(function(e) {
-					alert('stop');
-					self.model.save(auto_update, function() {
-						alert('updated');
-					});
-					e.preventDefault();
-				});
-			}
+			$(this).attr('href', self.get_link(val, auto_update));
 		});
 
 		$(nested_obj_nodes).each(function() {
