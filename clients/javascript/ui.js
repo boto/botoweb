@@ -282,6 +282,9 @@ boto_web.ui = {
 
 			// TODO Generalize complexType options
 			if (props._type == 'complexType') {
+				if (!self.obj) {
+					return;
+				}
 				opts.choices = [];
 				$(boto_web.env.models[self.obj.properties.target_class_name].properties).each(function() {
 					opts.choices.push({text: this._label, value: this.name});
@@ -824,10 +827,6 @@ boto_web.ui = {
 			.attr({method: 'post', enctype: 'multipart/form-data', target: 'server'})
 			.append(self.field.remove())
 			.appendTo(self.field_container);
-
-		$('iframe[name=server]').load(function() {
-			alert('upload complete');
-		});
 
 /*		setTimeout(function() {
 			$(self.field).uploadify({
