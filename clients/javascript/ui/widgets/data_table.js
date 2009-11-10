@@ -21,6 +21,7 @@ boto_web.ui.widgets.DataTable = function(table) {
 	});
 
 	var settings = this.data_table.fnSettings();
+	if (!settings) return;
 	$(settings.aoColumns).each(function() {
 		// Sort on raw value, not HTML markup
 		this.bUseRendered = false;
