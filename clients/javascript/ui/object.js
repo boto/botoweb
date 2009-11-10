@@ -171,6 +171,11 @@ boto_web.ui.Object = function(html, model, obj, action) {
 		self.node.find(sel).each(function() {
 			// Translate
 			var val = $(this).attr(prop);
+			var auto_update;
+			if (/update\((.*)\)/.test(val)) {
+				val = 'edit';
+				eval('auto_update = ' + RegExp.$1);
+			}
 			var method = {'view':'get', 'edit':'put', 'delete':'delete'}[val];
 
 			// Only allow view, edit, or delete and only if that action is allowed
@@ -181,6 +186,17 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			}
 
 			$(this).attr('href', self.get_link(method));
+
+			if (auto_update && typeof auto_update == 'object') {
+				auto_update.id = self.obj.id;
+				$(this).click(function(e) {
+					alert('stop');
+					self.model.save(auto_update, function() {
+						alert('updated');
+					});
+					e.preventDefault();
+				});
+			}
 		});
 
 		$(nested_obj_nodes).each(function() {
