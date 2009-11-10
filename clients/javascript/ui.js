@@ -298,7 +298,7 @@ boto_web.ui = {
 				}
 				opts.choices = [];
 				$(boto_web.env.models[self.obj.properties.target_class_name].properties).each(function() {
-					if ($.inArray('write', this._perm))
+					if ($.inArray('write', this._perm) >= 0)
 						opts.choices.push({text: this._label, value: this.name});
 				});
 				opts.choices.sort(function(a,b) { return (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : -1; });
