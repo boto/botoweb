@@ -26,7 +26,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			base_url += '&';
 
 		switch (method) {
-			case 'create':
+			case 'view':
 				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id;
 				break;
 			case 'edit':
