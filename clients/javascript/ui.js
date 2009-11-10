@@ -511,7 +511,7 @@ boto_web.ui = {
 			case 'str':
 			case 'integer':
 			case 'password':
-				if (this.choices)
+				if (props.choices)
 					return new boto_web.ui.dropdown(props)
 						.read_only(opts.read_only);
 				else if (props.maxlength > 1024)
