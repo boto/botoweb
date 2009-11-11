@@ -145,6 +145,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 					// Follow references if this is a reference or query type
 					if (self.model.prop_map[val]._item_type in boto_web.env.models) {
 						self.obj.follow(val, function(objs) {
+							alert(val);
 							$(objs).each(function() {
 								var n = $('<span/>').append(node.clone()).appendTo(container);
 								new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this);
@@ -153,7 +154,10 @@ boto_web.ui.Object = function(html, model, obj, action) {
 					}
 					// For string lists, duplicate the node for each value
 					else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'list') {
-						$(self.obj.properties[val]).each(function() {
+						var values = self.obj.properties[val];
+						if (!$.isArray(values))
+							values = [values];
+						$(values).each(function() {
 							node.clone()
 								.html(this.toString())
 								.appendTo(container);
