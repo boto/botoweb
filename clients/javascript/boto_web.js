@@ -539,31 +539,32 @@ var boto_web = {
 		self.id = properties.id;
 
 		self.follow = function(property, fnc) {
-			if (self.properties[property].id != undefined) {
-				if (self.properties[property].item_type) {
-					boto_web.env.models[self.properties[property].item_type].get(self.properties[property].id, function(obj) {
-						return fnc([obj]);
-					});
-				}
-				return;
-			}
-
 			var props = self.properties[property];
 
 			if (!$.isArray(props))
 				props = [props];
 
 			$(props).each(function() {
-				boto_web.all(boto_web.env.base_url + self.href + '/' + self.id + '/' + this.href, '*>*[id]', function(data) {
-					if(fnc){
-						var objects = [];
-						for(var x=0; x < data.length; x++){
-							var model = boto_web.env.models[data[x].model];
-							objects[x] = new boto_web.Model(model.href, model.name, data[x]);
-						}
-						return fnc(objects);
+				if (this.id != undefined) {
+					if (this.item_type) {
+						boto_web.env.models[this.item_type].get(this.id, function(obj) {
+							return fnc([obj]);
+						});
 					}
-				});
+					return;
+				}
+				else {
+					boto_web.all(boto_web.env.base_url + self.href + '/' + self.id + '/' + this.href, '*>*[id]', function(data) {
+						if(fnc){
+							var objects = [];
+							for(var x=0; x < data.length; x++){
+								var model = boto_web.env.models[data[x].model];
+								objects[x] = new boto_web.Model(model.href, model.name, data[x]);
+							}
+							return fnc(objects);
+						}
+					});
+				}
 			});
 		}
 	},
