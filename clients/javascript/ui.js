@@ -861,8 +861,11 @@ boto_web.ui = {
 				return;
 
 			self.model = boto_web.env.models[self.properties._item_type];
+			/*
+			 * The following code was used to display a dropdown instead of a search
+			 * field when choosing objects.
 			self.model.count(function(count) {
-				if (count < 100) {
+				if (count < 0) {
 					self.field.empty();
 
 					self.model.all(function(data, page) {
@@ -885,6 +888,7 @@ boto_web.ui = {
 					});
 				}
 				else {
+			*/
 					self.has_search = true;
 					self.field_container.empty();
 
@@ -975,8 +979,9 @@ boto_web.ui = {
 
 						return val;
 					});
-				}
+			/*	}
 			});
+			*/
 		}
 
 		self.init();
