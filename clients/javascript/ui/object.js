@@ -114,7 +114,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				if (this.tagName.toLowerCase() == 'img')
 					$(this).attr('src', self.obj.properties[val]);
 				// Load nested objects
-				else if (self.obj.properties[val].type in {reference:1,query:1} || self.model.prop_map[val] && self.model.prop_map[val]._type == 'list') {
+				else if ((self.obj.properties[val].type in {reference:1,query:1} || self.model.prop_map[val] && self.model.prop_map[val]._type == 'list')) {
 					var container;
 
 					// Find the best container to hold the new content, if the tag with

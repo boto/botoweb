@@ -23,17 +23,6 @@ boto_web.ui.widgets.Search = function(node) {
 	if (self.def)
 		eval('self.def = ' + self.def);
 
-
-	self.get_link = function(method) {
-		var base_url = document.location.href + '';
-		base_url = base_url.replace(/\?.*/,'');
-		switch (method) {
-			case 'post':
-				return base_url + '?action=create/' + self.model.name;
-				break;
-		}
-	};
-
 	// Find any properties matching the search parameters
 	$((self.node.attr(boto_web.ui.properties.attributes) || 'all').split(',')).each(function() {
 		if (this == 'all') {
@@ -54,25 +43,6 @@ boto_web.ui.widgets.Search = function(node) {
 
 	self.node.find(sel).each(function() {
 		new boto_web.ui.widgets.EditingTools(this, self.model, 'create');
-	});
-
-	// Add links
-	sel = boto_web.ui.selectors.link;
-	prop =  boto_web.ui.properties.link;
-
-	self.node.find(sel).each(function() {
-		// Translate
-		var val = $(this).attr(prop);
-		var method = {'create':'post'}[val];
-
-		// Only allow create, and only if that action is allowed
-		// according to the model API.
-		if (!(method && method in self.model.methods)) {
-			$(val).log(self.model.name + ' does not support this action');
-			return;
-		}
-
-		$(this).attr('href', self.get_link(method));
 	});
 
 	for (var i in self.props) {

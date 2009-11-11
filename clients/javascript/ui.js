@@ -30,6 +30,7 @@ boto_web.ui = {
 		'attribute_list': '*[bwWidget=attributeList]',
 		'editing_tools':  '*[bwWidget=editingTools]',
 		'date_time':      '*[bwWidget=dateTime]',
+		'model':      '*[bwModel]',
 		'attribute':      '*[bwAttribute]',
 		'class_name':     '*[bwClass]',
 		'link':           'a[bwLink]'

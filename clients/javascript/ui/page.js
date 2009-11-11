@@ -21,6 +21,16 @@ boto_web.ui.Page = function(html) {
 		return boto_web.ui.desktop.pages[self.id];
 	}
 
+	self.get_link = function(method, model) {
+		var base_url = document.location.href + '';
+		base_url = base_url.replace(/\?.*/,'');
+		switch (method) {
+			case 'create':
+				return base_url + '?action=create/' + model.name;
+				break;
+		}
+	};
+
 	self.node
 		.attr('id', '');
 	self.node = $('<div/>')
@@ -58,6 +68,34 @@ boto_web.ui.Page = function(html) {
 			self.listener = new boto_web.ui.widgets.Report(this);
 		});
 	}
+
+	// Add links
+	sel = boto_web.ui.selectors.link;
+	prop =  boto_web.ui.properties.link;
+
+	self.node.find(sel).each(function() {
+		// Translate
+		var val = $(this).attr(prop);
+		var method = {'create':'post'}[val];
+
+		var model = '';
+
+		if ($(this).is(boto_web.ui.selectors.model))
+			model = $(this).attr(boto_web.ui.properties.model);
+		else
+			model = $(this).parents(boto_web.ui.selectors.model + ':eq(0)').attr(boto_web.ui.properties.model);
+
+		model = boto_web.env.models[model] || '';
+
+		// Only allow create, and only if that action is allowed
+		// according to the model API.
+		if (!model || !(method && method in model.methods)) {
+			$(val).log(model.name + ' does not support this action');
+			return;
+		}
+
+		$(this).attr('href', self.get_link(val, model));
+	});
 
 	// Hide content based on user's auth_group
 	// TODO add this to some event that can be triggered when content on the page changes
