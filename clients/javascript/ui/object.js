@@ -145,7 +145,6 @@ boto_web.ui.Object = function(html, model, obj, action) {
 					// Follow references if this is a reference or query type
 					if (self.model.prop_map[val]._item_type in boto_web.env.models) {
 						self.obj.follow(val, function(objs) {
-							alert(val);
 							$(objs).each(function() {
 								var n = $('<span/>').append(node.clone()).appendTo(container);
 								new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this);
