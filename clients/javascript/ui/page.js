@@ -73,7 +73,6 @@ boto_web.ui.Page = function(html) {
 		}
 		else {
 			$(boto_web.env.user.groups).each(function() {
-				alert(this.name);
 				if (node.hasClass('deny-' + this.name))
 					authorized = false;
 			});

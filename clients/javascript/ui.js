@@ -31,6 +31,7 @@ boto_web.ui = {
 		'editing_tools':  '*[bwWidget=editingTools]',
 		'date_time':      '*[bwWidget=dateTime]',
 		'attribute':      '*[bwAttribute]',
+		'class_name':     '*[bwClass]',
 		'link':           'a[bwLink]'
 	},
 
@@ -39,6 +40,7 @@ boto_web.ui = {
 		'link':           'bwLink',
 		'attribute':      'bwAttribute',
 		'attributes':     'bwAttributes',
+		'class_name':     'bwClass',
 		'def':        'bwDefault'
 	},
 
