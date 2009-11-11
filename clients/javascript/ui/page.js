@@ -59,6 +59,31 @@ boto_web.ui.Page = function(html) {
 		});
 	}
 
+	// Hide content based on user's auth_group
+	// TODO add this to some event that can be triggered when content on the page changes
+	self.node.find('.auth').each(function() {
+		var authorized = true;
+		var node = $(this);
+		if (node.hasClass('deny-all')) {
+			authorized = false;
+			$(boto_web.env.user.groups).each(function() {
+				if (node.hasClass('allow-' + this.name))
+					authorized = true;
+			});
+		}
+		else {
+			$(boto_web.env.user.groups).each(function() {
+				alert(this.name);
+				if (node.hasClass('deny-' + this.name))
+					authorized = false;
+			});
+		}
+		// Avoid processing the same item again
+		node.removeClass('auth');
+		if (!authorized)
+			node.hide();
+	});
+
 	if (self.id in boto_web.ui.desktop.pages) {
 		return boto_web.ui.desktop.pages[self.id];
 	}
