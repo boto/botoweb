@@ -129,7 +129,7 @@ var boto_web = {
 					item_type: $(this).attr('item_type')
 				};
 			}
-			else if($(this).attr("type") == "complexType"){
+			else if($(this).children().length){
 				value = [];
 				$(this).children().each(function() {
 					value.push({
