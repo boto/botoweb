@@ -1100,6 +1100,7 @@ boto_web.ui.watch_url = function() {
 
 jQuery.fn.log = function (msg) {
 	//console.log("%s: %o", msg, this);
+	alert(msg + ': ' + this);
 	return this;
 };
 /*

@@ -98,7 +98,8 @@ boto_web.ui.Page = function(html) {
 			// Only allow create, and only if that action is allowed
 			// according to the model API.
 			if (!model || !(method && method in model.methods)) {
-				$(val).log(model.name + ' does not support this action');
+				if (model)
+					$(val).log(model.name + ' does not support this action');
 				return;
 			}
 

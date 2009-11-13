@@ -46,6 +46,11 @@ boto_web.ui.widgets.Search = function(node) {
 	});
 
 	for (var i in self.props) {
+		if (!(i in self.props)) {
+			$(i).log(self.model.name + ' does not support this property');
+			continue;
+		}
+
 		var prop = self.props[i];
 		var field;
 
