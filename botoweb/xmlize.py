@@ -144,6 +144,8 @@ class XMLSerializer(object):
 
 	def encode_cdata(self, string):
 		"""Return what might be a CDATA encoded string"""
+		if string == None:
+			return None
 		string = str(string)
 		for ch in BAD_CHARS:
 			if ch in string:
