@@ -47,6 +47,16 @@ boto_web.ui.Object = function(html, model, obj, action) {
 	self.parse_markup = function() {
 		var nested_obj_nodes = [];
 
+		// Check conditional functions which might drop sections from the DOM
+		sel = boto_web.ui.selectors.condition;
+		prop =  boto_web.ui.properties.condition;
+
+		self.node.find(sel).each(function() {
+			var val = $(this).attr(prop);
+			if (val in boto_web.env.opts.conditions)
+				boto_web.env.opts.conditions[val](self.obj, this, self);
+		});
+
 		// Add relational links to other objects
 		sel = boto_web.ui.selectors.relations;
 
@@ -193,7 +203,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 		});
 
 		// Insert datetimes
-		var sel = boto_web.ui.selectors.date_time;
+		sel = boto_web.ui.selectors.date_time;
 
 		self.node.find(sel).each(function() {
 			new boto_web.ui.widgets.DateTime(this);

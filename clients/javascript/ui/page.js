@@ -41,6 +41,9 @@ boto_web.ui.Page = function(html) {
 		.append(self.node);
 
 	self.parse_markup = function() {
+		if (!self.node.children().length)
+			return;
+
 		for (var sel in boto_web.env.opts.markup) {
 			self.node.find(sel).each(boto_web.env.opts.markup[sel]);
 		}
@@ -107,6 +110,7 @@ boto_web.ui.Page = function(html) {
 		self.node.find('.auth').each(function() {
 			var authorized = true;
 			var node = $(this);
+
 			if (node.hasClass('deny-all')) {
 				authorized = false;
 				$(boto_web.env.user.groups).each(function() {
@@ -123,7 +127,7 @@ boto_web.ui.Page = function(html) {
 			// Avoid processing the same item again
 			node.removeClass('auth');
 			if (!authorized)
-				node.hide();
+				node.empty().remove();
 		});
 	}
 
@@ -135,7 +139,8 @@ boto_web.ui.Page = function(html) {
 		boto_web.ui.desktop.activate(self);
 	}
 
-	self.title = self.node.find('h1').text();
+	if (self.node.find('h1'))
+		self.title = self.node.find('h1').text();
 	document.title = self.title || document.title;
 
 	// Load templates

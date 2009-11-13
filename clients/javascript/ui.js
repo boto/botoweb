@@ -31,6 +31,7 @@ boto_web.ui = {
 		'editing_tools':  '*[bwWidget=editingTools]',
 		'date_time':      '*[bwWidget=dateTime]',
 		'model':          '*[bwModel]',
+		'condition':      '*[bwCondition]',
 		'attribute':      '*[bwAttribute]',
 		'template':       '*[bwTemplate]',
 		'class_name':     '*[bwClass]',
@@ -42,6 +43,7 @@ boto_web.ui = {
 		'link':           'bwLink',
 		'attribute':      'bwAttribute',
 		'attributes':     'bwAttributes',
+		'condition':      'bwCondition',
 		'template':       'bwTemplate',
 		'class_name':     'bwClass',
 		'def':            'bwDefault'
@@ -96,6 +98,9 @@ boto_web.ui = {
 			self.handlers = $.extend(self.handlers, env.opts.handlers);
 
 		new boto_web.ui.Object($('header'), env.models.User, {id: env.user.id, properties: env.user});
+		var frame = new boto_web.ui.Page($('<section/>'));
+		frame.node = $('body');
+		frame.parse_markup();
 
 		$('header nav li').addClass('ui-state-default ui-corner-top');
 		$('header nav').show();
