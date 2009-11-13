@@ -30,8 +30,9 @@ boto_web.ui = {
 		'attribute_list': '*[bwWidget=attributeList]',
 		'editing_tools':  '*[bwWidget=editingTools]',
 		'date_time':      '*[bwWidget=dateTime]',
-		'model':      '*[bwModel]',
+		'model':          '*[bwModel]',
 		'attribute':      '*[bwAttribute]',
+		'template':       '*[bwTemplate]',
 		'class_name':     '*[bwClass]',
 		'link':           'a[bwLink]'
 	},
@@ -41,8 +42,9 @@ boto_web.ui = {
 		'link':           'bwLink',
 		'attribute':      'bwAttribute',
 		'attributes':     'bwAttributes',
+		'template':       'bwTemplate',
 		'class_name':     'bwClass',
-		'def':        'bwDefault'
+		'def':            'bwDefault'
 	},
 
 	handlers: {
@@ -1085,9 +1087,6 @@ boto_web.ui.watch_url = function() {
 
 			$.get(static_url, null, function(data) {
 				data = $(data);
-				for (var sel in boto_web.env.opts.markup) {
-					data.find(sel).each(boto_web.env.opts.markup[sel]);
-				}
 				new boto_web.ui.Page(data).activate();
 			});
 		}
