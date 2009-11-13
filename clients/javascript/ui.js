@@ -362,6 +362,14 @@ boto_web.ui = {
 							$(uploads).each(function() {
 								if ($(this.field).val())
 									$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
+
+								closeFcn.call(self.node);
+
+								boto_web.ui.alert('The database has been updated.');
+
+								if (opts.callback) {
+									opts.callback();
+								}
 								//$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
 								/*$(this.field).uploadifySettings('onComplete', function() {
 									closeFcn();
