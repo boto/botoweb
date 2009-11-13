@@ -27,17 +27,19 @@ boto_web.ui.Object = function(html, model, obj, action) {
 
 		switch (method) {
 			case 'view':
+				if (data)
+					return boto_web.env.base_url + self.model.href + '/' + self.obj.id + '/' + escape(data);
+
 				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id;
-				break;
+			// TODO phase out update(properties) in favor of edit(properties)
+			case 'update':
 			case 'edit':
+				if (data)
+					return base_url + 'action=update/' + self.model.name + '/' + self.obj.id + '&data=' + escape(data);
+
 				return base_url + 'action=edit/' + self.model.name + '/' + self.obj.id;
-				break;
-			case 'auto_update':
-				return base_url + 'action=update/' + self.model.name + '/' + self.obj.id + '&data=' + escape(data);
-				break;
 			case 'delete':
 				return base_url + 'action=delete/' + self.model.name + '/' + self.obj.id;
-				break;
 		}
 	};
 
@@ -223,12 +225,12 @@ boto_web.ui.Object = function(html, model, obj, action) {
 		self.node.find(sel).each(function() {
 			// Translate
 			var val = $(this).attr(prop);
-			var auto_update;
-			if (/update\((.*)\)/.test(val)) {
-				val = 'auto_update';
-				auto_update = RegExp.$1;
+			var data;
+			if (/(.*)\((.*)\)/.test(val)) {
+				val = RegExp.$1;
+				data = RegExp.$2;
 			}
-			var method = {'view':'get', 'auto_update':'put', 'edit':'put', 'delete':'delete'}[val];
+			var method = {'view':'get', 'update':'put', 'edit':'put', 'delete':'delete'}[val];
 
 			// Only allow view, edit, or delete and only if that action is allowed
 			// according to the model API.
@@ -237,7 +239,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				return;
 			}
 
-			$(this).attr('href', self.get_link(val, auto_update));
+			$(this).attr('href', self.get_link(val, data));
 		});
 
 		$(nested_obj_nodes).each(function() {
