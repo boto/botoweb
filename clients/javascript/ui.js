@@ -295,6 +295,9 @@ boto_web.ui = {
 		}
 
 		$(self.properties).each(function(num, props) {
+			if ('def' in opts)
+				props = $.extend(props, {value: opts.def[props.name]});
+
 			if (typeof obj != 'undefined')
 				props = $.extend(props, {value: obj.properties[props.name]});
 
@@ -965,8 +968,11 @@ boto_web.ui = {
 						.appendTo(self.field_container);
 
 					if (self.properties.value) {
+						if (!$.isArray(self.properties.value))
+							self.properties.value = [self.properties.value];
+
 						$(self.properties.value).each(function() {
-							self.model.get(this.id, function(obj) {
+							self.model.get(this.id || this, function(obj) {
 								add_selection(obj.id, obj.properties.name);
 							});
 						});
@@ -1099,15 +1105,13 @@ boto_web.ui.watch_url = function() {
 }
 
 jQuery.fn.log = function (msg) {
-	//console.log("%s: %o", msg, this);
-	alert(msg + ': ' + this);
+	console.log("%s: %o", msg, this);
 	return this;
 };
 /*
 $.extend(jQuery.jStore.defaults, {
 	project: 'newscore'
 })
-
 */
 
 $.equals = function(o, compareTo) {

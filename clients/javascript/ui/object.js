@@ -117,8 +117,12 @@ boto_web.ui.Object = function(html, model, obj, action) {
 					val = val[0];
 
 				// Decide whether this is a valid property.
-				if (!(val in self.obj.properties) || (val in self.model.properties && self.model.properties[val]._perm && $.inArray('read', self.model.properties[val]._perm) == -1)) {
+				if (val in self.model.properties && self.model.properties[val]._perm && $.inArray('read', self.model.properties[val]._perm) == -1) {
 					$(val).log(self.model.name + ' does not support this property');
+					$(this).empty();
+					return;
+				}
+				else if (!(val in self.obj.properties)) {
 					$(this).empty();
 					return;
 				}
@@ -230,13 +234,42 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				val = RegExp.$1;
 				data = RegExp.$2;
 			}
-			var method = {'view':'get', 'update':'put', 'edit':'put', 'delete':'delete'}[val];
+
+			var model = self.model;
+
+			if (val == 'create') {
+				if ($(this).is(boto_web.ui.selectors.model))
+					model = $(this).attr(boto_web.ui.properties.model);
+				else
+					model = $(this).parents(boto_web.ui.selectors.model + ':eq(0)').attr(boto_web.ui.properties.model);
+
+				model = boto_web.env.models[model] || '';
+			}
+
+			var method = {'create':'post', 'view':'get', 'update':'put', 'edit':'put', 'delete':'delete'}[val];
 
 			// Only allow view, edit, or delete and only if that action is allowed
 			// according to the model API.
-			if (!(method && method in self.model.methods)) {
-				$(val).log(self.model.name + ' does not support this action');
+			if (!(method && method in model.methods)) {
+				$(val).log(model.name + ' does not support this action');
 				return;
+			}
+
+			// Get defaults for the create form.
+			if (val == 'create' && data) {
+				// Convert barewords to object property values
+				while (/:\s*([a-z_]\w*)\s*(,|\})/i.test(data)) {
+					data = data.replace(/:\s*([a-z_]\w*)\s*(,|\})/i, function(a,b,c) {
+						return ': "' + self.obj.properties[b] + '"' + c;
+					})
+				}
+
+				eval('data = ' + data);
+
+				$(this).click(function(e) {
+					model.create({def: data});
+					e.preventDefault();
+				})
 			}
 
 			$(this).attr('href', self.get_link(val, data));

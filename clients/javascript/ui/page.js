@@ -84,6 +84,12 @@ boto_web.ui.Page = function(html) {
 		self.node.find(sel).each(function() {
 			// Translate
 			var val = $(this).attr(prop);
+			var data;
+			if (/(.*)\((.*)\)/.test(val)) {
+				val = RegExp.$1;
+				data = RegExp.$2;
+			}
+
 			var method = {'create':'post'}[val];
 
 			var model = '';
@@ -101,6 +107,18 @@ boto_web.ui.Page = function(html) {
 				if (model)
 					$(val).log(model.name + ' does not support this action');
 				return;
+			}
+
+			// Get defaults for the create form.
+			if (data) {
+				// Do not eval defaults if the JSON string references object values
+				if (!/:\s*([a-z_]\w*)\s*(,|\})/i.test(data)) {
+					eval('data = ' + data);
+					$(this).click(function(e) {
+						model.create({def: data});
+						e.preventDefault();
+					})
+				}
 			}
 
 			$(this).attr('href', self.get_link(val, model));
