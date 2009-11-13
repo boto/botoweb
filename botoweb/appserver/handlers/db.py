@@ -351,7 +351,6 @@ class DBHandler(RequestHandler):
 		val = request.POST.get(property)
 		if hasattr(val, "file"):
 			val = val.file.read()
-			val = val.replace("\r\n", "\n").replace("\r", "\n")
 		setattr(obj, property, val)
 		# Fire off any "on_set" instructions
 		if hasattr(obj, "on_set_%s" % property):
