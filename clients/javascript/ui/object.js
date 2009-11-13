@@ -118,7 +118,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 
 				// Decide whether this is a valid property.
 				if (!(val in self.obj.properties) || (val in self.model.properties && self.model.properties[val]._perm && $.inArray('read', self.model.properties[val]._perm) == -1)) {
-					$(val).log(self.model.name + ' does not support this property');
+					$(val).log(self.model.name + ' does not support property ' + val);
 					$(this).empty();
 					return;
 				}
