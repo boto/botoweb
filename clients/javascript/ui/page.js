@@ -23,10 +23,15 @@ boto_web.ui.Page = function(html) {
 
 	self.get_link = function(method, model) {
 		var base_url = document.location.href + '';
-		base_url = base_url.replace(/\?.*/,'');
+		base_url = base_url.replace(/action=.*?(&|$)/,'');
+		if (base_url.indexOf('?') == -1)
+			base_url += '?';
+		else
+			base_url += '&';
+
 		switch (method) {
 			case 'create':
-				return base_url + '?action=create/' + model.name;
+				return base_url + 'action=create/' + model.name;
 				break;
 		}
 	};
