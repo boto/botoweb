@@ -412,7 +412,15 @@ boto_web.ui = {
 			title: model.name + ' Editor',
 			width: 300 * self.columns.length,
 			buttons: {
-				Save: function() { if (self.submit(closeFcn)) closeFcn.call(this); },
+				Save: function() {
+					// Disable clicking Save again
+					var button = $(this).siblings('.ui-dialog-buttonpane').find('button:eq(0)');
+					button.addClass('ui-state-disabled');
+					button.unbind();
+
+					if (self.submit(closeFcn))
+						closeFcn.call(this);
+				},
 				Cancel: closeFcn
 			}
 		});
@@ -1113,7 +1121,9 @@ boto_web.ui.watch_url = function() {
 }
 
 jQuery.fn.log = function (msg) {
-	console.log("%s: %o", msg, this);
+	try {
+		console.log("%s: %o", msg, this);
+	} catch(e) {}
 	return this;
 };
 /*
