@@ -18,7 +18,7 @@ boto_web.ui.widgets.Report = function(node) {
 	self.columns = [];
 
 	self.step_1 = function() {
-		self.node.find('#step_2, #step_3').remove();
+		self.node.find('#step_2, #step_3, #step_4').remove();
 		self.filters = [];
 		self.columns = [];
 
