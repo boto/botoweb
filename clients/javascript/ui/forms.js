@@ -12,36 +12,31 @@
 boto_web.ui.forms = {
 	property_field: function(props, opts) {
 		var self = this;
-		if (!opts) opts = {read_only: false};
+
+		if (!props || !props.name) return;
+
 		switch ((props._type == 'list') ? (props._item_type) : props._type) {
 			case 'string':
 			case 'str':
 			case 'integer':
-			case 'password':
 				if (props.choices)
-					return new self.dropdown(props)
-						.read_only(opts.read_only);
+					return new self.dropdown(props, opts);
 				else if (props.maxlength > 1024)
-					return new self.textarea(props)
-						.read_only(opts.read_only);
+					return new self.textarea(props, opts);
 				else
-					return new self.text(props)
-						.read_only(opts.read_only);
+					return new self.text(props, opts);
+			case 'password':
+				return new self.password(props, opts);
 			case 'dateTime':
-				return new self.date(props)
-					.read_only(opts.read_only);
+				return new self.date(props, opts);
 			case 'boolean':
-				return new self.bool(props)
-					.read_only(opts.read_only);
+				return new self.bool(props, opts);
 			case 'complexType':
-				return new self.complex(props, opts.choices)
-					.read_only(opts.read_only);
+				return new self.complex(props, opts);
 			case 'blob':
-				return new self.file(props)
-					.read_only(opts.read_only);
+				return new self.file(props, opts);
 			default:
-				return new self.picklist(props)
-					.read_only(opts.read_only);
+				return new self.picklist(props, opts);
 		}
 	},
 
@@ -51,8 +46,9 @@ boto_web.ui.forms = {
 	 *
 	 * @param {Object} properties HTML node properties.
 	 */
-	_field: function(properties) {
+	_field: function(properties, opts) {
 		var self = this;
+		this.opts = opts || {read_only: false};
 		this.node = $('<dl/>');
 		this.label = $('<dt/>').html(properties._label || properties.name.replace(/^(.)/g, function(a,b) { return b.toUpperCase() }) || '&nbsp;');
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
@@ -123,7 +119,7 @@ boto_web.ui.forms = {
 
 		this.field_container = $('<dd/>').addClass('field_container').append(this.field);
 		this.node.append(this.label, this.field_container, this.text);
-		this.read_only();
+		this.read_only(this.opts.read_only);
 
 		this.field_container.data('get_value', function() {
 			if (self.fields.length > 1) {
@@ -177,20 +173,20 @@ boto_web.ui.forms = {
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	textarea: function(properties) {
+	textarea: function(properties, opts) {
 		properties._tagName = 'textarea';
 		properties.innerHTML = properties.value;
 		properties.rows = properties.rows || 3;
 		properties.cols = properties.cols || 48;
-		boto_web.ui.forms._field.call(this, properties);
+		boto_web.ui.forms._field.call(this, properties, opts);
 	},
 
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	bool: function(properties) {
+	bool: function(properties, opts) {
 		properties.type = 'radio';
-		boto_web.ui.forms._field.call(this, properties);
+		boto_web.ui.forms._field.call(this, properties, opts);
 
 		var no_field = this.add_field();
 		var self = this;
@@ -225,8 +221,8 @@ boto_web.ui.forms = {
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	complex: function(properties, choices) {
-		boto_web.ui.forms._field.call(this, properties);
+	complex: function(properties, opts) {
+		boto_web.ui.forms._field.call(this, properties, opts);
 
 		var self = this;
 
@@ -241,7 +237,7 @@ boto_web.ui.forms = {
 					$('<dd/>').append(
 						//$('<input/>')
 						//	.text(this.name)
-						new boto_web.ui.dropdown({name: this.name, choices: choices}).field.val(this.value)
+						new boto_web.ui.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value)
 					)
 				)
 				.appendTo(self.field_container);
@@ -263,51 +259,56 @@ boto_web.ui.forms = {
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	text: function(properties) {
+	text: function(properties, opts) {
 		var self = this;
 
-		if (properties._type == 'password')
-			properties.type = 'password';
-
-		boto_web.ui.forms._field.call(this, properties);
-
-		if (properties._type == 'password') {
-			this.field.val('');
-			$('<br/>').appendTo(this.field_container);
-			this.reset = $('<input/>')
-				.attr({ type: 'checkbox', id: this.field.id + '_reset' })
-				.appendTo(this.field_container);
-			$('<label/>')
-				.css('display', 'inline')
-				.attr({'htmlFor': this.reset.id})
-				.text(' Send password reset email')
-				.appendTo(this.field_container);
-			this.text.text('******');
-
-			self.field_container.data('get_value', function() {
-				if (self.reset.is(':checked'))
-					return '';
-				else if (self.field.val() == '')
-					return;
-				else
-					return self.field.val();
-			});
-		}
+		boto_web.ui.forms._field.call(this, properties, opts);
 	},
 
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	dropdown: function(properties) {
+	password: function(properties, opts) {
+		var self = this;
+		properties.type = 'password';
+
+		boto_web.ui.forms._field.call(this, properties, opts);
+
+		this.field.val('');
+		$('<br/>').appendTo(this.field_container);
+		this.reset = $('<input/>')
+			.attr({ type: 'checkbox', id: this.field.id + '_reset' })
+			.appendTo(this.field_container);
+		$('<label/>')
+			.css('display', 'inline')
+			.attr({'htmlFor': this.reset.id})
+			.text(' Send password reset email')
+			.appendTo(this.field_container);
+		this.text.text('******');
+
+		self.field_container.data('get_value', function() {
+			if (self.reset.is(':checked'))
+				return '';
+			else if (self.field.val() == '')
+				return;
+			else
+				return self.field.val();
+		});
+	},
+
+	/**
+	 * @param {Object} properties HTML node properties.
+	 */
+	dropdown: function(properties, opts) {
 		properties._tagName = 'select';
-		boto_web.ui.forms._field.call(this, properties);
+		boto_web.ui.forms._field.call(this, properties, opts);
 	},
 
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	date: function(properties) {
-		boto_web.ui.forms._field.call(this, properties);
+	date: function(properties, opts) {
+		boto_web.ui.forms._field.call(this, properties, opts);
 		var self = this;
 
 		this.datepicker = $(this.field).datepicker({
@@ -341,9 +342,9 @@ boto_web.ui.forms = {
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	file: function(properties) {
+	file: function(properties, opts) {
 		properties.type = 'file';
-		boto_web.ui.forms._field.call(this, properties);
+		boto_web.ui.forms._field.call(this, properties, opts);
 
 		var self = this;
 
@@ -366,11 +367,11 @@ boto_web.ui.forms = {
 	/**
 	 * @param {Object} properties HTML node properties.
 	 */
-	picklist: function(properties) {
+	picklist: function(properties, opts) {
 		properties._tagName = 'select';
 		properties.choices = [];
 
-		boto_web.ui.forms._field.call(this, properties);
+		boto_web.ui.forms._field.call(this, properties, opts);
 
 		var self = this;
 

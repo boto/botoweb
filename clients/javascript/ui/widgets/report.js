@@ -18,12 +18,10 @@ boto_web.ui.widgets.Report = function(node) {
 	self.columns = [];
 
 	self.step_1 = function() {
-		self.node.empty();
+		self.node.find('#step_2, #step_3').remove();
 		self.filters = [];
 		self.columns = [];
 
-		self.template.find('#step_1').clone()
-			.appendTo(self.node);
 		var models = [];
 
 		for (var name in boto_web.env.models)

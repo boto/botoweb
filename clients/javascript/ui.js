@@ -320,7 +320,7 @@ boto_web.ui = {
 				opts.choices.sort(function(a,b) { return (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : -1; });
 			}
 
-			var field = boto_web.ui.property_field(props, opts);
+			var field = boto_web.ui.forms.property_field(props, opts);
 
 			if (typeof field == 'undefined') return;
 
@@ -590,6 +590,8 @@ boto_web.ui.watch_url = function() {
 		"change",
 		function(objEvent, objData) {
 			var static_url = objData.currentHash.replace(/#|\?(.*)/g, '');
+
+			if (!static_url) return;
 
 			if (RegExp.$1) {
 				boto_web.ui.params = {};

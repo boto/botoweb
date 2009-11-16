@@ -23,7 +23,7 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 		if (props._perm && $.inArray('read', props._perm) == -1)
 			return;
 
-		var field = boto_web.ui.forms.property_field(props);
+		var field = boto_web.ui.forms.property_field(props, {read_only: true});
 
 		if (typeof field == 'undefined') return;
 
