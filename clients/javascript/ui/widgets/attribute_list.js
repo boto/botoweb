@@ -23,30 +23,7 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 		if (props._perm && $.inArray('read', props._perm) == -1)
 			return;
 
-		var field;
-
-		switch (this._type) {
-			case 'string':
-			case 'integer':
-			case 'password':
-			case 'list':
-				if (this.choices)
-					field = new boto_web.ui.dropdown(props);
-				else if (props.maxlength > 1024)
-					field = new boto_web.ui.textarea(props);
-				else
-					field = new boto_web.ui.text(props);
-				break;
-			case 'dateTime':
-				field = new boto_web.ui.date(props);
-				break;
-			case 'blob':
-				field = new boto_web.ui.file(props);
-				break;
-			case 'object':
-				field = new boto_web.ui.picklist(props);
-				break;
-		}
+		var field = boto_web.ui.forms.property_field(props);
 
 		if (typeof field == 'undefined') return;
 

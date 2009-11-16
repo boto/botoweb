@@ -52,32 +52,7 @@ boto_web.ui.widgets.Search = function(node) {
 		}
 
 		var prop = self.props[i];
-		var field;
-
-		switch (prop._type) {
-			case 'string':
-			case 'integer':
-			case 'password':
-			case 'list':
-				if (prop.choices)
-					field = new boto_web.ui.dropdown(prop)
-						.read_only(false);
-				else if (prop.maxlength > 1024)
-					field = new boto_web.ui.textarea(prop)
-						.read_only(false);
-				else
-					field = new boto_web.ui.text(prop)
-						.read_only(false);
-				break;
-			case 'dateTime':
-				field = new boto_web.ui.date(prop)
-						.read_only(false);
-				break;
-			case 'object':
-				field = new boto_web.ui.picklist(prop)
-						.read_only(false);
-				break;
-		}
+		var field = boto_web.ui.forms.property_field(prop);
 
 		if (!field)
 			continue;

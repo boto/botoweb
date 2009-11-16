@@ -276,7 +276,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				// For string lists, duplicate the node for each value
 				else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'list') {
 					if (editable) {
-						var field = boto_web.ui.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val]}));
+						var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val]}));
 						self.fields.push(field);
 						$(this).append(field.field_container);
 					}
@@ -298,7 +298,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			}
 			else {
 				if (editable) {
-					var field = boto_web.ui.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val]}));
+					var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val]}));
 					self.fields.push(field);
 					$(this).append(field.field_container);
 				}

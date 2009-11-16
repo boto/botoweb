@@ -121,7 +121,7 @@ boto_web.ui.widgets.Report = function(node) {
 							})
 						),
 					$('<br class="clear" />'),
-					$(boto_web.ui.property_field(property).field_container)
+					$(boto_web.ui.forms.property_field(property).field_container)
 				)
 				.find('.ui-button').remove();
 			e.preventDefault();
