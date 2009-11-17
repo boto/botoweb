@@ -11,8 +11,8 @@
 boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 	var self = this;
 
-	self.node = $(node).addClass('widget-attribute_list clear');
-	self.template = $('<div/>').append(self.node.contents().clone());
+	self.node = $(node).addClass('widget-attribute_list clear').attr(boto_web.ui.properties.attribute_list, '');
+	self.template = $('<div/>').append(self.node.contents().clone()).addClass('template');
 	self.node.empty();
 	self.model = model;
 	self.properties = [];
@@ -21,7 +21,7 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 	if (self.sequence && self.sequence != 'all')
 		self.sequence = self.sequence.split(',')
 	else
-		self.sequence = self.model.properties.splice();
+		self.sequence = $.map(self.model.properties, function(prop) { return prop.name });
 
 	self.properties = $.map(self.sequence, function(name, num) {
 		if (!(name in self.model.prop_map))
@@ -76,6 +76,14 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 
 		var template = self.template.find(boto_web.ui.selectors.attribute.replace(']', '=' + props.name + ']'));
 
+		if (template.length) {
+			// Ignore nested attributes, these may belong to different objects via references
+			if (template.parents(boto_web.ui.selectors.attribute).length)
+				template = {};
+			else
+				template = template.parent('*:not(.template):last');
+		}
+
 		var container = $('<div/>')
 			.addClass('property');
 
@@ -85,11 +93,15 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 			container.attr(boto_web.ui.properties.attribute, props.name);
 
 		c.append(
-			$('<label/>')
-				.addClass('property_label')
-				.text(props._label),
-			container,
-			$('<br class="clear"/>')
+			$('<div/>')
+				.addClass('row ' + (((num % self.per_column) % 2) ? 'odd' : 'even'))
+				.append(
+					$('<label/>')
+						.addClass('property_label')
+						.html(props._label + ' &nbsp; '),
+					container,
+					$('<br class="clear"/>')
+				)
 		);
 	});
 };
