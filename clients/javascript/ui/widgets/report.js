@@ -297,11 +297,11 @@ boto_web.ui.widgets.Report = function(node) {
 			.unbind()
 			.click(function() {
 				get_columns();
-				self.query = '?model=' + self.model.name
+				self.query = 'model=' + self.model.name
 					+ '&filters=' + escape($.toJSON(self.filters))
 					+ '&columns=' + escape($.toJSON(self.columns));
 				self.step_4();
-				document.location.href += self.query;
+				document.location.href += '?' + self.query;
 			})
 			.find('em').html('<strong>Generate the report</strong> and export the results.');
 	}
