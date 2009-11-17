@@ -33,6 +33,7 @@ boto_web.ui = {
 		'model':          '*[bwModel]',
 		'condition':      '*[bwCondition]',
 		'trigger':        '*[bwTrigger]',
+		'editable':       '*[bwEditable]',
 		'attribute':      '*[bwAttribute]',
 		'template':       '*[bwTemplate]',
 		'class_name':     '*[bwClass]',

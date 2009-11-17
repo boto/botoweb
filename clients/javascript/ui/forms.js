@@ -49,7 +49,7 @@ boto_web.ui.forms = {
 	_field: function(properties, opts) {
 		var self = this;
 		this.opts = opts || {read_only: false};
-		this.node = $('<dl/>');
+		this.node = this.opts.node || $('<dl/>');
 		this.label = $('<dt/>').html(properties._label || properties.name.replace(/^(.)/g, function(a,b) { return b.toUpperCase() }) || '&nbsp;');
 		this.field = $('<' + (properties._tagName || 'input') + '/>');
 		this.text = $('<span/>');
@@ -117,8 +117,18 @@ boto_web.ui.forms = {
 			return this;
 		}
 
-		this.field_container = $('<dd/>').addClass('field_container').append(this.field);
-		this.node.append(this.label, this.field_container, this.text);
+		var container_tag = (this.opts.node) ? 'div' : 'dd';
+
+		this.field_container = $('<' + container_tag + '/>').addClass('field_container').append(this.field);
+
+		if (!this.opts.no_label)
+			this.node.append(this.label);
+
+		this.node.append(this.field_container);
+
+		if (!this.opts.no_text)
+			this.node.append(this.text);
+
 		this.read_only(this.opts.read_only);
 
 		this.field_container.data('get_value', function() {
