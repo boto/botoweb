@@ -32,6 +32,7 @@ boto_web.ui = {
 		'date_time':      '*[bwWidget=dateTime]',
 		'model':          '*[bwModel]',
 		'condition':      '*[bwCondition]',
+		'trigger':        '*[bwTrigger]',
 		'attribute':      '*[bwAttribute]',
 		'template':       '*[bwTemplate]',
 		'class_name':     '*[bwClass]',
@@ -44,6 +45,7 @@ boto_web.ui = {
 		'attribute':      'bwAttribute',
 		'attributes':     'bwAttributes',
 		'condition':      'bwCondition',
+		'trigger':        'bwTrigger',
 		'template':       'bwTemplate',
 		'class_name':     'bwClass',
 		'def':            'bwDefault'
