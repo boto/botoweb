@@ -33,6 +33,15 @@ class URLMapper(WSGILayer):
 		self.env = env
 		self.index_handler = IndexHandler(self.env, {})
 		self.handlers = {}
+		# Load up and verify all the handlers
+		for route in self.env.config.get("botoweb", "handlers"):
+			handler = find_class(route.get("handler"))
+			if not handler:
+				raise Exception("Handler not found: %s" % route.get('handler'))
+			if route.get("db_class"):
+				model_class = find_class(route.get("db_class"))
+				if not model_class:
+					raise Exception("DB Class not found: %s" % route.get('db_class'))
 
 	def handle(self, req, response):
 		"""
