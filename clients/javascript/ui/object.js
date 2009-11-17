@@ -38,7 +38,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 				if (data)
 					return base_url + 'action=update/' + self.model.name + '/' + self.obj.id + '&data=' + escape(data);
 
-				#return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id + '&action=edit';
+				//return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id + '&action=edit';
 
 				return base_url + 'action=edit/' + self.model.name + '/' + self.obj.id;
 			case 'delete':
@@ -208,13 +208,13 @@ boto_web.ui.Object = function(html, model, obj, action) {
 					e.preventDefault();
 				})
 			}
-			else if (val == 'edit') {
+			/*else if (val == 'edit') {
 				$(this).click(function(e) {
 					self.edit();
 					e.preventDefault();
 				});
 				return;
-			}
+			}*/
 
 			$(this).attr('href', self.get_link(val, data));
 		});
@@ -237,8 +237,10 @@ boto_web.ui.Object = function(html, model, obj, action) {
 	self.parse_attributes = function(opt) {
 		if (!opt)
 			opt = {};
+
 		var sel = opt.sel;
 		var prop = opt.prop;
+
 		if (!opt.sel || !opt.prop)  {
 			sel = boto_web.ui.selectors.attribute;
 			prop = boto_web.ui.properties.attribute;

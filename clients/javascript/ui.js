@@ -255,7 +255,7 @@ boto_web.ui = {
 		if (!opts)
 			opts = {};
 
-		opts = $.extend({read_only: false}, opts);
+		opts = $.extend({read_only: false, hide: {}}, opts);
 
 		self.node = $('<div/>')
 			.addClass('editor')
