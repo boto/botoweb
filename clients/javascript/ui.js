@@ -47,6 +47,7 @@ boto_web.ui = {
 		'condition':      'bwCondition',
 		'trigger':        'bwTrigger',
 		'template':       'bwTemplate',
+		'editable':       'bwEditable',
 		'class_name':     'bwClass',
 		'def':            'bwDefault'
 	},
@@ -297,8 +298,10 @@ boto_web.ui = {
 		}
 
 		$(self.properties).each(function(num, props) {
-			if ('def' in opts)
+			if ('def' in opts && props.name in opts.def) {
 				props = $.extend(props, {value: opts.def[props.name]});
+				opts.hide[props.name] = true;
+			}
 
 			if (typeof obj != 'undefined')
 				props = $.extend(props, {value: obj.properties[props.name]});
@@ -327,8 +330,11 @@ boto_web.ui = {
 			if (typeof field == 'undefined') return;
 
 			self.fields.push(field);
-			field.node.addClass(num % 2 ? 'even' : 'odd');
-			field.node.appendTo(self.columns[Math.floor(num / self.per_column)]);
+
+			if (!(props.name in opts.hide)) {
+				field.node.addClass(num % 2 ? 'even' : 'odd');
+				field.node.appendTo(self.columns[Math.floor(num / self.per_column)]);
+			}
 		});
 
 		self.submit = function(closeFcn) {
