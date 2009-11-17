@@ -351,7 +351,7 @@ boto_web.ui = {
 				if (typeof val == 'undefined')
 					return;
 
-				if (!self.obj || !$.equals((self.obj.properties[name] || ''), val))
+				if (val != '' && !self.obj || self.obj && !$.equals((self.obj.properties[name] || ''), val))
 					data[name] = val;
 			});
 
