@@ -297,10 +297,11 @@ boto_web.ui.widgets.Report = function(node) {
 			.unbind()
 			.click(function() {
 				get_columns();
-				self.step_4();
-				document.location.href += 'model=' + self.model.name
+				self.query = 'model=' + self.model.name
 					+ '&filters=' + escape($.toJSON(self.filters))
 					+ '&columns=' + escape($.toJSON(self.columns));
+				self.step_4();
+				document.location.href += self.query;
 			})
 			.find('em').html('<strong>Generate the report</strong> and export the results.');
 	}
@@ -312,6 +313,16 @@ boto_web.ui.widgets.Report = function(node) {
 				.appendTo(self.node);
 
 			$('#next_step').hide();
+
+			$('<div/>')
+				.addClass('ui-button ui-state-default ui-corner-all')
+				.html('<span class="ui-icon ui-icon-refresh"></span>Save Report')
+				.click(function() {
+					var editor = boto_web.env.models.Report.create({def: {query: self.query}});
+					editor.node.find('input[name=query]').parents('dl').hide();
+				})
+				.appendTo(self.node.find('.results'));
+
 		}
 
 		var thead = $('<thead/>');
@@ -346,6 +357,7 @@ boto_web.ui.widgets.Report = function(node) {
 
 	self.update = function() {
 		if (/model=(.*?)&filters=(.*?)&columns=(.*?)(&|$)/.test(document.location.href)) {
+			self.query = boto_web.env.models[RegExp.$0];
 			self.model = boto_web.env.models[RegExp.$1];
 			self.filters = $.evalJSON(unescape(RegExp.$2));
 			self.columns = $.evalJSON(unescape(RegExp.$3));
