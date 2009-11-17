@@ -57,9 +57,26 @@ boto_web.ui.Object = function(html, model, obj, action) {
 
 		self.node.find(sel).each(function() {
 			var val = $(this).attr(prop);
-			if (val in boto_web.env.opts.conditions)
-				boto_web.env.opts.conditions[val](self.obj, this, self);
+			if (boto_web.env.opts.conditions && val in boto_web.env.opts.conditions){
+				var ret = boto_web.env.opts.conditions[val](self.obj, this, self);
+				if(ret === false){
+					$(this).hide();
+				}
+			} else { 
+				$(this).hide();
+			}
 		});
+
+		// Fire off any triggers
+		sel = boto_web.ui.selectors.trigger;
+		prop =  boto_web.ui.properties.trigger;
+
+		self.node.find(sel).each(function() {
+			var val = $(this).attr(prop);
+			if (boto_web.env.opts.triggers && val in boto_web.env.opts.triggers)
+				boto_web.env.opts.triggers[val](self.obj, this, self);
+		});
+
 
 		// Add relational links to other objects
 		sel = boto_web.ui.selectors.relations;
