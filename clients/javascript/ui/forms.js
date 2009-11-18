@@ -247,7 +247,7 @@ boto_web.ui.forms = {
 					$('<dd/>').append(
 						//$('<input/>')
 						//	.text(this.name)
-						new boto_web.ui.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value)
+						new boto_web.ui.forms.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value)
 					)
 				)
 				.appendTo(self.field_container);
