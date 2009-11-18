@@ -239,6 +239,8 @@ boto_web.ui.forms = {
 		this.field_container.empty();
 
 		$(properties.value).each(function() {
+			if (!this.name) return;
+
 			$('<dl/>')
 				.addClass('mapping')
 				.append(

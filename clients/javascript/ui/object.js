@@ -166,6 +166,10 @@ boto_web.ui.Object = function(html, model, obj, action) {
 		self.node.find(sel).each(function() {
 			// Translate
 			var val = $(this).attr(prop);
+
+			if (!val)
+				return;
+
 			var data;
 			if (/(.*)\((.*)\)/.test(val)) {
 				val = RegExp.$1;
