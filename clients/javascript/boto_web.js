@@ -448,7 +448,7 @@ var boto_web = {
 					var objects = [];
 					for(var x=0; x < data.length; x++){
 						var model = boto_web.env.models[data[x].model];
-						objects[x] = model.cache(new boto_web.Model(model.href, model.name, data[x]));
+						objects[x] = new boto_web.Model(model.href, model.name, data[x]);
 					}
 					return fnc(objects, page);
 				}
@@ -462,7 +462,7 @@ var boto_web = {
 					var objects = [];
 					for(var x=0; x < data.length; x++){
 						var model = boto_web.env.models[data[x].model];
-						objects[x] = model.cache(new boto_web.Model(model.href, model.name, data[x]));
+						objects[x] = new boto_web.Model(model.href, model.name, data[x]);
 					}
 					return fnc(objects, page);
 				}
@@ -487,7 +487,7 @@ var boto_web = {
 			clearTimeout(self.cache_timeouts[obj.id]);
 			self.cache_timeouts[obj.id] = setTimeout(function() {
 				delete self.cache[obj.id];
-			}, 60000);
+			}, 10000);
 			return self.cache[obj.id];
 		}
 
@@ -513,6 +513,7 @@ var boto_web = {
 				delete(data['id']);
 				method = "PUT";
 			}
+			delete self.cache[data.id];
 			return boto_web.save(ref, this.name, data, method, fnc);
 		}
 
