@@ -157,8 +157,14 @@ boto_web.ui.widgets.Report = function(node) {
 			}
 		};
 
-		$.map(self.model.properties.sort(boto_web.ui.sort_props), function(p) {
-			if ($.inArray('read', p._perm) < 0) return null;
+		// Add ID to the property list... pushing the properties array does not work
+		var props = [{_label: 'ID', name: 'id', _perm: ['read'], _type: 'string'}];
+		$(self.model.properties).each(function() { props.push(this); });
+		props.sort(boto_web.ui.sort_props)
+
+		$.map(props, function(p) {
+			if ($.inArray('read', p._perm) < 0)
+				return;
 
 			$('<div/>')
 				.addClass('attribute ui-button ui-state-default ui-corner-all')
