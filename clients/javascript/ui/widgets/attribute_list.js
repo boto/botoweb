@@ -89,6 +89,8 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 
 		if (template.length)
 			container.append(template);
+		else if (props._type in {list:1,query:1,reference:1})
+			container.append($('<div/>').attr(boto_web.ui.properties.attribute, props.name));
 		else
 			container.attr(boto_web.ui.properties.attribute, props.name);
 
