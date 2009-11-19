@@ -128,16 +128,37 @@ boto_web.ui.widgets.DataTable = function(table) {
 			$(this).find('td').each(function() {
 				item.push($(this).html().replace(/^\s*|\s*$/g, ''));
 			});
-			data.push(item);
+			if (item.length == settings.aoColumns.length)
+				data.push(item);
 		});
 		var raw_data = $.map(data, function(cols) {
 			return [$.map(cols, function(col) { return col.replace(/<[^>]*>/g, ''); })]
 		});
 
-		if (data.length > 0) {
-			this.data_table.fnAddData(data, true);
-			this.add_events();
-		}
+		if (data.length == 0)
+			return;
+
+		var indices = this.data_table.fnAddData(data, true);
+		this.add_events();
+
+		return indices;
+	}
+
+	this.update = function(row, values) {
+		var item = [];
+		$(values).each(function() {
+			$(this).find('td').each(function() {
+				item.push($(this).html().replace(/^\s*|\s*$/g, ''));
+			});
+		});
+
+		if (item.length > 0)
+			this.data_table.fnUpdate(item, row);
+	}
+
+	this.del = function(row) {
+		alert('deleting ' + row);
+		this.data_table.fnDeleteRow(row);
 	}
 
 	this.reset = function() {
