@@ -9,14 +9,19 @@
  *
  * @param html an HTML document fragment for parsing.
  */
-boto_web.ui.Object = function(html, model, obj, action) {
+boto_web.ui.Object = function(html, model, obj, opts) {
 	var self = this;
+
+	if (!opts)
+		opts = {};
 
 	self.model = model;
 	self.obj = obj;
 	self.node = $(html);
 	self.guid = self.model.name + '_' + self.obj.id;
+	self.parent = opts.parent;
 	self.fields = [];
+	self.data_tables = opts.data_tables || [];
 
 	self.get_link = function(method, data) {
 		var base_url = document.location.href + '';
@@ -105,10 +110,15 @@ boto_web.ui.Object = function(html, model, obj, action) {
 
 			for (var i in relations) {
 				self.obj.follow(relations[i].name, function(data) {
+					var table = new boto_web.ui.widgets.DataTable(node.parent('table'));
 					$(data).each(function() {
-						node.append(new boto_web.ui.Object(template.clone(), boto_web.env.models[this.name], this).node)
+						var o = new boto_web.ui.Object(template.clone(), boto_web.env.models[this.name], this, {
+							parent: self,
+							data_tables: {
+								table: table
+							}
+						});
 					});
-					new boto_web.ui.widgets.DataTable(node.parent('table'));
 				});
 			}
 
@@ -231,6 +241,18 @@ boto_web.ui.Object = function(html, model, obj, action) {
 		delete self.nested_obj_nodes;
 	};
 
+	self.update_tables = function() {
+		$(self.data_tables).each(function() {
+			if (this.row != undefined)
+				this.table.update(this.row, self.node);
+			else
+				this.row = this.table.append([self.node])[0];
+		});
+
+		if (self.parent)
+			self.parent.update_tables();
+	};
+
 	self.edit = function() {
 		$(self.fields).each(function() {
 			this.node.children().hide();
@@ -315,8 +337,9 @@ boto_web.ui.Object = function(html, model, obj, action) {
 					self.obj.follow(val, function(objs) {
 						$(objs).each(function() {
 							var n = $('<span/>').append(node.clone()).appendTo(container);
-							new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this);
+							new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this, {parent: self});
 						});
+						self.update_tables();
 					});
 				}
 				// For string lists, duplicate the node for each value
@@ -343,7 +366,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 			if (!$(this).parents(boto_web.ui.selectors.editable) || $(this).parents(boto_web.ui.selectors.editable).attr(boto_web.ui.properties.editable) != 'true')
 				return;
 
-			if ($.inArray('write', self.model.prop_map[val]._perm) >= 0) {
+			if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
 				var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val]}), {
 					node: $(container),
 					no_text: true,
@@ -356,5 +379,7 @@ boto_web.ui.Object = function(html, model, obj, action) {
 	}
 
 	self.parse_markup();
+
+	self.update_tables();
 };
 

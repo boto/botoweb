@@ -20,13 +20,30 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 	self.def = self.node.attr(boto_web.ui.properties.def);
 
 	self.update = function(results, append) {
-		var nodes = []
+		var nodes = [];
+		var objects = [];
 		for (var i in results) {
-			nodes.push(new boto_web.ui.Object(self.template.clone(), boto_web.env.models[results[i].properties.model], results[i]).node);
+			var o = new boto_web.ui.Object(self.template.clone(), boto_web.env.models[results[i].properties.model], results[i]);
+			nodes.push(o.node);
+			objects.push(o);
 		}
 
-		if (self.data_table)
-			self.data_table.append(nodes);
+		if (self.data_table) {
+			var indices = self.data_table.append(nodes);
+
+			$(indices).each(function (i, row) {
+				if (!(objects[i].obj.id in self.model.data_tables))
+					self.model.data_tables[objects[i].obj.id] = [];
+
+				var t = {
+					table: self.data_table,
+					row: row
+				};
+
+				objects[i].data_tables.push(t);
+				self.model.data_tables[objects[i].obj.id].push(t);
+			});
+		}
 		else
 			$(nodes).each(function() { self.node.append(this); });
 	}
