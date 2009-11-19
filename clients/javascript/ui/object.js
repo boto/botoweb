@@ -245,8 +245,11 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		$(self.data_tables).each(function() {
 			if (this.row != undefined)
 				this.table.update(this.row, self.node);
-			else
-				this.row = this.table.append([self.node])[0];
+			else {
+				var rows = this.table.append([self.node]);
+				if (rows)
+					this.row = rows[0];
+			}
 		});
 
 		if (self.parent)
