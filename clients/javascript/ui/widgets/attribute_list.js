@@ -24,13 +24,20 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 		self.sequence = $.map(self.model.properties, function(prop) { return prop.name });
 
 	self.properties = $.map(self.sequence, function(name, num) {
-		if (!(name in self.model.prop_map))
+		var n = name.replace(/\..*/, '');
+		if (!(n in self.model.prop_map))
 			return;
 
-		var props = self.model.prop_map[name];
+		var props = {};
+
+		for (i in self.model.prop_map[n])
+			props[i] = self.model.prop_map[n][i];
 
 		if (props._perm && $.inArray('read', props._perm) == -1)
 			return;
+
+		if (n != name)
+			props.name = name;
 
 		//if (!obj.properties[props.name])
 		//	return;
