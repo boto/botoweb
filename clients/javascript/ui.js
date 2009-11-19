@@ -319,11 +319,13 @@ boto_web.ui = {
 				if (self.obj.properties.primary_key && self.obj.properties.primary_key != 'id')
 					opts.choices.push({text: self.obj.properties.primary_key, value: self.obj.properties.primary_key});
 
-				$(boto_web.env.models[self.obj.properties.target_class_name].properties).each(function() {
-					if ($.inArray('write', this._perm) >= 0)
-						opts.choices.push({text: this._label, value: this.name});
-				});
-				opts.choices.sort(function(a,b) { return (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : -1; });
+				if (self.obj.properties.target_class_name) {
+					$(boto_web.env.models[self.obj.properties.target_class_name].properties).each(function() {
+						if ($.inArray('write', this._perm) >= 0)
+							opts.choices.push({text: this._label, value: this.name});
+					});
+					opts.choices.sort(function(a,b) { return (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : -1; });
+				}
 			}
 
 			var field = boto_web.ui.forms.property_field(props, opts);
@@ -379,6 +381,8 @@ boto_web.ui = {
 								if (opts.callback) {
 									opts.callback();
 								}
+
+								document.location.reload(true)();
 								//$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
 								/*$(this.field).uploadifySettings('onComplete', function() {
 									closeFcn();
@@ -393,8 +397,10 @@ boto_web.ui = {
 						else
 							self.model.get(data.getResponseHeader('Location'), upload_fnc);
 					}
-					else
+					else {
 						boto_web.ui.alert('The database has been updated.');
+						document.location.reload(true)();
+					}
 
 					if (opts.callback) {
 						opts.callback();
@@ -469,7 +475,7 @@ boto_web.ui = {
 			title: 'Please confirm',
 			dialogClass: 'confirm',
 			buttons: {
-				'Yes, delete it': function() { self.submit(); closeFcn.call(this); },
+				'Yes, delete it': function() { self.submit(); closeFcn.call(this); document.location.reload(true)(); },
 				Cancel: closeFcn
 			}
 		});
