@@ -377,6 +377,7 @@ var boto_web = {
 		self.cache = {};
 		self.cache_timeouts = {};
 		self.prop_map = {};
+		self.data_tables = {};
 
 		// Parse method names and descriptions
 		$('methods *', xml).each(function(){ self.methods[this.nodeName] = $(this).text() });
@@ -521,9 +522,15 @@ var boto_web = {
 		// Delete this object
 		//
 		this.del = function(id, fnc){
-			delete self.cache[id];
 			ref = this.href;
-			return boto_web.del(boto_web.env.base_url + ref + "/" + id, fnc);
+			return boto_web.del(boto_web.env.base_url + ref + "/" + id, function(x) {
+				$(self.data_tables[id]).each(function() {
+					this.table.del(this.row);
+				});
+				delete self.data_tables[id];
+				delete self.cache[id];
+				return fnc(x);
+			});
 		}
 
 	},
