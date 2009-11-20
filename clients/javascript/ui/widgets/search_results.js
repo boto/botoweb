@@ -20,6 +20,9 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 	self.def = self.node.attr(boto_web.ui.properties.def);
 
 	self.update = function(results, append) {
+		if (!results || results.length == 0)
+			return;
+
 		var nodes = [];
 		var objects = [];
 		for (var i in results) {
@@ -53,7 +56,7 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 	}
 
 	if (self.def == 'all') {
-		self.model.all(function(results, page) { self.update(results, page); return page < 10; });
+		self.model.all(function(results, page) { self.update(results, page); });
 	}
 	else if (self.def) {
 		// Evaluate JSON search filters
