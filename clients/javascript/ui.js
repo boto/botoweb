@@ -236,12 +236,13 @@ boto_web.ui = {
 			})
 	},
 
-	alert: function(msg) {
+	alert: function(msg, title) {
 		$('<div/>')
 			.html(msg)
 			.dialog({
 				modal: true,
 				dialogClass: 'alert',
+				title: title || 'Alert',
 				buttons: {
 					Ok: function() { $(this).dialog('close'); }
 				}
@@ -398,6 +399,7 @@ boto_web.ui = {
 							self.model.get(data.getResponseHeader('Location'), upload_fnc);
 					}
 					else {
+						closeFcn.call(self.node);
 						boto_web.ui.alert('The database has been updated.');
 						document.location.reload(true)();
 					}
@@ -407,14 +409,14 @@ boto_web.ui = {
 					}
 				}
 				else {
-					boto_web.ui.alert('There was an error updating the database:<br />' + data.responseText);
+					boto_web.ui.alert($(data.responseXML).find('message').text(), 'There was an error updating the database');
 				}
 				// TODO data save callback
 			});
 
 			if (uploads.length)
 				return false;
-			return true;
+			return false;
 		};
 
 		$('<br/>')

@@ -20,6 +20,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 	self.node = $(html);
 	self.guid = self.model.name + '_' + self.obj.id;
 	self.parent = opts.parent;
+	self.editing_templates = {};
 	self.fields = [];
 	self.data_tables = opts.data_tables || [];
 
@@ -234,8 +235,10 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		});
 
 		$(self.nested_obj_nodes).each(function() {
-			$(this[0]).replaceWith(this[1]);
-			$(this[1]).trigger('ready');
+			if (this[0].parentNode || 1) {
+				$(this[0]).replaceWith(this[1]);
+				$(this[1]).trigger('ready');
+			}
 		});
 
 		delete self.nested_obj_nodes;
@@ -258,8 +261,13 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 
 	self.edit = function() {
 		$(self.fields).each(function() {
-			this.node.children().hide();
+			this.field_container.siblings().hide();
 			this.field_container.show();
+			if (this.properties.name in self.editing_templates) {
+				self.editing_templates[this.properties.name]
+					.clone()
+					.insertAfter(this.field_container);
+			}
 		});
 	};
 
@@ -278,8 +286,10 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		self.node.find(sel).each(function() {
 			var val = $(this).attr(prop).split('.');
 
+			var editable = $(this).parents(boto_web.ui.selectors.editable) && $(this).parents(boto_web.ui.selectors.editable).attr(boto_web.ui.properties.editable) == 'true';
+
 			// Ignore nested attributes
-			if (!opt.attribute_lists && $(this).is(boto_web.ui.selectors.attribute_list + ' ' + sel)) {
+			if (!val || !opt.attribute_lists && $(this).is(boto_web.ui.selectors.attribute_list + ' ' + sel)) {
 				return;
 			}
 
@@ -301,72 +311,79 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				$(this).empty();
 				return;
 			}
-			else if (!(val in self.obj.properties)) {
-				$(this).empty();
-				return;
-			}
 
-			if (this.tagName.toLowerCase() == 'img')
-				$(this).attr('src', self.obj.properties[val]);
-			// Load nested objects
-			else if ((self.obj.properties[val].type in {reference:1,query:1} || self.model.prop_map[val] && self.model.prop_map[val]._type == 'list')) {
-				// Find the best container to hold the new content, if the tag with
-				// this attribute is the only child in its parent object then we
-				// can use the natural parent, otherwise we generate a new span.
-				if ($(this).siblings().length == 0 && $(this).parent()) {
-					container = $(this).parent().clone();
-					self.nested_obj_nodes.push([$(this).parent(), container]);
-					$(this).parent().empty();
+			if (val in self.obj.properties) {
+				if (this.tagName.toLowerCase() == 'img')
+					$(this).attr('src', self.obj.properties[val]);
+				// Load nested objects
+				else if ((self.obj.properties[val].type in {reference:1,query:1} || self.model.prop_map[val] && self.model.prop_map[val]._type == 'list')) {
+					//container = $(this).clone();
+					var node = $(this).clone();
+
+					// Find the best container to hold the new content, if the tag with
+					// this attribute is the only child in its parent object then we
+					// can use the natural parent, otherwise we generate a new span.
+
+					if ($(this).parent('ul,ol').length) {
+						container = $(this).parent().clone();
+						container.empty();
+						self.nested_obj_nodes.push([$(this).parent(), container]);
+					}
+					else {
+						container = $('<span/>');
+						self.nested_obj_nodes.push([this, container]);
+						$(this).empty();
+					}
+
+					// Follow references if this is a reference or query type
+					if (self.model.prop_map[val]._item_type in boto_web.env.models) {
+						if (!follow_props && !node.html())
+							follow_props = ['name'];
+						if (follow_props)
+							node.attr(boto_web.ui.properties.attribute, follow_props.join('.'));
+						else
+							node.attr(boto_web.ui.properties.attribute, '');
+
+						if (node.html() && !(val in self.editing_templates))
+							self.editing_templates[val] = node.clone();
+
+						self.obj.follow(val, function(objs) {
+							$(objs).each(function() {
+								var n = $('<span/>').append(node.clone()).appendTo(container);
+								new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this, {parent: self});
+							});
+							self.update_tables();
+						});
+					}
+					// For string lists, duplicate the node for each value
+					else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'list') {
+						var values = self.obj.properties[val];
+						if (values) {
+							if (!$.isArray(values))
+								values = [values];
+
+							$(values).each(function() {
+								node.clone()
+									.html(this.toString())
+									.appendTo(container);
+							});
+						}
+					}
+				}
+				else if (prop == boto_web.ui.properties.class_name) {
+					$(this).addClass('model-' + self.obj.properties.model);
+					$(this).addClass('value-' + self.obj.properties[val].toString().replace(/\s[\s\S]*$/, ''));
 				}
 				else {
-					container = $('<span/>');
-					self.nested_obj_nodes.push([this, container]);
+					$(this).append($('<span/>').text(self.obj.properties[val].toString()));
 				}
-
-				var node = $(this).clone();
-
-				$(this).empty();
-				container.empty();
-
-				if (!follow_props && !node.html())
-					follow_props = ['name'];
-				if (follow_props)
-					node.attr(boto_web.ui.properties.attribute, follow_props.join('.'));
-				else
-					node.attr(boto_web.ui.properties.attribute, '');
-
-				// Follow references if this is a reference or query type
-				if (self.model.prop_map[val]._item_type in boto_web.env.models) {
-					self.obj.follow(val, function(objs) {
-						$(objs).each(function() {
-							var n = $('<span/>').append(node.clone()).appendTo(container);
-							new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this, {parent: self});
-						});
-						self.update_tables();
-					});
-				}
-				// For string lists, duplicate the node for each value
-				else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'list') {
-					var values = self.obj.properties[val];
-					if (!$.isArray(values))
-						values = [values];
-					$(values).each(function() {
-						node.clone()
-							.html(this.toString())
-							.appendTo(container);
-					});
-				}
-			}
-			else if (prop == boto_web.ui.properties.class_name) {
-				$(this).addClass('model-' + self.obj.properties.model);
-				$(this).addClass('value-' + self.obj.properties[val].toString().replace(/\s[\s\S]*$/, ''));
 			}
 			else {
-				$(this).append($('<span/>').text(self.obj.properties[val].toString()));
+				$(this).empty();
 			}
 
 			// If this is not an editable section, don't add an editing form
-			if (!$(this).parents(boto_web.ui.selectors.editable) || $(this).parents(boto_web.ui.selectors.editable).attr(boto_web.ui.properties.editable) != 'true')
+			if (!editable)
 				return;
 
 			if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
