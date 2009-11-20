@@ -115,7 +115,7 @@ var boto_web = {
 	parseObject: function(data){
 		var obj = {};
 		obj.length = 0;
-		obj._id = $(data).attr('id');
+		obj.id = $(data).attr('id');
 		obj.model = data.tagName;
 
 		$(data).children().each(function(){
@@ -544,7 +544,7 @@ var boto_web = {
 		self.href = href;
 		self.name = name;
 		self.properties = properties;
-		self.id = properties._id;
+		self.id = properties.id;
 
 		self.follow = function(property, fnc) {
 			var props = self.properties[property];
