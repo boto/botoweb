@@ -122,6 +122,8 @@ boto_web.ui.widgets.DataTable = function(table) {
 		if (!$.isArray(rows))
 			return;
 
+		var settings = this.data_table.fnSettings();
+
 		var data = [];
 		$(rows).each(function() {
 			var item = [];
@@ -145,6 +147,8 @@ boto_web.ui.widgets.DataTable = function(table) {
 	}
 
 	this.update = function(row, values) {
+		var settings = this.data_table.fnSettings();
+
 		var item = [];
 		$(values).each(function() {
 			$(this).find('td').each(function() {
@@ -152,7 +156,7 @@ boto_web.ui.widgets.DataTable = function(table) {
 			});
 		});
 
-		if (item.length > 0)
+		if (item.length == settings.aoColumns.length)
 			this.data_table.fnUpdate(item, row);
 	}
 
