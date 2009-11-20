@@ -182,7 +182,13 @@ class DBHandler(RequestHandler):
 				if hasattr(self.db_class, "_indexed_%s" % param_name):
 					param_name = "_indexed_%s" % param_name
 					prop_value = prop_value.upper()
-				query.filter("%s %s" % (param_name, filter[1]), prop_value)
+				# Allows a ['prop_name', 'sort', 'desc|asc']
+				if filter[1] == "sort":
+					if filter[2] == "desc":
+						param_name = "-%s" % param_name
+					query.sort_by = param_name
+				else:
+					query.filter("%s %s" % (param_name, filter[1]), prop_value)
 		else:
 			properties = [p.name for p in query.model_class.properties(hidden=False)]
 			for filter in set(params.keys()):
