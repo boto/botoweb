@@ -28,6 +28,8 @@ boto_web.ui.Desktop = function() {
 			self.pages[page.id] = page;
 			self.node.append(page.node);
 			self.num_pages++;
+		} else {
+			page = self.pages[page.id]
 		}
 
 		for (var i in self.pages) {
