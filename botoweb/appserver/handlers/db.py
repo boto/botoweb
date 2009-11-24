@@ -130,7 +130,7 @@ class DBHandler(RequestHandler):
 		content =  self.update(obj, props, request.user, request)
 
 		response.content_type = "text/xml"
-		content.to_xml().writexml(response)
+		response.write(xmlize.dumps(content))
 		return response
 
 
