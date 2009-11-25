@@ -25,6 +25,8 @@ boto_web.ui.forms = {
 					return new self.textarea(props, opts);
 				else
 					return new self.text(props, opts);
+			case 'text':
+				return new self.textarea(props, opts);
 			case 'password':
 				return new self.password(props, opts);
 			case 'dateTime':
