@@ -351,13 +351,17 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						if (node.html() && !(val in self.editing_templates))
 							self.editing_templates[val] = node.clone();
 
+						var filters = $(this).attr(boto_web.ui.properties.filter);
+						if(filters){
+							filters = eval(filters);
+						}
 						self.obj.follow(val, function(objs) {
 							$(objs).each(function() {
 								var n = $('<span/>').append(node.clone()).appendTo(container);
 								new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this, {parent: self});
 							});
 							self.update_tables();
-						});
+						}, filters);
 					}
 					// For string lists, duplicate the node for each value
 					else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'list') {

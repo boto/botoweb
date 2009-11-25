@@ -374,7 +374,7 @@ var boto_web = {
 		self.name = xml.attr('name');
 		self.href = $('href', xml).text();
 		self.methods = {};
-		self.cache = {};
+		self._cache = {};
 		self.cache_timeouts = {};
 		self.prop_map = {};
 		self.data_tables = {};
@@ -484,18 +484,19 @@ var boto_web = {
 		}
 
 		this.cache = function(obj) {
-			self.cache[obj.id] = obj;
+			self._cache[obj.id] = obj;
 			clearTimeout(self.cache_timeouts[obj.id]);
 			self.cache_timeouts[obj.id] = setTimeout(function() {
-				delete self.cache[obj.id];
+				delete self._cache[obj.id];
 			}, 10000);
-			return self.cache[obj.id];
+			return self._cache[obj.id];
 		}
+
 
 		this.get = function(id, fnc){
 			var self = this;
-			if (self.cache[id]) {
-				fnc(self.cache[id]);
+			if (self._cache[id]) {
+				fnc(self._cache[id]);
 				return;
 			}
 			boto_web.get_by_id(boto_web.env.base_url + self.href, id, function(obj){
@@ -509,12 +510,12 @@ var boto_web = {
 			ref = boto_web.env.base_url + this.href;
 			method = "POST";
 			if("id" in data){
-				delete self.cache[data.id];
+				delete self._cache[data.id];
 				ref += ("/" + data.id);
 				delete(data['id']);
 				method = "PUT";
 			}
-			delete self.cache[data.id];
+			delete self._cache[data.id];
 			return boto_web.save(ref, this.name, data, method, fnc);
 		}
 
@@ -528,7 +529,7 @@ var boto_web = {
 					this.table.del(this.row);
 				});
 				delete self.data_tables[id];
-				delete self.cache[id];
+				delete self._cache[id];
 				return fnc(x);
 			});
 		}
@@ -546,7 +547,7 @@ var boto_web = {
 		self.properties = properties;
 		self.id = properties.id;
 
-		self.follow = function(property, fnc) {
+		self.follow = function(property, fnc, filters) {
 			var props = self.properties[property];
 
 			if (!$.isArray(props))
@@ -560,9 +561,8 @@ var boto_web = {
 						});
 					}
 					return;
-				}
-				else {
-					boto_web.all(boto_web.env.base_url + self.href + '/' + self.id + '/' + this.href, '*>*[id]', function(data) {
+				} else {
+					boto_web.query(boto_web.env.base_url + self.href + '/' + self.id + '/' + this.href, filters, '*>*[id]', function(data) {
 						if(fnc){
 							var objects = [];
 							for(var x=0; x < data.length; x++){

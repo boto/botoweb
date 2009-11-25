@@ -50,6 +50,7 @@ boto_web.ui = {
 		'template':       'bwTemplate',
 		'editable':       'bwEditable',
 		'class_name':     'bwClass',
+		'filter':        'bwFilter',
 		'def':            'bwDefault'
 	},
 
