@@ -237,7 +237,7 @@ class XMLSerializer(object):
 		"""Decode a single property node"""
 		value = None
 		prop_type = (prop.get("type") or "string").lower()
-		if prop_type == "string":
+		if prop_type in ("string", "text"):
 			value = self.decode_string(prop)
 		elif prop_type in ('complex', 'complextype', 'dict'):
 			# Dictionary
