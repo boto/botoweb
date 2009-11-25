@@ -236,7 +236,11 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 
 		$(self.nested_obj_nodes).each(function() {
 			if (this[0].parentNode || 1) {
-				$(this[0]).replaceWith(this[1]);
+				if(this[0].tagName == "TD"){
+					$(this[0]).append(this[1]);
+				} else {
+					$(this[0]).replaceWith(this[1]);
+				}
 				$(this[1]).trigger('ready');
 			}
 		});
