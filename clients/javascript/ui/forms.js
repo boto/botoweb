@@ -58,6 +58,8 @@ boto_web.ui.forms = {
 		this.fields = [this.field];
 		this.perms = properties._perms || [];
 		this.properties = properties;
+		this.editing_template = opts.editing_template;
+		this.nested_objs = [];
 
 		properties.id = properties.id || 'field_' + properties.name;
 		properties.id += Math.round(Math.random() * 99999);
@@ -77,11 +79,26 @@ boto_web.ui.forms = {
 		}
 
 		this.add_field = function(value) {
-			var field = this.field.clone()
-				.attr('id', this.field.attr('id') + '_' + this.fields.length)
-				.val(value || '')
-				.insertAfter($('<br />').insertAfter(this.fields[this.fields.length - 1]))
-				.focus()
+			var field;
+
+			if (this.editing_template) {
+				field = this.editing_template.clone();
+				this.nested_objs.push(field);
+				field.edit();
+				$(field.node).show();
+
+				self.field_container.append(
+					$('<br />'),
+					field.node
+				);
+			}
+			else {
+				field = this.field.clone()
+					.attr('id', this.field.attr('id') + '_' + this.fields.length)
+					.val(value || '')
+					.insertAfter($('<br />').insertAfter(this.fields[this.fields.length - 1]))
+					.focus()
+			}
 
 			this.fields.push(field);
 
@@ -170,11 +187,15 @@ boto_web.ui.forms = {
 		}
 
 		if (properties._item_type in boto_web.env.models) {
-			$('<span/>')
+			self.button_new = $('<span/>')
 				.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + properties._item_type)
 				.addClass('ui-button ui-state-default ui-corner-all')
-				.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); })
 				.appendTo(self.field_container);
+
+			if (self.editing_template)
+				self.button_new = self.button_new.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); });
+			else
+				self.button_new = self.button_new.click(function(e) { self.add_field(); e.preventDefault(); });
 		}
 
 		$('<br/>')
@@ -389,6 +410,9 @@ boto_web.ui.forms = {
 
 		var self = this;
 
+		if (self.editing_template)
+			self.field = $(self.editing_template).attr('name', properties.name);
+
 		self.init = function() {
 			if (!(self.properties._item_type in boto_web.env.models))
 				return;
@@ -480,10 +504,8 @@ boto_web.ui.forms = {
 						.addClass('selections')
 						.appendTo(self.field_container);
 
-					$('<span/>')
-						.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + self.properties._item_type)
-						.addClass('ui-button ui-state-default ui-corner-all')
-						.click(function(e) { boto_web.env.models[self.properties._item_type].create(); e.preventDefault(); })
+					self.button_new
+						.click(function(e) { self.add_field(); e.preventDefault(); })
 						.appendTo(self.field_container);
 
 					$('<br/>')
@@ -503,6 +525,25 @@ boto_web.ui.forms = {
 
 					self.field_container.data('get_value', function() {
 						var val = [];
+
+						if (self.nested_objs.length) {
+							var good = true;
+
+							$(self.nested_objs).each(function() {
+								if (!this.submitted) {
+									this.submit();
+									good = false;
+									return false;
+								}
+								else {
+									alert('FOUND: ' + this.obj.id);
+									val.push(this.obj.id);
+								}
+							});
+
+							if (!good)
+								return false;
+						}
 
 						self.field_container.find('.selections div').each(function() {
 							val.push(this.id.replace('selection_', ''));
