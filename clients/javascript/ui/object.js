@@ -16,7 +16,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		opts = {};
 
 	self.model = model;
-	self.obj = obj;
+	self.obj = obj || {properties: {}};
 	self.node = $(html);
 	self.guid = self.model.name + '_' + self.obj.id;
 	self.parent = opts.parent;
@@ -44,7 +44,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				if (data)
 					return base_url + 'action=update/' + self.model.name + '/' + self.obj.id + '&data=' + escape(data);
 
-				//return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id + '&action=edit';
+				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id + '&action=edit';
 
 				return base_url + 'action=edit/' + self.model.name + '/' + self.obj.id;
 			case 'delete':
@@ -223,13 +223,13 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					e.preventDefault();
 				})
 			}
-			/*else if (val == 'edit') {
+			else if (val == 'edit') {
 				$(this).click(function(e) {
 					self.edit();
 					e.preventDefault();
 				});
 				return;
-			}*/
+			}
 
 			$(this).attr('href', self.get_link(val, data));
 		});
@@ -248,8 +248,112 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		delete self.nested_obj_nodes;
 	};
 
+	self.submit = function(closeFcn) {
+		var self = this;
+
+		var data = {};
+		var uploads = [];
+		self.submitted = true;
+
+		if (self.obj)
+			data.id = self.obj.id;
+
+		var has_nested = false;
+
+		$(self.fields).each(function() {
+			if (!this.field)
+				return;
+
+			var val;
+			var name = this.field.attr('name');
+
+			if (this.field.attr('type') == 'file') {
+				uploads.push(this);
+				return;
+			}
+
+			if (this.field_container.data('get_value'))
+				val = this.field_container.data('get_value')();
+
+			// Allow nested objects to submit
+			if (val === false) {
+				has_nested = true;
+				return false;
+			}
+
+			if (typeof val == 'undefined')
+				return;
+
+			if (val != '' && !self.obj || self.obj && !$.equals((self.obj.properties[name] || ''), val))
+				data[name] = val;
+		});
+
+		if (has_nested)
+			return;
+
+		if (!self.model)
+			return;
+
+			alert($.dump(data));
+
+		self.model.save(data, function(data) {
+			self.submitted = true;
+			if (data.status < 300) {
+				var id = data.getResponseHeader('Location').replace(/.*\//, '');
+
+				self.obj.id = id;
+
+				if (uploads.length) {
+					var upload_fnc = function(obj) {
+						$(uploads).each(function() {
+							if ($(this.field).val())
+								$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
+
+							closeFcn.call(self.node);
+
+							boto_web.ui.alert('The database has been updated.');
+
+							if (opts.callback) {
+								opts.callback();
+							}
+
+							document.location.reload(true);
+							//$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
+							/*$(this.field).uploadifySettings('onComplete', function() {
+								closeFcn();
+								boto_web.ui.alert('The database has been updated.');
+							});*/
+							//$(this.field).uploadifyUpload();
+						});
+					};
+
+					if (self.obj)
+						upload_fnc(self.obj);
+					else
+						self.model.get(data.getResponseHeader('Location'), upload_fnc);
+				}
+				else if (self.parent)
+					self.parent.submit();
+				else {
+					boto_web.ui.alert('The database has been updated.');
+					document.location.reload(true);
+				}
+
+				if (opts.callback) {
+					opts.callback();
+				}
+			}
+			else {
+				boto_web.ui.alert($(data.responseXML).find('message').text(), 'There was an error updating the database');
+			}
+			// TODO data save callback
+		});
+	};
+
 	self.update_tables = function() {
 		$(self.data_tables).each(function() {
+			if (!this.table)
+				return;
 			if (this.row != undefined)
 				this.table.update(this.row, self.node);
 			else {
@@ -263,21 +367,59 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			self.parent.update_tables();
 	};
 
-	self.edit = function() {
+	self.edit = function(force) {
 		$(self.fields).each(function() {
 			this.field_container.siblings().hide();
+			this.label.show();
 			this.field_container.show();
+
+			if (this.editing_template)
+				this.editing_template.edit();
+
+			/*
 			if (this.properties.name in self.editing_templates) {
-				self.editing_templates[this.properties.name]
-					.clone()
-					.insertAfter(this.field_container);
+				var show_nested_editors = function(field) { return function() {
+					var template = self.editing_templates[field.properties.name];
+
+					if (template.used) {
+						var n = template.node;
+						template = template.clone();
+						template.node.insertAfter(n);
+					}
+
+					template.used = true;
+
+					template.edit()
+
+					template.node
+						.appendTo(field.field_container);
+
+					// Only allow the Add button to be clicked once for non-lists
+					if (!(field.properties._type in {list:1,query:1}))
+						$(this).unbind();
+				}}(this);
+
+				if (this.button_new && !self.obj) {
+					this.button_new.unbind()
+						.click(show_nested_editors);
+				}
+				else
+					show_nested_editors();
 			}
+			*/
 		});
+
+		$('<a/>')
+			.html('<span class="ui-icon ui-icon-disk"></span>Save')
+			.click(function() { self.submit() })
+			.prependTo(self.node);
 	};
 
 	self.parse_attributes = function(opt) {
 		if (!opt)
 			opt = {};
+
+		var needs_label = false;
 
 		var sel = opt.sel;
 		var prop = opt.prop;
@@ -316,11 +458,13 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				return;
 			}
 
-			if (val in self.obj.properties) {
-				if (this.tagName.toLowerCase() == 'img')
-					$(this).attr('src', self.obj.properties[val]);
+			var editing_template;
+
+			//if (val in self.obj.properties) {
 				// Load nested objects
-				else if ((self.obj.properties[val].type in {reference:1,query:1} || self.model.prop_map[val] && self.model.prop_map[val]._type == 'list')) {
+				if (self.model.prop_map[val] && (self.model.prop_map[val]._type == 'list'
+					|| self.model.prop_map[val]._type in boto_web.env.models
+					|| self.model.prop_map[val]._item_type in boto_web.env.models)) {
 					//container = $(this).clone();
 					var node = $(this).clone();
 
@@ -348,20 +492,51 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						else
 							node.attr(boto_web.ui.properties.attribute, '');
 
-						if (node.html() && !(val in self.editing_templates))
-							self.editing_templates[val] = node.clone();
+						if (node.html() && !(val in self.editing_templates)) {
+							needs_label = true;
 
-						var filters = $(this).attr(boto_web.ui.properties.filter);
-						if(filters){
-							filters = eval(filters);
+							var n = node.clone()
+								.attr(boto_web.ui.properties.editable, 'true');
+
+							n.find(boto_web.ui.selectors.editing_tools).remove();
+
+							var o = new boto_web.ui.Object(
+								n.clone(true),
+								boto_web.env.models[self.model.prop_map[val]._item_type],
+								null,
+								{parent: self}
+							);
+
+							console.log('>' + val);
+
+							o.clone = function(obj) {
+								return new boto_web.ui.Object(
+									n.clone(true),
+									boto_web.env.models[self.model.prop_map[val]._item_type],
+									obj,
+									{parent: self}
+								);
+							};
+							editing_template = o;
 						}
-						self.obj.follow(val, function(objs) {
-							$(objs).each(function() {
-								var n = $('<span/>').append(node.clone()).appendTo(container);
-								new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this, {parent: self});
-							});
-							self.update_tables();
-						}, filters);
+
+						if (self.obj.id) {
+							var filters = $(this).attr(boto_web.ui.properties.filter);
+							if(filters){
+								filters = eval(filters);
+							}
+							self.obj.follow(val, function(objs) {
+								$(objs).each(function() {
+									var n = $('<span/>').append(node.clone()).appendTo(container);
+									new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this, {parent: self});
+								});
+								self.update_tables();
+							}, filters);
+						}
+						else {
+							var n = $('<span/>').append(node.clone()).appendTo(container);
+							new boto_web.ui.Object(n, boto_web.env.models[self.model.prop_map[val]._item_type], null, {parent: self});
+						}
 					}
 					// For string lists, duplicate the node for each value
 					else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'list') {
@@ -378,31 +553,40 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						}
 					}
 				}
-				else if (prop == boto_web.ui.properties.class_name) {
-					$(this).addClass('model-' + self.obj.properties.model);
-					$(this).addClass('value-' + self.obj.properties[val].toString().replace(/\s[\s\S]*$/, ''));
+				else if (self.obj.id && val in self.obj.properties) {
+					if (this.tagName.toLowerCase() == 'img')
+						$(this).attr('src', self.obj.properties[val]);
+					else if (prop == boto_web.ui.properties.class_name) {
+						$(this).addClass('model-' + self.obj.properties.model);
+						$(this).addClass('value-' + self.obj.properties[val].toString().replace(/\s[\s\S]*$/, ''));
+					}
+					else {
+						$(this).append($('<span/>').text(self.obj.properties[val].toString()));
+					}
 				}
 				else {
-					$(this).append($('<span/>').text(self.obj.properties[val].toString()));
+					//$(this).empty();
 				}
-			}
+			/*}
 			else {
 				$(this).empty();
-			}
+			}*/
 
 			// If this is not an editable section, don't add an editing form
-			if (!editable)
-				return;
+			//if (!editable)
+			//	return;
 
-			if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
+			//if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
 				var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val]}), {
 					node: $(container),
 					no_text: true,
-					no_label: true
+					no_label: !needs_label,
+					editing_template: editing_template
 				});
 				self.fields.push(field);
-				field.read_only();
-			}
+				field.field_container.hide();
+				field.label.hide();
+			//}
 		});
 	}
 
