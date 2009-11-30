@@ -72,15 +72,13 @@ boto_web.ui.Page = function(html) {
 				};})(RegExp.$2));
 			});
 		}
-		else {
-			self.node.find(boto_web.ui.selectors.search).each(function() {
-				new boto_web.ui.widgets.Search(this);
-			});
+		self.node.find(boto_web.ui.selectors.search).each(function() {
+			new boto_web.ui.widgets.Search(this);
+		});
 
-			self.node.find(boto_web.ui.selectors.report).each(function() {
-				self.listener = new boto_web.ui.widgets.Report(this);
-			});
-		}
+		self.node.find(boto_web.ui.selectors.report).each(function() {
+			self.listener = new boto_web.ui.widgets.Report(this);
+		});
 
 		// Add links
 		sel = boto_web.ui.selectors.link;
@@ -175,7 +173,15 @@ boto_web.ui.Page = function(html) {
 
 	// Map each template to a list of nodes where it should be inserted
 	self.node.find(sel).each(function() {
-		var val = $(this).attr(prop);
+		var val = $(this).attr(prop)
+		if(boto_web.ui.params.id){
+			val = val.replace("{{id}}", boto_web.ui.params.id[0])
+		}
+		if(self.node.attr(boto_web.ui.properties.model)){
+			var model = boto_web.env.models[self.node.attr(boto_web.ui.properties.model)];
+			val = val.replace("{{href}}", boto_web.env.base_url + "/" + model.href);
+		}
+
 		if (!templates)
 			templates = {};
 
