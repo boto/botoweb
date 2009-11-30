@@ -18,6 +18,7 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 		.clone();
 	self.node.empty();
 	self.def = self.node.attr(boto_web.ui.properties.def);
+	self.limit_pages = self.node.attr("bwLimit");
 
 	self.update = function(results, append) {
 		if (!results || results.length == 0)
@@ -56,16 +57,16 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 	}
 
 	if (self.def == 'all') {
-		self.model.all(function(results, page) { self.update(results, page); });
+		self.model.all(function(results, page) { self.update(results, page); return ((self.limit_pages == "none") || (page < eval(self.limit_pages) )); });
 	}
 	else if (self.def) {
 		// Evaluate JSON search filters
 		eval('self.def = ' + self.def);
 
 		if ($.isArray(self.def))
-			self.model.query(self.def, function(results, page) { self.update(results, page); });
+			self.model.query(self.def, function(results, page) { self.update(results, page); return ((self.limit_pages == "none") || (page < eval(self.limit_pages))); });
 		else
-			self.model.find(self.def, function(results, page) { self.update(results, page); });
+			self.model.find(self.def, function(results, page) { self.update(results, page); return ((self.limit_pages == "none") || (page < eval(self.limit_pages))); });
 	}
 
 	if (self.node.is('tr, tbody')) {
