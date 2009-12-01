@@ -608,6 +608,7 @@ boto_web.ui.watch_url = function() {
 		"change",
 		function(objEvent, objData) {
 			var static_url = objData.currentHash.replace(/#|\?(.*)/g, '');
+			boto_web.ajax.stop();
 
 			if (!static_url) return;
 

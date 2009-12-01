@@ -23,6 +23,33 @@
 // Javascript API for boto_web searching
 //
 var boto_web = {
+	ajax: {
+		cachedRequests: {},
+		manager: $.manageAjax.create("cacheQueue", { queue: true, cacheResponse:true, preventDoubbleRequests: false, maxRequests: 3 }),
+		stop: function(name, id){
+			boto_web.ajax.cachedRequests = {};
+			boto_web.ajax.manager.abort(name, id);
+		},
+		get: function(url, callback){
+			var ajaxID = 'GET_'+ url.replace(/\./g, '_');
+			var cachedRequests = boto_web.ajax.cachedRequests;
+			if(cachedRequests[ajaxID]){
+				cachedRequests[ajaxID].push(callback);
+			} else {
+				cachedRequests[ajaxID] = [callback];
+
+				boto_web.ajax.manager.add({
+					success: function(data){
+						for(cbnum in cachedRequests[ajaxID]){
+							cachedRequests[ajaxID][cbnum](data);
+						}
+						delete cachedRequests[ajaxID];
+					},
+					url: url
+				});
+			}
+		}
+	},
 
 	//
 	// Get all items at this url
@@ -57,10 +84,10 @@ var boto_web = {
 
 			// Get the next page
 			if (fnc(data, page++) && url)
-				$.get(url, process);
+				boto_web.ajax.get(url, process);
 		}
 
-		return $.get(url, process);
+		return boto_web.ajax.get(url, process);
 	},
 
 	//
@@ -102,10 +129,10 @@ var boto_web = {
 
 			// Get the next page
 			if (fnc(data, page++) && url)
-				$.get(url, process);
+				boto_web.ajax.get(url, process);
 		}
 
-		return $.get(url, process);
+		return boto_web.ajax.get(url, process);
 	},
 
 	//
@@ -160,7 +187,7 @@ var boto_web = {
 	// Find a specific object by ID
 	//
 	get_by_id: function(url, id, fnc){
-		$.get(url + "/" + id, function(data){
+		boto_web.ajax.get(url + "/" + id, function(data){
 			$(data).children().each(function(){
 				var curobj = boto_web.parseObject(this);
 				if(curobj.length > 0){
@@ -336,7 +363,7 @@ var boto_web = {
 
 		// __init__ object
 		// Get our route info
-		$.get(self.base_url, function(xml){
+		boto_web.ajax.get(self.base_url, function(xml){
 			// Setup our name
 			self.name = $(xml).find("Index").attr("name");
 			// Set our routes and model APIs
