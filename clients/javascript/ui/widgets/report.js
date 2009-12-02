@@ -12,15 +12,21 @@ boto_web.ui.widgets.Report = function(node) {
 	var self = this;
 
 	self.node = $(node);
-	self.template = $('<div/>').append(self.node.contents().clone());
+	//self.template = $('<div/>').append(self.node.contents().clone());
+	self.breadcrumbs = self.node.parent().find("ul.breadcrumbs");
 	self.model = null;
 	self.filters = [];
 	self.columns = [];
 
 	self.step_1 = function() {
-		self.node.find('#step_2, #step_3, #step_4').remove();
+		self.node.parent().find('#next_step').hide();
+		self.node.find("section").hide();
+		self.node.find('#step_1').show();
 		self.filters = [];
 		self.columns = [];
+
+		// Add the breadcrumbs
+		self.breadcrumbs.html('<li>Reporting</li>');
 
 		var models = [];
 
@@ -62,9 +68,13 @@ boto_web.ui.widgets.Report = function(node) {
 	}
 
 	self.step_2 = function(e) {
-		self.node.empty();
-		self.template.find('#step_2').clone()
-			.appendTo(self.node);
+		self.node.find("section").hide();
+		self.node.find('#step_2').show();
+
+		// Add the breadcrumbs
+		self.breadcrumbs.empty();
+		self.add_breadcrumb(self.step_1, "Reporting");
+		self.breadcrumbs.append('<li>' + self.model.name + '</li>');
 
 		if (self.model.properties.length > 15) {
 			$('<input/>')
@@ -201,9 +211,14 @@ boto_web.ui.widgets.Report = function(node) {
 	}
 
 	self.step_3 = function() {
-		self.node.empty();
-		self.template.find('#step_3').clone()
-			.appendTo(self.node);
+		self.node.find("section").hide();
+		self.node.find('#step_3').show();
+
+		// Add the breadcrumbs
+		self.breadcrumbs.empty();
+		self.add_breadcrumb(self.step_1, "Reporting");
+		self.add_breadcrumb(self.step_2, self.model.name);
+		self.breadcrumbs.append('<li>Attributes</li>');
 
 		if (self.model.properties.length > 15) {
 			$('<input/>')
@@ -314,9 +329,15 @@ boto_web.ui.widgets.Report = function(node) {
 
 	self.step_4 = function(preview) {
 		if (!preview) {
-			self.node.empty();
-			self.template.find('#step_4').clone()
-				.appendTo(self.node);
+			self.node.find("section").hide();
+			self.node.find('#step_4').show();
+
+			// Add the breadcrumbs
+			self.breadcrumbs.empty();
+			self.add_breadcrumb(self.step_1, "Reporting");
+			self.add_breadcrumb(self.step_2, self.model.name);
+			self.add_breadcrumb(self.step_3, "Attributes");
+			self.breadcrumbs.append('<li>Results</li>');
 
 			$('#next_step').hide();
 
@@ -373,6 +394,16 @@ boto_web.ui.widgets.Report = function(node) {
 		else {
 			self.step_1();
 		}
+	}
+
+	self.add_breadcrumb = function(step, name){
+		var step_link = document.createElement("a");
+		step_link.href = "#pages/reporting.html";
+		step_link.innerHTML = name;
+		$(step_link).bind("click", step);
+		var crumb = document.createElement("li");
+		$(crumb).append(step_link);
+		self.breadcrumbs.append(crumb);
 	}
 
 	self.update();
