@@ -213,6 +213,11 @@ var boto_web = {
 			if (pval == undefined)
 				continue;
 
+			if (!(pname in boto_web.env.models[obj_name].prop_map)) {
+				console.log(pname + ' ' + obj_name);
+				continue;
+			}
+
 			var type = boto_web.env.models[obj_name].prop_map[pname]._type;
 
 			var list = true;
@@ -256,7 +261,9 @@ var boto_web = {
 		}
 
 		//DEBUG
-		//alert((new XMLSerializer()).serializeToString(doc));
+		alert((new XMLSerializer()).serializeToString(doc));
+		fnc({status: 201, getResponseHeader: function() { return '123' ;}});
+		return
 
 		opts = {
 			url: url,

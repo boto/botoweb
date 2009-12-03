@@ -63,13 +63,22 @@ boto_web.ui.Page = function(html) {
 
 				$(node).hide();
 
-				model.get(id, (function(action) { return function(obj) {
-					self.obj = new boto_web.ui.Object(node, model, obj, action);
+				if (id) {
+					model.get(id, (function(action) { return function(obj) {
+						self.obj = new boto_web.ui.Object(node, model, obj, action);
+						$(node).show();
+
+						self.title = self.node.find('h1').text();
+						document.title = self.title || document.title;
+					};})(RegExp.$2));
+				}
+				else {
+					self.obj = new boto_web.ui.Object(node, model, null, RegExp.$2);
 					$(node).show();
 
 					self.title = self.node.find('h1').text();
 					document.title = self.title || document.title;
-				};})(RegExp.$2));
+				}
 			});
 		}
 		self.node.find(boto_web.ui.selectors.search).each(function() {
