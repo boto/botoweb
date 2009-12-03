@@ -384,7 +384,7 @@ boto_web.ui = {
 									opts.callback();
 								}
 
-								document.location.reload(true)();
+								document.location.reload(true);
 								//$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
 								/*$(this.field).uploadifySettings('onComplete', function() {
 									closeFcn();
