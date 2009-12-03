@@ -42,6 +42,7 @@ TYPE_NAMES = {
 
 CHAR_MAP = {
 	"\x19": "'",
+	'\x1c': "",
 	"\xe8": "e",
 }
 
