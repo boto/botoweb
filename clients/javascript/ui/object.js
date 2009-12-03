@@ -512,8 +512,6 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 								{parent: self}
 							);
 
-							console.log('>' + val);
-
 							o.clone = function(obj) {
 								return new boto_web.ui.Object(
 									n.clone(true),
@@ -578,10 +576,10 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			}*/
 
 			// If this is not an editable section, don't add an editing form
-			//if (!editable)
-			//	return;
+			if (!editable)
+				return;
 
-			//if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
+			if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
 				var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val] || ''}), {
 					node: $(container),
 					no_text: true,
@@ -599,7 +597,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						});
 					}}(field));
 				}
-			//}
+			}
 		});
 	}
 
