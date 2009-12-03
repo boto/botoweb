@@ -261,7 +261,7 @@ var boto_web = {
 		}
 
 		//DEBUG
-		alert((new XMLSerializer()).serializeToString(doc));
+		alert(url + "\n\n" + (new XMLSerializer()).serializeToString(doc));
 		fnc({status: 201, getResponseHeader: function() { return '123' ;}});
 		return
 

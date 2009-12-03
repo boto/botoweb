@@ -23,6 +23,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 	self.editing_templates = {};
 	self.fields = [];
 	self.data_tables = opts.data_tables || [];
+	self.opts = opts;
 
 	self.get_link = function(method, data) {
 		var base_url = document.location.href + '';
@@ -307,7 +308,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		self.model.save(data, function(data) {
 			self.submitted = true;
 			if (data.status < 300) {
-				var id = data.getResponseHeader('Location').replace(/.*\//, '');
+				var id = self.obj.id || data.getResponseHeader('Location').replace(/.*\//, '');
 
 				self.obj.id = id;
 
@@ -478,6 +479,8 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				//container = $(this).clone();
 				var node = $(this).clone();
 
+				console.log(val + ' ' + self.model.name);
+
 				// Find the best container to hold the new content, if the tag with
 				// this attribute is the only child in its parent object then we
 				// can use the natural parent, otherwise we generate a new span.
@@ -492,6 +495,8 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					self.nested_obj_nodes.push([this, container]);
 					$(this).empty();
 				}
+
+				$(this).attr(boto_web.ui.properties.attribute, '');
 
 				// Follow references if this is a reference or query type
 				if (self.model.prop_map[val]._item_type in boto_web.env.models) {
@@ -523,7 +528,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 								n.clone(true),
 								boto_web.env.models[self.model.prop_map[val]._item_type],
 								obj,
-								{parent: self}
+								{parent: self, debug: 1}
 							);
 						};
 						editing_template = o;
@@ -581,7 +586,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			if (!editable)
 				return;
 
-			if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
+			//if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
 				var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val] || ''}), {
 					node: $(container),
 					no_text: true,
@@ -599,7 +604,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						});
 					}}(field));
 				}
-			}
+			//}
 		});
 	}
 

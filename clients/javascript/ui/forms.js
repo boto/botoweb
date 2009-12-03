@@ -82,6 +82,9 @@ boto_web.ui.forms = {
 			var field;
 
 			if (this.editing_template) {
+				if (this.properties._type != 'list' && this.fields.length >= 2)
+					return;
+
 				field = this.editing_template.clone(value);
 				this.nested_objs.push(field);
 				field.edit();
@@ -454,11 +457,41 @@ boto_web.ui.forms = {
 						.appendTo(self.field_container);
 
 					var add_selection = function(id, name) {
-						$('<div/>')
+						var selection = $('<div/>')
 							.addClass('clear')
 							.attr('id', 'selection_' + id)
-							.html('<span class="ui-icon ui-icon-closethick" onclick="$(this).parent().remove()"></span> ' + name)
+							.html('<span class="ui-icon ui-icon-closethick"></span> ' + name)
 							.appendTo(self.field_container.find('.selections'))
+
+						if (self.properties._type != 'list' && self.nested_objs.length >= 1) {
+							var remove_field = function() {
+								// Hide custom fields if an existing selection is chosen
+								$(self.nested_objs).each(function() {
+									$(this.node).siblings('br:eq(0)').remove();
+									$(this.node).remove();
+								});
+
+								self.nested_objs = [];
+								self.fields.pop();
+							};
+
+							remove_field();
+
+							selection.find('span').click(function() {
+								$(this).parent().remove();
+
+								// Remove the editor corresponding to this object
+								remove_field();
+
+								// Add a blank editor
+								self.add_field();
+							});
+						}
+						else {
+							selection.find('span').click(function() {
+								$(this).parent().remove();
+							});
+						}
 
 						if (self.editing_template) {
 							self.model.get(id, function(obj) {
@@ -542,7 +575,6 @@ boto_web.ui.forms = {
 									return false;
 								}
 								else {
-									alert('FOUND: ' + this.obj.id);
 									val.push(this.obj.id);
 								}
 							});
@@ -550,10 +582,13 @@ boto_web.ui.forms = {
 							if (!good)
 								return false;
 						}
-
-						self.field_container.find('.selections div').each(function() {
-							val.push(this.id.replace('selection_', ''));
-						});
+						// TODO decide whether selections should be loaded into nested objects...
+						// if not then this should not be in an else
+						else {
+							self.field_container.find('.selections div').each(function() {
+								val.push(this.id.replace('selection_', ''));
+							});
+						}
 
 						if (val.length == 1)
 							val = val[0];
