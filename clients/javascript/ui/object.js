@@ -49,6 +49,12 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				return base_url + 'action=edit/' + self.model.name + '/' + self.obj.id;
 			case 'delete':
 				return base_url + 'action=delete/' + self.model.name + '/' + self.obj.id;
+			case 'mailto':
+				if (data)
+					return "mailto:" + self.obj.properties[data];
+				return "mailto:" + self.obj.properties['email'];
+			case 'attr':
+				return self.obj.properties[data];
 		}
 	};
 
@@ -198,7 +204,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				model = boto_web.env.models[model] || '';
 			}
 
-			var method = {'create':'post', 'view':'get', 'update':'put', 'edit':'put', 'delete':'delete'}[val];
+			var method = {'create':'post', 'view':'get', 'update':'put', 'edit':'put', 'delete':'delete', 'mailto': 'get', 'attr': 'get'}[val];
 
 			// Only allow view, edit, or delete and only if that action is allowed
 			// according to the model API.
@@ -231,7 +237,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				return;
 			}*/
 
-			$(this).attr('href', self.get_link(val, data));
+			$(this).attr('href',$(this).attr("href") +  self.get_link(val, data));
 		});
 
 		$(self.nested_obj_nodes).each(function() {
