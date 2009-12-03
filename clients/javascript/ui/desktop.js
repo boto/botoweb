@@ -24,17 +24,22 @@ boto_web.ui.Desktop = function() {
 	 */
 	self.activate = function(page) {
 		//TODO Trigger appropriate actions on pages.
+		for (var i in self.pages) {
+			if (self.pages[i].node) {
+				self.pages[i].node.hide();
+				if (i.indexOf('section_') >= 0) {
+					self.pages[i].node.remove(true);
+					delete self.pages[i];
+				}
+			}
+		}
+
 		if (!self.pages[page.id]) {
 			self.pages[page.id] = page;
 			self.node.append(page.node);
 			self.num_pages++;
 		} else {
 			page = self.pages[page.id]
-		}
-
-		for (var i in self.pages) {
-			if (self.pages[i].node)
-				self.pages[i].node.hide();
 		}
 
 		page.node.show();

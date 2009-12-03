@@ -58,7 +58,7 @@ boto_web.ui.forms = {
 		this.fields = [this.field];
 		this.perms = properties._perms || [];
 		this.properties = properties;
-		this.editing_template = opts.editing_template;
+		this.editing_template = this.opts.editing_template;
 		this.nested_objs = [];
 
 		properties.id = properties.id || 'field_' + properties.name;
@@ -82,7 +82,7 @@ boto_web.ui.forms = {
 			var field;
 
 			if (this.editing_template) {
-				field = this.editing_template.clone();
+				field = this.editing_template.clone(value);
 				this.nested_objs.push(field);
 				field.edit();
 				$(field.node).show();
@@ -164,7 +164,7 @@ boto_web.ui.forms = {
 		if ($.isArray(properties.value)) {
 			$(properties.value).each(function(i ,prop) {
 				if (i == 0)
-					self.field.val(prop);
+					self.field.val(prop || '');
 				else
 					self.add_field(prop);
 			});
@@ -272,7 +272,7 @@ boto_web.ui.forms = {
 					$('<dd/>').append(
 						//$('<input/>')
 						//	.text(this.name)
-						new boto_web.ui.forms.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value)
+						new boto_web.ui.forms.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value || '')
 					)
 				)
 				.appendTo(self.field_container);
@@ -362,7 +362,7 @@ boto_web.ui.forms = {
 			}
 		});
 
-		this.field.val(this.field.val().replace('T', ' ').replace(/(\d+:\d+)(:\d+)?Z?.*/, '$1 GMT'));
+		this.field.val(this.field.val().replace('T', ' ').replace(/(\d+:\d+)(:\d+)?Z?.*/, '$1 GMT') || '');
 
 		$('<div/>')
 			.addClass('small')
@@ -459,6 +459,12 @@ boto_web.ui.forms = {
 							.attr('id', 'selection_' + id)
 							.html('<span class="ui-icon ui-icon-closethick" onclick="$(this).parent().remove()"></span> ' + name)
 							.appendTo(self.field_container.find('.selections'))
+
+						if (self.editing_template) {
+							self.model.get(id, function(obj) {
+								self.add_field(obj);
+							});
+						}
 					}
 
 					$('<input/>')
@@ -518,7 +524,7 @@ boto_web.ui.forms = {
 
 						$(self.properties.value).each(function() {
 							self.model.get(this.id || this, function(obj) {
-								add_selection(obj.id, obj.properties.name);
+								add_selection(obj.id, obj.properties.name, obj);
 							});
 						});
 					}

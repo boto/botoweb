@@ -409,10 +409,12 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			*/
 		});
 
-		$('<a/>')
-			.html('<span class="ui-icon ui-icon-disk"></span>Save')
-			.click(function() { self.submit() })
-			.prependTo(self.node);
+		if (!this.parent) {
+			$('<a/>')
+				.html('<span class="ui-icon ui-icon-disk"></span>Save')
+				.click(function() { self.submit() })
+				.prependTo(self.node);
+		}
 	};
 
 	self.parse_attributes = function(opt) {
@@ -438,6 +440,9 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			if (!val || !opt.attribute_lists && $(this).is(boto_web.ui.selectors.attribute_list + ' ' + sel)) {
 				return;
 			}
+
+			if (!self.obj.properties)
+				return;
 
 			$(this).attr(prop, '');
 			var container = $(this);
@@ -520,7 +525,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 							editing_template = o;
 						}
 
-						if (self.obj.id) {
+						if (self.obj.follow) {
 							var filters = $(this).attr(boto_web.ui.properties.filter);
 							if(filters){
 								filters = eval(filters);
@@ -553,7 +558,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						}
 					}
 				}
-				else if (self.obj.id && val in self.obj.properties) {
+				else if (self.obj.properties && val in self.obj.properties) {
 					if (this.tagName.toLowerCase() == 'img')
 						$(this).attr('src', self.obj.properties[val]);
 					else if (prop == boto_web.ui.properties.class_name) {
@@ -577,7 +582,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			//	return;
 
 			//if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
-				var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val]}), {
+				var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val] || ''}), {
 					node: $(container),
 					no_text: true,
 					no_label: !needs_label,
@@ -586,6 +591,14 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				self.fields.push(field);
 				field.field_container.hide();
 				field.label.hide();
+
+				if (self.obj.properties[val] && self.obj.properties[val].type == 'reference') {
+					self.obj.follow(val, function(field) { return function(objs) {
+						$(objs).each(function() {
+							field.add_field(this);
+						});
+					}}(field));
+				}
 			//}
 		});
 	}
