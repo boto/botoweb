@@ -237,7 +237,11 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				return;
 			}*/
 
-			$(this).attr('href',$(this).attr("href") +  self.get_link(val, data));
+			if($(this).attr('href')){
+				$(this).attr('href',$(this).attr("href") +  self.get_link(val, data));
+			} else {
+				$(this).attr('href',self.get_link(val, data));
+			}
 		});
 
 		$(self.nested_obj_nodes).each(function() {
