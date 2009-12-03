@@ -40,6 +40,11 @@ TYPE_NAMES = {
 	Key: "object",
 }
 
+CHAR_MAP = {
+	"\x19": "'",
+	"\xe8": "e",
+}
+
 class DefaultObject(object):
 	"""Default object for when re get something that we don't know about yet"""
 	id = None
@@ -93,9 +98,8 @@ class XMLSerializer(object):
 		self.file.write("""<%(prop_name)s %(params)s>%(prop_value)s</%(prop_name)s>""" % args)
 
 	def encode_str(self, prop_name, prop_value):
-		if isinstance(prop_value, unicode) or isinstance(prop_value, str):
-			prop_value = prop_value.encode("utf-8", "ignore")
-		return self.encode_default(prop_name, str(prop_value), "string")
+		prop_value = str(prop_value)
+		return self.encode_default(prop_name, prop_value, "string")
 
 	def encode_int(self, prop_name, prop_value):
 		return self.encode_default(prop_name, str(prop_value), "integer")
@@ -147,6 +151,10 @@ class XMLSerializer(object):
 		if string == None:
 			return None
 		string = str(string)
+		string = string.encode("ascii", "xmlcharrefreplace")
+		for rep in CHAR_MAP:
+			if rep in string:
+				string = string.replace(rep, CHAR_MAP[rep])
 		for ch in BAD_CHARS:
 			if ch in string:
 				return "<![CDATA[ %s ]]>" % string
