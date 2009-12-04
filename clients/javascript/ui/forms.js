@@ -195,10 +195,13 @@ boto_web.ui.forms = {
 				.addClass('ui-button ui-state-default ui-corner-all')
 				.appendTo(self.field_container);
 
-			if (self.editing_template)
-				self.button_new = self.button_new.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); });
-			else
+			if (self.editing_template) {
 				self.button_new = self.button_new.click(function(e) { self.add_field(); e.preventDefault(); });
+				if (properties._type != 'list')
+					self.button_new.hide();
+			}
+			else
+				self.button_new = self.button_new.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); });
 		}
 
 		$('<br/>')
@@ -463,6 +466,8 @@ boto_web.ui.forms = {
 							.html('<span class="ui-icon ui-icon-closethick"></span> ' + name)
 							.appendTo(self.field_container.find('.selections'))
 
+						self.button_new.show();
+
 						if (self.properties._type != 'list' && self.nested_objs.length >= 1) {
 							var remove_field = function() {
 								// Hide custom fields if an existing selection is chosen
@@ -485,6 +490,11 @@ boto_web.ui.forms = {
 
 								// Add a blank editor
 								self.add_field();
+
+								self.button_new.hide();
+							});
+							self.button_new.click(function() {
+								selection.find('span').click();
 							});
 						}
 						else {
@@ -546,6 +556,9 @@ boto_web.ui.forms = {
 					self.button_new
 						.click(function(e) { self.add_field(); e.preventDefault(); })
 						.appendTo(self.field_container);
+
+					if (properties._type != 'list')
+						self.button_new.hide();
 
 					$('<br/>')
 						.addClass('clear')
