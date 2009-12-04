@@ -12,7 +12,6 @@ boto_web.ui.widgets.Report = function(node) {
 	var self = this;
 
 	self.node = $(node);
-	//self.template = $('<div/>').append(self.node.contents().clone());
 	self.breadcrumbs = self.node.parent().find("ul.breadcrumbs");
 	self.model = null;
 	self.filters = [];
@@ -20,7 +19,7 @@ boto_web.ui.widgets.Report = function(node) {
 
 	self.step_1 = function() {
 		self.node.parent().find('#next_step').hide();
-		self.node.find("section").hide();
+		self.node.find("article").hide();
 		self.node.find('#step_1').show();
 		self.filters = [];
 		self.columns = [];
@@ -68,7 +67,7 @@ boto_web.ui.widgets.Report = function(node) {
 	}
 
 	self.step_2 = function(e) {
-		self.node.find("section").hide();
+		self.node.find("article").hide();
 		self.node.find('#step_2').show();
 
 		// Add the breadcrumbs
@@ -93,9 +92,9 @@ boto_web.ui.widgets.Report = function(node) {
 						self.node.find('.filter').show();
 					}
 				})
-				.appendTo(self.node.find('.attributes'));
+				.appendTo(self.node.find('#step_2 .attributes'));
 
-			$('<br/>').appendTo(self.node.find('.attributes'));
+			$('<br/>').appendTo(self.node.find('#step_2 .attributes'));
 		}
 
 		var add_filter = function(e, property) {
@@ -182,22 +181,25 @@ boto_web.ui.widgets.Report = function(node) {
 				.click(function(e) {
 					add_filter(e, p)
 				})
-				.appendTo(self.node.find('.attributes'));
+				.appendTo(self.node.find('#step_2 .attributes'));
 		});
 
+		self.node.find("#preview_button").remove();
 		$('<div/>')
+			.attr("id", "preview_button")
 			.addClass('ui-button ui-state-default ui-corner-all')
 			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview')
 			.click(function() {
 				get_filters();
-				self.node.find('.results').empty();
-				self.step_4(true);
+				self.node.find('#step_2 .preview').empty();
+				self.build_results(true, self.node.find("#step_2 .preview"));
 			})
-			.insertBefore(self.node.find('.results'));
+			.insertBefore(self.node.find('.preview'));
 
+		self.node.find(".preview").empty();
 		$('<br/>')
 			.addClass('clear')
-			.appendTo(self.node.find('.results'));
+			.appendTo(self.node.find('.preview'));
 
 		$('#next_step')
 			.show()
@@ -211,7 +213,7 @@ boto_web.ui.widgets.Report = function(node) {
 	}
 
 	self.step_3 = function() {
-		self.node.find("section").hide();
+		self.node.find("article").hide();
 		self.node.find('#step_3').show();
 
 		// Add the breadcrumbs
@@ -241,9 +243,9 @@ boto_web.ui.widgets.Report = function(node) {
 						self.node.find('label, input').show();
 					}
 				})
-				.appendTo(self.node.find('.attributes'));
+				.appendTo(self.node.find('#step_3 .attributes'));
 
-			$('<br/>').appendTo(self.node.find('.attributes'));
+			$('<br/>').appendTo(self.node.find('#step_3 .attributes'));
 		}
 
 		var set_sort_icons = function() {
@@ -283,11 +285,11 @@ boto_web.ui.widgets.Report = function(node) {
 
 					set_sort_icons();
 				})
-				.appendTo(self.node.find('.attributes'));
+				.appendTo(self.node.find('#step_3 .attributes'));
 			$('<label/>')
 				.attr({'for': this.name})
 				.html(' ' + this._label + '<br />')
-				.appendTo(self.node.find('.attributes'));
+				.appendTo(self.node.find('#step_3 .attributes'));
 		});
 
 		$('<ul/>')
@@ -299,57 +301,70 @@ boto_web.ui.widgets.Report = function(node) {
 			.disableSelection()
 			.appendTo(self.node.find('.columns'));
 
+		self.node.find("#preview_button").remove();
 		$('<div/>')
+			.attr("id", "preview_button")
 			.addClass('ui-button ui-state-default ui-corner-all')
-			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview')
+			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview with Attributes')
 			.click(function() {
 				get_columns();
-				self.node.find('.results').empty();
-				self.step_4(true);
+				self.node.find('#step_3 .preview').empty();
+				self.build_results(true, self.node.find("#step_3 .preview"));
 			})
-			.insertBefore(self.node.find('.results'));
+			.insertBefore(self.node.find('.preview'));
 
+		self.node.find(".preview").empty();
 		$('<br/>')
 			.addClass('clear')
-			.appendTo(self.node.find('.results'));
+			.appendTo(self.node.find('.preview'));
+
 
 		$('#next_step')
 			.show()
 			.unbind()
 			.click(function() {
 				get_columns();
-				self.query = 'model=' + self.model.name
-					+ '&filters=' + escape($.toJSON(self.filters))
-					+ '&columns=' + escape($.toJSON(self.columns));
 				self.step_4();
-				document.location.href += '?' + self.query;
 			})
 			.find('em').html('<strong>Generate the report</strong> and export the results.');
 	}
 
-	self.step_4 = function(preview) {
-		if (!preview) {
-			self.node.find("section").hide();
-			self.node.find('#step_4').show();
+	self.step_4 = function() {
+		self.node.find("article").hide();
+		self.node.find('#step_4').show();
 
-			// Add the breadcrumbs
-			self.breadcrumbs.empty();
-			self.add_breadcrumb(self.step_1, "Reporting");
-			self.add_breadcrumb(self.step_2, self.model.name);
-			self.add_breadcrumb(self.step_3, "Attributes");
-			self.breadcrumbs.append('<li>Results</li>');
+		// Add the breadcrumbs
+		self.breadcrumbs.empty();
+		self.add_breadcrumb(self.step_1, "Reporting");
+		self.add_breadcrumb(self.step_2, self.model.name);
+		self.add_breadcrumb(self.step_3, "Attributes");
+		self.breadcrumbs.append('<li>Results</li>');
 
-			$('#next_step').hide();
+		$('#next_step').hide();
 
-			$('<div/>')
-				.addClass('ui-button ui-state-default ui-corner-all')
-				.html('<span class="ui-icon ui-icon-refresh"></span>Save Report')
-				.click(function() {
-					var editor = boto_web.env.models.Report.create({def: {query: self.query}, hide: ['query']});
-				})
-				.appendTo(self.node.find('.results'));
-		}
+		self.node.find("#step_4 .results").empty();
 
+		var query = 'model=' + self.model.name
+			+ '&filters=' + escape($.toJSON(self.filters))
+			+ '&columns=' + escape($.toJSON(self.columns));
+		$("<a/>")
+			.attr("href", document.location + "?" + query)
+			.text("Click here to link to this report")
+			.appendTo(self.node.find("#step_4 .results"));
+
+		$("<br/>").addClass("clear").appendTo(self.node.find("#step_4 .results"));
+
+		$('<div/>')
+			.addClass('ui-button ui-state-default ui-corner-all')
+			.html('<span class="ui-icon ui-icon-refresh"></span>Save Report')
+			.click(function() {
+				var editor = boto_web.env.models.Report.create({def: {query: self.query}, hide: ['query']});
+			})
+			.appendTo(self.node.find('#step_4 .results'));
+		self.build_results(false, self.node.find("#step_4 .results"));
+	}
+
+	self.build_results = function(preview, resultNode){
 		var thead = $('<thead/>');
 		var tbody = $('<tbody/>');
 		var trhead = $('<tr/>').appendTo(thead);
@@ -370,7 +385,7 @@ boto_web.ui.widgets.Report = function(node) {
 		$('<table/>')
 			.append(thead)
 			.append(tbody)
-			.appendTo(self.node.find('.results'));
+			.appendTo(resultNode);
 
 		self.results = new boto_web.ui.widgets.SearchResults(tbody, self.model);
 
@@ -378,6 +393,7 @@ boto_web.ui.widgets.Report = function(node) {
 			self.results.update(data, page);
 			return !preview;
 		});
+
 	}
 
 	self.update = function() {

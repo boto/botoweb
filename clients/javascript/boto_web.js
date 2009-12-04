@@ -25,7 +25,7 @@
 var boto_web = {
 	ajax: {
 		cachedRequests: {},
-		manager: $.manageAjax.create("cacheQueue", { queue: true, cacheResponse:true, preventDoubbleRequests: false, maxRequests: 3 }),
+		manager: $.manageAjax.create("cacheQueue", { queue: true, cacheResponse:false, preventDoubbleRequests: false, maxRequests: 3 }),
 		stop: function(name, id){
 			boto_web.ajax.cachedRequests = {};
 			boto_web.ajax.manager.abort(name, id);
