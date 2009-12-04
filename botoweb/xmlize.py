@@ -153,10 +153,7 @@ class XMLSerializer(object):
 		if string == None:
 			return None
 		string = str(string)
-		string = string.encode("ascii", "xmlcharrefreplace")
-		for rep in CHAR_MAP:
-			if rep in string:
-				string = string.replace(rep, CHAR_MAP[rep])
+		string = repr(string.encode("ascii", "xmlcharrefreplace")).strip("'")
 		for ch in BAD_CHARS:
 			if ch in string:
 				return "<![CDATA[ %s ]]>" % string
