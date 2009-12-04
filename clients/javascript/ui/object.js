@@ -25,7 +25,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 	self.data_tables = opts.data_tables || [];
 	self.opts = opts;
 
-	self.get_link = function(method, data) {
+	self.get_link = function(method, data, node) {
 		var base_url = document.location.href + '';
 		base_url = base_url.replace(/action=.*?(&|$)/,'');
 		if (base_url.indexOf('?') == -1)
@@ -55,7 +55,11 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					return "mailto:" + self.obj.properties[data];
 				return "mailto:" + self.obj.properties['email'];
 			case 'attr':
-				return self.obj.properties[data];
+				if(data) {
+					return self.obj.properties[data];
+				} else {
+					return $(node).text();
+				}
 		}
 	};
 
@@ -74,7 +78,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			if (boto_web.env.opts.conditions && val in boto_web.env.opts.conditions){
 				var ret = boto_web.env.opts.conditions[val](self.obj, this, self);
 				if(ret === false){
-					$(this).hide();
+					$(this).remove();
 				}
 			} else {
 				$(this).hide();
@@ -209,7 +213,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 
 			// Only allow view, edit, or delete and only if that action is allowed
 			// according to the model API.
-			if (!(method && method in model.methods)) {
+			if (!(method && model && model.methods && method in model.methods)) {
 				$(val).log(model.name + ' does not support this action');
 				return;
 			}
@@ -239,9 +243,9 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			}
 
 			if($(this).attr('href')){
-				$(this).attr('href',$(this).attr("href") +  self.get_link(val, data));
+				$(this).attr('href',$(this).attr("href") +  self.get_link(val, data, this));
 			} else {
-				$(this).attr('href',self.get_link(val, data));
+				$(this).attr('href',self.get_link(val, data, this));
 			}
 		});
 
