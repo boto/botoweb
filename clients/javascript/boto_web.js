@@ -261,9 +261,9 @@ var boto_web = {
 		}
 
 		//DEBUG
-		alert(url + "\n\n" + (new XMLSerializer()).serializeToString(doc));
-		fnc({status: 201, getResponseHeader: function() { return '123' ;}});
-		return
+		//alert(url + "\n\n" + (new XMLSerializer()).serializeToString(doc));
+		//fnc({status: 201, getResponseHeader: function() { return '123' ;}});
+		//return
 
 		opts = {
 			url: url,
@@ -543,7 +543,7 @@ var boto_web = {
 		this.save = function(data, fnc){
 			ref = boto_web.env.base_url + this.href;
 			method = "POST";
-			if("id" in data){
+			if("id" in data && typeof data.id != 'undefined'){
 				delete self._cache[data.id];
 				ref += ("/" + data.id);
 				delete(data['id']);
