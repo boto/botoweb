@@ -326,6 +326,8 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 								opts.callback();
 							}
 
+							document.location.href = ('' + document.location.href).replace(/#.*/, self.get_link('view'))
+
 							document.location.reload(true);
 						});
 					};
@@ -339,6 +341,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					self.parent.submit();
 				else {
 					boto_web.ui.alert('The database has been updated.');
+					document.location.href = ('' + document.location.href).replace(/#.*/, self.get_link('view'))
 					document.location.reload(true);
 				}
 
@@ -370,6 +373,8 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 	};
 
 	self.edit = function(force) {
+		self.node.find(boto_web.ui.selectors.editing_tools).remove();
+
 		$(self.fields).each(function() {
 			this.field_container.siblings().hide();
 			this.label.show();
@@ -418,9 +423,10 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 
 		if (!this.parent) {
 			$('<a/>')
+				.addClass('ui-button ui-state-default ui-corner-all')
 				.html('<span class="ui-icon ui-icon-disk"></span>Save')
 				.click(function() { self.submit() })
-				.prependTo(self.node);
+				.appendTo(self.node);
 		}
 	};
 
@@ -586,7 +592,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			if (!editable)
 				return;
 
-			//if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
+			if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
 				var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val] || ''}), {
 					node: $(container),
 					no_text: true,
@@ -604,7 +610,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						});
 					}}(field));
 				}
-			//}
+			}
 		});
 	}
 
