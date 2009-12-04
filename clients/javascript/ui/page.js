@@ -31,7 +31,12 @@ boto_web.ui.Page = function(html) {
 
 		switch (method) {
 			case 'create':
-				return base_url + 'action=create/' + model.name;
+				if (boto_web.env.opts.editing_templates[model.name]) {
+					base_url = '#' + boto_web.env.opts.editing_templates[model.name] + '?';
+					method = 'new';
+				}
+
+				return base_url + 'action=' + method + '/' + model.name;
 				break;
 		}
 	};
@@ -75,6 +80,9 @@ boto_web.ui.Page = function(html) {
 				else {
 					self.obj = new boto_web.ui.Object(node, model, null, RegExp.$2);
 					$(node).show();
+
+					if (/action=new/.test(document.location.href))
+						self.obj.edit();
 
 					self.title = self.node.find('h1').text();
 					document.title = self.title || document.title;
