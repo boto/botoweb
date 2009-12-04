@@ -214,7 +214,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			// Only allow view, edit, or delete and only if that action is allowed
 			// according to the model API.
 			if (!(method && model && model.methods && method in model.methods)) {
-				$(val).log(model.name + ' does not support this action');
+				$(val).log(model.name + ' does not support action ' + val);
 				return;
 			}
 
@@ -431,6 +431,11 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				.html('<span class="ui-icon ui-icon-disk"></span>Save')
 				.click(function() { self.submit() })
 				.appendTo(self.node);
+			$('<a/>')
+				.addClass('ui-button ui-state-default ui-corner-all')
+				.html('<span class="ui-icon ui-icon-cancel"></span>Cancel')
+				.click(function() { document.location.reload(true);})
+				.appendTo(self.node);
 		}
 	};
 
@@ -489,7 +494,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				//container = $(this).clone();
 				var node = $(this).clone();
 
-				console.log(val + ' ' + self.model.name);
+				//console.log(val + ' ' + self.model.name);
 
 				// Find the best container to hold the new content, if the tag with
 				// this attribute is the only child in its parent object then we

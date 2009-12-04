@@ -270,16 +270,19 @@ boto_web.ui.forms = {
 		$(properties.value).each(function() {
 			if (!this.name) return;
 
+			var inpt = null;
+			if(opts.choices){
+				inpt = new boto_web.ui.forms.dropdown({name: this.name, choices: opts.choices}).field.val(this.value || '');
+			} else {
+				inpt = new boto_web.ui.forms.text({name: this.name}).field.val(this.value || '');
+			}
+
 			$('<dl/>')
 				.addClass('mapping')
 				.append(
 					$('<dt/>')
 						.text(this.name),
-					$('<dd/>').append(
-						//$('<input/>')
-						//	.text(this.name)
-						new boto_web.ui.forms.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value || '')
-					)
+					$('<dd/>').append(inpt)
 				)
 				.appendTo(self.field_container);
 		});

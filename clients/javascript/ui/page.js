@@ -110,7 +110,7 @@ boto_web.ui.Page = function(html) {
 				data = RegExp.$2;
 			}
 
-			var method = {'create':'post'}[val];
+			var method = {'create':'post', "update": "put"}[val];
 
 			var model = '';
 
@@ -125,7 +125,7 @@ boto_web.ui.Page = function(html) {
 			// according to the model API.
 			if (!model || !(method && method in model.methods)) {
 				if (model)
-					$(val).log(model.name + ' does not support this action');
+					$(val).log(model.name + ' does not support action ' + val);
 				return;
 			}
 
