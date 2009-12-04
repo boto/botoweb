@@ -384,7 +384,7 @@ boto_web.ui = {
 									opts.callback();
 								}
 
-								document.location.reload(true);
+								//document.location.reload(true);
 								//$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
 								/*$(this.field).uploadifySettings('onComplete', function() {
 									closeFcn();
@@ -402,7 +402,7 @@ boto_web.ui = {
 					else {
 						closeFcn.call(self.node);
 						boto_web.ui.alert('The database has been updated.');
-						document.location.reload(true)();
+						document.location.reload(true);
 					}
 
 					if (opts.callback) {
@@ -608,7 +608,6 @@ boto_web.ui.watch_url = function() {
 		"change",
 		function(objEvent, objData) {
 			var static_url = objData.currentHash.replace(/#|\?(.*)/g, '');
-			boto_web.ajax.stop();
 
 			if (!static_url) return;
 

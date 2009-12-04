@@ -58,6 +58,8 @@ boto_web.ui.forms = {
 		this.fields = [this.field];
 		this.perms = properties._perms || [];
 		this.properties = properties;
+		this.editing_template = this.opts.editing_template;
+		this.nested_objs = [];
 
 		properties.id = properties.id || 'field_' + properties.name;
 		properties.id += Math.round(Math.random() * 99999);
@@ -77,11 +79,29 @@ boto_web.ui.forms = {
 		}
 
 		this.add_field = function(value) {
-			var field = this.field.clone()
-				.attr('id', this.field.attr('id') + '_' + this.fields.length)
-				.val(value || '')
-				.insertAfter($('<br />').insertAfter(this.fields[this.fields.length - 1]))
-				.focus()
+			var field;
+
+			if (this.editing_template) {
+				if (this.properties._type != 'list' && this.fields.length >= 2)
+					return;
+
+				field = this.editing_template.clone(value);
+				this.nested_objs.push(field);
+				field.edit();
+				$(field.node).show();
+
+				self.field_container.append(
+					$('<br />'),
+					field.node
+				);
+			}
+			else {
+				field = this.field.clone()
+					.attr('id', this.field.attr('id') + '_' + this.fields.length)
+					.val(value || '')
+					.insertAfter($('<br />').insertAfter(this.fields[this.fields.length - 1]))
+					.focus()
+			}
 
 			this.fields.push(field);
 
@@ -147,7 +167,7 @@ boto_web.ui.forms = {
 		if ($.isArray(properties.value)) {
 			$(properties.value).each(function(i ,prop) {
 				if (i == 0)
-					self.field.val(prop);
+					self.field.val(prop || '');
 				else
 					self.add_field(prop);
 			});
@@ -170,11 +190,18 @@ boto_web.ui.forms = {
 		}
 
 		if (properties._item_type in boto_web.env.models) {
-			$('<span/>')
+			self.button_new = $('<span/>')
 				.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + properties._item_type)
 				.addClass('ui-button ui-state-default ui-corner-all')
-				.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); })
 				.appendTo(self.field_container);
+
+			if (self.editing_template) {
+				self.button_new = self.button_new.click(function(e) { self.add_field(); e.preventDefault(); });
+				if (properties._type != 'list')
+					self.button_new.hide();
+			}
+			else
+				self.button_new = self.button_new.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); });
 		}
 
 		$('<br/>')
@@ -251,7 +278,7 @@ boto_web.ui.forms = {
 					$('<dd/>').append(
 						//$('<input/>')
 						//	.text(this.name)
-						new boto_web.ui.forms.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value)
+						new boto_web.ui.forms.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value || '')
 					)
 				)
 				.appendTo(self.field_container);
@@ -341,7 +368,7 @@ boto_web.ui.forms = {
 			}
 		});
 
-		this.field.val(this.field.val().replace('T', ' ').replace(/(\d+:\d+)(:\d+)?Z?.*/, '$1 GMT'));
+		this.field.val(this.field.val().replace('T', ' ').replace(/(\d+:\d+)(:\d+)?Z?.*/, '$1 GMT') || '');
 
 		$('<div/>')
 			.addClass('small')
@@ -389,6 +416,9 @@ boto_web.ui.forms = {
 
 		var self = this;
 
+		if (self.editing_template)
+			self.field = $(self.editing_template).attr('name', properties.name);
+
 		self.init = function() {
 			if (!(self.properties._item_type in boto_web.env.models))
 				return;
@@ -430,11 +460,54 @@ boto_web.ui.forms = {
 						.appendTo(self.field_container);
 
 					var add_selection = function(id, name) {
-						$('<div/>')
+						var selection = $('<div/>')
 							.addClass('clear')
 							.attr('id', 'selection_' + id)
-							.html('<span class="ui-icon ui-icon-closethick" onclick="$(this).parent().remove()"></span> ' + name)
+							.html('<span class="ui-icon ui-icon-closethick"></span> ' + name)
 							.appendTo(self.field_container.find('.selections'))
+
+						self.button_new.show();
+
+						if (self.properties._type != 'list' && self.nested_objs.length >= 1) {
+							var remove_field = function() {
+								// Hide custom fields if an existing selection is chosen
+								$(self.nested_objs).each(function() {
+									$(this.node).siblings('br:eq(0)').remove();
+									$(this.node).remove();
+								});
+
+								self.nested_objs = [];
+								self.fields.pop();
+							};
+
+							remove_field();
+
+							selection.find('span').click(function() {
+								$(this).parent().remove();
+
+								// Remove the editor corresponding to this object
+								remove_field();
+
+								// Add a blank editor
+								self.add_field();
+
+								self.button_new.hide();
+							});
+							self.button_new.click(function() {
+								selection.find('span').click();
+							});
+						}
+						else {
+							selection.find('span').click(function() {
+								$(this).parent().remove();
+							});
+						}
+
+						if (self.editing_template) {
+							self.model.get(id, function(obj) {
+								self.add_field(obj);
+							});
+						}
 					}
 
 					$('<input/>')
@@ -480,11 +553,12 @@ boto_web.ui.forms = {
 						.addClass('selections')
 						.appendTo(self.field_container);
 
-					$('<span/>')
-						.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + self.properties._item_type)
-						.addClass('ui-button ui-state-default ui-corner-all')
-						.click(function(e) { boto_web.env.models[self.properties._item_type].create(); e.preventDefault(); })
+					self.button_new
+						.click(function(e) { self.add_field(); e.preventDefault(); })
 						.appendTo(self.field_container);
+
+					if (properties._type != 'list')
+						self.button_new.hide();
 
 					$('<br/>')
 						.addClass('clear')
@@ -496,7 +570,7 @@ boto_web.ui.forms = {
 
 						$(self.properties.value).each(function() {
 							self.model.get(this.id || this, function(obj) {
-								add_selection(obj.id, obj.properties.name);
+								add_selection(obj.id, obj.properties.name, obj);
 							});
 						});
 					}
@@ -504,9 +578,30 @@ boto_web.ui.forms = {
 					self.field_container.data('get_value', function() {
 						var val = [];
 
-						self.field_container.find('.selections div').each(function() {
-							val.push(this.id.replace('selection_', ''));
-						});
+						if (self.nested_objs.length) {
+							var good = true;
+
+							$(self.nested_objs).each(function() {
+								if (!this.submitted) {
+									this.submit();
+									good = false;
+									return false;
+								}
+								else {
+									val.push(this.obj.id);
+								}
+							});
+
+							if (!good)
+								return false;
+						}
+						// TODO decide whether selections should be loaded into nested objects...
+						// if not then this should not be in an else
+						else {
+							self.field_container.find('.selections div').each(function() {
+								val.push(this.id.replace('selection_', ''));
+							});
+						}
 
 						if (val.length == 1)
 							val = val[0];
