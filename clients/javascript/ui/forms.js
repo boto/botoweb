@@ -99,7 +99,7 @@ boto_web.ui.forms = {
 				field = this.field.clone()
 					.attr('id', this.field.attr('id') + '_' + this.fields.length)
 					.val(value || '')
-					.insertAfter($('<br />').insertAfter(this.fields[this.fields.length - 1]))
+					.insertAfter($('<br />').appendTo(this.field_container))
 					.focus()
 			}
 
