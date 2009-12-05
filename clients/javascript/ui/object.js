@@ -595,7 +595,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				}
 			}
 			else {
-				//$(this).empty();
+				$(this).empty();
 			}
 
 			// If this is not an editable section, don't add an editing form
