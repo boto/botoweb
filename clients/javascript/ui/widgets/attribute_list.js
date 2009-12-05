@@ -17,6 +17,8 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 	self.model = model;
 	self.properties = [];
 	self.sequence = self.node.attr(boto_web.ui.properties.attributes);
+	self.existing_only = self.node.attr(boto_web.ui.properties.existing_only) || '';
+	self.existing_only = self.existing_only.split(',');
 
 	if (self.sequence && self.sequence != 'all')
 		self.sequence = self.sequence.split(',')
@@ -96,8 +98,14 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 
 		if (template.length)
 			container.append(template);
-		else if (props._type in {list:1,query:1,reference:1})
-			container.append($('<div/>').attr(boto_web.ui.properties.attribute, props.name));
+		else if (props._type in {list:1,query:1,reference:1}) {
+			var field = $('<div/>').attr(boto_web.ui.properties.attribute, props.name);
+
+			if ($.inArray(props.name, self.existing_only) >= 0)
+				field.attr(boto_web.ui.properties.existing_only, 'true');
+
+			container.append(field);
+		}
 		else
 			container.attr(boto_web.ui.properties.attribute, props.name);
 

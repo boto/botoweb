@@ -37,6 +37,7 @@ boto_web.ui = {
 		'attribute':      '*[bwAttribute]',
 		'template':       '*[bwTemplate]',
 		'class_name':     '*[bwClass]',
+		'existing_only':  '*[bwExistingOnly]',
 		'link':           'a[bwLink]'
 	},
 
@@ -51,6 +52,7 @@ boto_web.ui = {
 		'editable':       'bwEditable',
 		'class_name':     'bwClass',
 		'filter':        'bwFilter',
+		'existing_only':  'bwExistingOnly',
 		'def':            'bwDefault'
 	},
 
