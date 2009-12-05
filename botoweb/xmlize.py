@@ -40,13 +40,6 @@ TYPE_NAMES = {
 	Key: "object",
 }
 
-CHAR_MAP = {
-	"\x19": "'",
-	'\x1c': "",
-	'\x1d': "",
-	"\xe8": "e",
-}
-
 class DefaultObject(object):
 	"""Default object for when re get something that we don't know about yet"""
 	id = None
@@ -100,7 +93,10 @@ class XMLSerializer(object):
 		self.file.write("""<%(prop_name)s %(params)s>%(prop_value)s</%(prop_name)s>""" % args)
 
 	def encode_str(self, prop_name, prop_value):
-		prop_value = str(prop_value)
+		if isinstance(prop_value, unicode):
+			prop_value = prop_value.encode('ascii', 'xmlcharrefreplace')
+		else:
+			prop_value = str(prop_value)
 		return self.encode_default(prop_name, prop_value, "string")
 
 	def encode_int(self, prop_name, prop_value):
@@ -152,8 +148,7 @@ class XMLSerializer(object):
 		"""Return what might be a CDATA encoded string"""
 		if string == None:
 			return None
-		string = str(string)
-		string = repr(string.encode("ascii", "xmlcharrefreplace")).strip("'").replace("\\n", "\n");
+		string = repr(string.encode("ascii", "xmlcharrefreplace")).strip("'").strip('"').replace("\\n", "\n");
 		for ch in BAD_CHARS:
 			if ch in string:
 				return "<![CDATA[ %s ]]>" % string

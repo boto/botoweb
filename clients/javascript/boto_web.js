@@ -629,10 +629,13 @@ var boto_web = {
 };
 
 //
-// Global Ajax retrying on 408
+// Global Ajax retrying on:
+// 408 - Request Timeout
+// 502 - Proxy Timeout
+// 504 - Gateway Timeout
 //
 $(document).ajaxError(function(e, request, opts, err){
-	if(request.status == 408){
+	if(request.status == 408 || request.status == 502 || request.status == 504){
 		$.ajax(opts);
 	}
 });
