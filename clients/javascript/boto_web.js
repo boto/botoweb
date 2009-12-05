@@ -581,10 +581,10 @@ var boto_web = {
 		self.id = properties.id;
 
 		self.follow = function(property, fnc, filters) {
+			var props = self.properties[property];
+
 			if (typeof props == 'undefined')
 				return;
-
-			var props = self.properties[property];
 
 			if (!$.isArray(props))
 				props = [props];
