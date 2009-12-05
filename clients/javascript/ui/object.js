@@ -603,11 +603,29 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				return;
 
 			if (val in self.model.prop_map && $.inArray('write', self.model.prop_map[val]._perm) >= 0) {
+				var choices;
+
+				// TODO Generalize complexType options
+				if (self.obj && self.model.prop_map[val]._type == 'complexType') {
+					choices = [{text: 'ID', value: 'id'}];
+					if (self.obj.properties.primary_key && self.obj.properties.primary_key != 'id')
+						choices.push({text: self.obj.properties.primary_key, value: self.obj.properties.primary_key});
+
+					if (self.obj.properties.target_class_name) {
+						$(boto_web.env.models[self.obj.properties.target_class_name].properties).each(function() {
+							if ($.inArray('write', this._perm) >= 0)
+								choices.push({text: this._label, value: this.name});
+						});
+						choices.sort(function(a,b) { return (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : -1; });
+					}
+				}
+
 				var field = boto_web.ui.forms.property_field($.extend(self.model.prop_map[val], {name: val, value: self.obj.properties[val] || ''}), {
 					node: $(container),
 					no_text: true,
 					no_label: !needs_label,
-					editing_template: editing_template
+					editing_template: editing_template,
+					choices: choices
 				});
 				self.fields.push(field);
 				field.field_container.hide();
