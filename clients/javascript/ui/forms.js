@@ -60,7 +60,10 @@ boto_web.ui.forms = {
 		this.properties = properties;
 		this.editing_template = this.opts.editing_template;
 		this.nested_objs = [];
-		this.existing_only = opts.existing_only;
+		this.existing_only = this.opts.existing_only;
+
+		if (this.existing_only)
+			this.editing_template = '';
 
 		properties.id = properties.id || 'field_' + properties.name;
 		properties.id += Math.round(Math.random() * 99999);
@@ -192,10 +195,10 @@ boto_web.ui.forms = {
 
 		if (properties._item_type in boto_web.env.models) {
 			if (self.existing_only) {
-				self.button_new = $('<span/>')
+				//self.button_new = $('<span/>')
 				self.field.hide();
 			}
-			else {
+			//else {
 				self.button_new = $('<span/>')
 					.html('<span class="ui-icon ui-icon-plusthick"></span>New ' + properties._item_type)
 					.addClass('ui-button ui-state-default ui-corner-all')
@@ -208,7 +211,7 @@ boto_web.ui.forms = {
 				}
 				else
 					self.button_new = self.button_new.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); });
-			}
+			//}
 		}
 
 		$('<br/>')
@@ -278,8 +281,8 @@ boto_web.ui.forms = {
 			if (!this.name) return;
 
 			var inpt = null;
-			if(opts.choices){
-				inpt = new boto_web.ui.forms.dropdown({name: this.name, choices: opts.choices}).field.val(this.value || '');
+			if(this.opts.choices){
+				inpt = new boto_web.ui.forms.dropdown({name: this.name, choices: this.opts.choices}).field.val(this.value || '');
 			} else {
 				inpt = new boto_web.ui.forms.text({name: this.name}).field.val(this.value || '');
 			}
@@ -564,8 +567,12 @@ boto_web.ui.forms = {
 						.appendTo(self.field_container);
 
 					self.button_new
-						.click(function(e) { self.add_field(); e.preventDefault(); })
 						.appendTo(self.field_container);
+
+					if (self.editing_template)
+						self.button_new.click(function(e) { self.add_field(); e.preventDefault(); });
+					else
+						self.button_new = self.button_new.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); });
 
 					if (properties._type != 'list')
 						self.button_new.hide();
