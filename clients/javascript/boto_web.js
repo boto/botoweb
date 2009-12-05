@@ -187,6 +187,9 @@ var boto_web = {
 	// Find a specific object by ID
 	//
 	get_by_id: function(url, id, fnc){
+		if(!id){
+			throw new Error("Error, ID can not be null!");
+		}
 		boto_web.ajax.get(url + "/" + id, function(data){
 			$(data).children().each(function(){
 				var curobj = boto_web.parseObject(this);
@@ -583,11 +586,14 @@ var boto_web = {
 		self.follow = function(property, fnc, filters) {
 			var props = self.properties[property];
 
+			if(typeof props == 'undefined')
+				return;
+
 			if (!$.isArray(props))
 				props = [props];
 
 			$(props).each(function() {
-				if (this.id != undefined) {
+				if (typeof this.id != 'undefined') {
 					if (this.item_type) {
 						boto_web.env.models[this.item_type].get(this.id, function(obj) {
 							return fnc([obj]);
