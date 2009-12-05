@@ -110,7 +110,7 @@ boto_web.ui.Page = function(html) {
 				data = RegExp.$2;
 			}
 
-			var method = {'create':'post', "update": "put"}[val];
+			var method = {'create':'post'}[val];
 
 			var model = '';
 
