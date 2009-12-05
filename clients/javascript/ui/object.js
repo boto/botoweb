@@ -376,7 +376,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			self.parent.update_tables();
 	};
 
-	self.edit = function(force) {
+	self.edit = function(nested) {
 		self.node.find(boto_web.ui.selectors.editing_tools).remove();
 
 		$(self.fields).each(function() {
@@ -385,7 +385,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			this.field_container.show();
 
 			if (this.editing_template) {
-				this.editing_template.edit();
+				this.editing_template.edit(true);
 
 				// When creating a new object, expand all nested objects for quicker input
 				if (!self.obj.id)
@@ -425,7 +425,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			*/
 		});
 
-		if (!this.parent) {
+		if (!nested) {
 			$('<a/>')
 				.addClass('ui-button ui-state-default ui-corner-all')
 				.html('<span class="ui-icon ui-icon-disk"></span>Save')
@@ -436,6 +436,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				.html('<span class="ui-icon ui-icon-cancel"></span>Cancel')
 				.click(function() { document.location.reload(true);})
 				.appendTo(self.node);
+			$('<br class="clear"/>').appendTo(self.node);
 		}
 	};
 
