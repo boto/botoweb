@@ -410,6 +410,8 @@ boto_web.ui = {
 					}
 				}
 				else {
+					self.save_button.removeClass('ui-state-disabled');
+					self.submitting = false;
 					boto_web.ui.alert($(data.responseXML).find('message').text(), 'There was an error updating the database');
 				}
 				// TODO data save callback
@@ -431,10 +433,12 @@ boto_web.ui = {
 			width: 300 * self.columns.length,
 			buttons: {
 				Save: function() {
+					if (self.submitting)
+						return;
 					// Disable clicking Save again
-					var button = $(this).siblings('.ui-dialog-buttonpane').find('button:eq(0)');
-					button.addClass('ui-state-disabled');
-					button.unbind();
+					self.save_button = $(this).siblings('.ui-dialog-buttonpane').find('button:eq(0)');
+					self.save_button.addClass('ui-state-disabled');
+					self.submitting = true;
 
 					if (self.submit(closeFcn))
 						closeFcn.call(this);
