@@ -40,13 +40,6 @@ TYPE_NAMES = {
 	Key: "object",
 }
 
-CHAR_MAP = {
-	"\x19": "'",
-	'\x1c': "",
-	'\x1d': "",
-	"\xe8": "e",
-}
-
 class DefaultObject(object):
 	"""Default object for when re get something that we don't know about yet"""
 	id = None
@@ -153,7 +146,7 @@ class XMLSerializer(object):
 		if string == None:
 			return None
 		string = str(string)
-		string = repr(string.encode("ascii", "xmlcharrefreplace")).strip("'").replace("\\n", "\n");
+		string = repr(string.encode("ascii", "xmlcharrefreplace")).strip("'").strip('"').replace("\\n", "\n");
 		for ch in BAD_CHARS:
 			if ch in string:
 				return "<![CDATA[ %s ]]>" % string
