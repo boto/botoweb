@@ -590,7 +590,7 @@ var boto_web = {
 				props = [props];
 
 			$(props).each(function() {
-				if (this.id != undefined) {
+				if (typeof this.id != 'undefined') {
 					if (this.item_type) {
 						boto_web.env.models[this.item_type].get(this.id, function(obj) {
 							return fnc([obj]);
