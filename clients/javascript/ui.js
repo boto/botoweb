@@ -468,6 +468,7 @@ boto_web.ui = {
 			self.model.del(self.obj.id, function(data) {
 				if (data.status < 300) {
 					boto_web.ui.alert('The database has been updated.');
+					document.location.reload(true);
 				}
 				else {
 					boto_web.ui.alert('There was an error updating the database.');
@@ -482,7 +483,7 @@ boto_web.ui = {
 			title: 'Please confirm',
 			dialogClass: 'confirm',
 			buttons: {
-				'Yes, delete it': function() { self.submit(); closeFcn.call(this); document.location.reload(true)(); },
+				'Yes, delete it': function() { self.submit(); closeFcn.call(this); },
 				Cancel: closeFcn
 			}
 		});
