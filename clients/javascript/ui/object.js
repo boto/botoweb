@@ -48,6 +48,8 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id + '&action=edit';
 
 				return base_url + 'action=edit/' + self.model.name + '/' + self.obj.id;
+			case 'clone':
+				return '#' + boto_web.env.opts.model_template.replace('*', self.model.name) + '?id=' + self.obj.id + '&action=clone';
 			case 'delete':
 				return base_url + 'action=delete/' + self.model.name + '/' + self.obj.id;
 			case 'mailto':
@@ -209,7 +211,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				model = boto_web.env.models[model] || '';
 			}
 
-			var method = {'create':'post', 'view':'get', 'update':'put', 'edit':'put', 'delete':'delete', 'mailto': 'get', 'attr': 'get'}[val];
+			var method = {'create':'post', 'clone':'post', 'view':'get', 'update':'put', 'edit':'put', 'delete':'delete', 'mailto': 'get', 'attr': 'get'}[val];
 
 			// Only allow view, edit, or delete and only if that action is allowed
 			// according to the model API.
@@ -237,6 +239,14 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			else if (val == 'edit') {
 				$(this).click(function(e) {
 					self.edit();
+					e.preventDefault();
+				});
+				return;
+			}
+			else if (val == 'clone') {
+				$(this).click(function(e) {
+					self.edit();
+					self.obj.id = '';
 					e.preventDefault();
 				});
 				return;

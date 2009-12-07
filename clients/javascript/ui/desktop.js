@@ -33,7 +33,7 @@ boto_web.ui.Desktop = function() {
 						self.pages[i].node.remove(true);
 						delete self.pages[i];
 					} catch(e) {
-						console.log(e);
+						//console.log(e);
 					}
 				}
 			}

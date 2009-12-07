@@ -17,7 +17,7 @@ boto_web.ui.widgets.EditingTools = function(node, model, actions) {
 	self.node = $(node).addClass('widget-editing_tools');
 	self.model = model;
 
-	actions = actions || 'delete edit';
+	actions = actions || 'delete clone edit';
 	actions = actions.split(' ');
 
 	for (i in actions) {
@@ -25,6 +25,10 @@ boto_web.ui.widgets.EditingTools = function(node, model, actions) {
 			case 'create':
 				if ('post' in self.model.methods)
 					$('<li><a bwLink="create"><span class="ui-icon ui-icon-plus"></span>New ' + self.model.name + '</a></li>').prependTo(self.node);
+				break;
+			case 'clone':
+				if ('post' in self.model.methods)
+					$('<li><a bwLink="clone"><span class="ui-icon ui-icon-copy"></span>Clone ' + self.model.name + '</a></li>').prependTo(self.node);
 				break;
 			case 'delete':
 				if ('delete' in self.model.methods)
