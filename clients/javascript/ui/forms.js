@@ -91,7 +91,7 @@ boto_web.ui.forms = {
 
 				field = this.editing_template.clone(value);
 				this.nested_objs.push(field);
-				field.edit();
+				field.edit(true);
 				$(field.node).show();
 
 				self.field_container.append(
@@ -574,7 +574,7 @@ boto_web.ui.forms = {
 					else
 						self.button_new = self.button_new.click(function(e) { boto_web.env.models[properties._item_type].create({callback: function() {self.init()}}); e.preventDefault(); });
 
-					if (properties._type != 'list')
+					if (properties._type != 'list' && self.properties.value)
 						self.button_new.hide();
 
 					$('<br/>')
