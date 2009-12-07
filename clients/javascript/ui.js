@@ -470,6 +470,12 @@ boto_web.ui = {
 			self.model.del(self.obj.id, function(data) {
 				if (data.status < 300) {
 					boto_web.ui.alert('The database has been updated.');
+
+					// Go back until we hit a page that doesn't belong to this object.
+					while (document.location.hash.indexOf('id=' + self.obj.id) >= 0) {
+						history.go(-1);
+					}
+
 					document.location.reload(true);
 				}
 				else {

@@ -161,7 +161,6 @@ boto_web.ui.widgets.DataTable = function(table) {
 	}
 
 	this.del = function(row) {
-		alert('deleting ' + row);
 		this.data_table.fnDeleteRow(row);
 	}
 
