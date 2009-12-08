@@ -269,6 +269,8 @@ boto_web.ui.widgets.Report = function(node) {
 		$(self.model.properties).each(function() {
 			if ($.inArray('read', this._perm) < 0) return;
 
+			var prop = this;
+
 			$('<input/>')
 				.attr({id: this.name, value: this._label, type: 'checkbox'})
 				.change(function() {
@@ -280,7 +282,7 @@ boto_web.ui.widgets.Report = function(node) {
 							.appendTo(self.node.find('ul'))
 					}
 					else {
-						$('#column_' + this.id).remove();
+						$('.columns #column_' + this.id).remove();
 					}
 
 					set_sort_icons();
