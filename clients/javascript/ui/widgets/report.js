@@ -378,10 +378,22 @@ boto_web.ui.widgets.Report = function(node) {
 			$('<th/>')
 				.text(p._label)
 				.appendTo(trhead);
-			$('<td/>')
-				.text(' ')
-				.attr('bwAttribute', p.name)
-				.appendTo(trbody);
+
+			if (p.name == 'name') {
+				$('<td/>')
+					.append($('<a>')
+						.text(' ')
+						.attr(boto_web.ui.properties.attribute, p.name)
+						.attr(boto_web.ui.properties.link, 'view')
+					)
+					.appendTo(trbody);
+			}
+			else {
+				$('<td/>')
+					.text(' ')
+					.attr(boto_web.ui.properties.attribute, p.name)
+					.appendTo(trbody);
+			}
 		});
 
 		$('<table/>')
