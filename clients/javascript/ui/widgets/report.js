@@ -379,19 +379,37 @@ boto_web.ui.widgets.Report = function(node) {
 				.text(p._label)
 				.appendTo(trhead);
 
+			var is_list = self.model.prop_map[p.name]._type == 'list';
+			var is_ref = self.model.prop_map[p.name]._item_type in boto_web.env.models;
+			var linked_name = $('<a/>')
+				.attr(boto_web.ui.properties.attribute, 'name')
+				.attr(boto_web.ui.properties.link, 'view');
+			var node = $('<span/>')
+				.attr(boto_web.ui.properties.attribute, p.name);
+
+
 			if (p.name == 'name') {
 				$('<td/>')
-					.append($('<a>')
-						.text(' ')
+					.append(linked_name)
+					.appendTo(trbody);
+			}
+			else if (is_list) {
+				$('<td/>')
+					.append($('<ul/>').append($('<li/>')
 						.attr(boto_web.ui.properties.attribute, p.name)
-						.attr(boto_web.ui.properties.link, 'view')
-					)
+						.append(is_ref ? linked_name : null)
+					))
+					.appendTo(trbody);
+			}
+			else if (is_ref) {
+				$('<td/>')
+					.append(node.append(linked_name))
 					.appendTo(trbody);
 			}
 			else {
 				$('<td/>')
-					.text(' ')
-					.attr(boto_web.ui.properties.attribute, p.name)
+					.append(
+					)
 					.appendTo(trbody);
 			}
 		});
@@ -401,7 +419,7 @@ boto_web.ui.widgets.Report = function(node) {
 			.append(tbody)
 			.appendTo(resultNode);
 
-		self.results = new boto_web.ui.widgets.SearchResults(tbody, self.model);
+		self.results = new boto_web.ui.widgets.SearchResults(tbody, self.model, {min_memory: true});
 
 		self.model.query(self.filters, function(data, page) {
 			self.results.update(data, page);

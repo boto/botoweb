@@ -8,7 +8,7 @@
  *
  * @param node the node containing the search result template.
  */
-boto_web.ui.widgets.SearchResults = function(node, model) {
+boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 	var self = this;
 
 	self.node = $(node);
@@ -19,6 +19,8 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 	self.node.empty();
 	self.def = self.node.attr(boto_web.ui.properties.def);
 	self.limit_pages = self.node.attr("bwLimit");
+	self.opts = opts || {};
+	self.num_results = 0;
 
 	self.update = function(results, append) {
 		if (!results || results.length == 0)
@@ -27,13 +29,14 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 		var nodes = [];
 		var objects = [];
 		for (var i in results) {
+			self.num_results++;
 			var o = new boto_web.ui.Object(self.template.clone(), boto_web.env.models[results[i].properties.model], results[i]);
 			nodes.push(o.node);
 			objects.push(o);
 		}
 
 		if (self.data_table) {
-			var indices = self.data_table.append(nodes);
+			var indices = self.data_table.append(nodes, {no_redraw: (self.opts.min_memory && self.num_results > 50)});
 
 			$(indices).each(function (i, row) {
 				if (!(objects[i].obj.id in self.model.data_tables))
@@ -54,6 +57,7 @@ boto_web.ui.widgets.SearchResults = function(node, model) {
 
 	self.reset = function() {
 		self.data_table.reset();
+		self.num_results = 0;
 	}
 
 	if (self.def == 'all') {
