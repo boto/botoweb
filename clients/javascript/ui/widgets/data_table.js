@@ -118,10 +118,14 @@ boto_web.ui.widgets.DataTable = function(table) {
 			});
 	}
 
-	this.append = function(rows) {
+	this.append = function(rows, opts) {
 		if (!$.isArray(rows))
 			return;
 
+		if (!opts)
+			opts = {};
+
+		var self = this;
 		var settings = this.data_table.fnSettings();
 
 		var data = [];
@@ -140,8 +144,11 @@ boto_web.ui.widgets.DataTable = function(table) {
 		if (data.length == 0)
 			return;
 
-		var indices = this.data_table.fnAddData(data, true);
-		this.add_events();
+		var redraw = !opts.no_redraw;
+		var indices = this.data_table.fnAddData(data, redraw);
+
+		if (redraw)
+			this.add_events();
 
 		return indices;
 	}
