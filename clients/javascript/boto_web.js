@@ -147,10 +147,10 @@ var boto_web = {
 
 		$(data).children().each(function(){
 			var value = null;
-			if($(this).attr("type") == "reference"){
+			if($(this).attr("type") in {reference:1,blob:1}){
 				value = {
 					name: this.tagName,
-					type: 'reference',
+					type: $(this).attr("type"),
 					href: $(this).attr("href"),
 					id: $(this).attr("id"),
 					item_type: $(this).attr('item_type')
@@ -608,6 +608,22 @@ var boto_web = {
 							return fnc(objects);
 						}
 					});
+				}
+			});
+		}
+
+		self.load = function(property, fnc) {
+			var props = self.properties[property];
+
+			if (typeof props == 'undefined')
+				return;
+
+			if (!$.isArray(props))
+				props = [props];
+
+			$(props).each(function() {
+				if (this.type == 'blob') {
+					boto_web.ajax.get(boto_web.env.base_url + self.href + '/' + self.id + '/' + this.href, fnc);
 				}
 			});
 		}

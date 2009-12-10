@@ -586,9 +586,18 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 							values = [values];
 
 						$(values).each(function() {
-							node.clone()
-								.html(this.toString())
-								.appendTo(container);
+							if (self.model.prop_map[val]._type == 'blob') {
+								self.obj.load(val, function (html) {
+									node.clone()
+										.html(html)
+										.appendTo(container);
+								});
+							}
+							else {
+								node.clone()
+									.html(this.toString())
+									.appendTo(container);
+							}
 						});
 					}
 				}
@@ -596,6 +605,12 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			else if (self.obj.properties && val in self.obj.properties) {
 				if (this.tagName.toLowerCase() == 'img')
 					$(this).attr('src', self.obj.properties[val]);
+				else if (self.model.prop_map[val]._type == 'blob') {
+					var node = $(this);
+					self.obj.load(val, function (html) {
+						node.html(html);
+					});
+				}
 				else if (prop == boto_web.ui.properties.class_name) {
 					$(this).addClass('model-' + self.obj.properties.model);
 					$(this).addClass('value-' + self.obj.properties[val].toString().replace(/\s[\s\S]*$/, ''));
