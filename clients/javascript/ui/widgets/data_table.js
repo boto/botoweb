@@ -21,6 +21,8 @@ boto_web.ui.widgets.DataTable = function(table, opts) {
 		sPaginationType: 'full_numbers'
 	});
 
+	table.data('data_table', this.data_table);
+
 	this.opts = opts || {};
 
 	var settings = this.data_table.fnSettings();
@@ -103,11 +105,6 @@ boto_web.ui.widgets.DataTable = function(table, opts) {
 
 		this.progressbar.progressbar('option', 'value', percent);
 		this.progress_text.text(text);
-
-		if (percent == 100) {
-			//this.status.hide();
-			this.data_table.fnDraw();
-		}
 	}
 
 	this.add_events = function() {

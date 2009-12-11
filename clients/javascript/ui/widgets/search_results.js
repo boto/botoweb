@@ -19,7 +19,7 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 	self.node.empty();
 	self.def = self.node.attr(boto_web.ui.properties.def);
 	self.limit_pages = self.node.attr("bwLimit");
-	self.opts = opts || {};
+	self.opts = opts || { };
 	self.num_results = 0;
 
 	self.update = function(results, append, count) {
@@ -37,6 +37,9 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 
 		if (self.data_table) {
 			if (count) {
+				if (count > 50) {
+					self.opts.min_memory = true;
+				}
 				self.data_table.update_progress(100 * self.num_results / count, 'Total ' + count + ' results');
 			}
 
