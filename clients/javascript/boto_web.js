@@ -331,7 +331,24 @@ var boto_web = {
 		});
 	},
 
-	count: function(url, fnc){
+	count: function(url, query, fnc){
+		// Build the query string
+		parts = [];
+		for (query_num in query){
+			query_part = query[query_num];
+			name = query_part[0];
+			op = query_part[1];
+			value = query_part[2];
+
+			if(value.constructor.toString().indexOf("Array") != -1){
+				parts.push('["' + name + '","' + op + '",["' + value.join('","') + '"]]');
+			} else {
+				parts.push('["' + name + '","' + op + '","' + value + '"]');
+			}
+		}
+
+		url += "?query=[" + escape(parts.join(",") + "]");
+
 		$.ajax({
 			type: "HEAD",
 			url: url,
@@ -507,12 +524,8 @@ var boto_web = {
 			return this.find([], fnc);
 		}
 
-		this.count = function(fnc){
-			if (self.obj_count)
-				return fnc(self.obj_count);
-
-			boto_web.count(boto_web.env.base_url + this.href, function(count) {
-				self.obj_count = count;
+		this.count = function(query, fnc){
+			boto_web.count(boto_web.env.base_url + this.href, query, function(count) {
 				fnc(count);
 			});
 		}
