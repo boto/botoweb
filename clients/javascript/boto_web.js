@@ -39,9 +39,10 @@ var boto_web = {
 				cachedRequests[ajaxID] = [callback];
 
 				boto_web.ajax.manager.add({
-					success: function(data){
+					success: function(data, status, xhr){
+						var xhr = boto_web.ajax.manager.getXHR(ajaxID);
 						for(cbnum in cachedRequests[ajaxID]){
-							cachedRequests[ajaxID][cbnum](data);
+							cachedRequests[ajaxID][cbnum](data, xhr);
 						}
 						delete cachedRequests[ajaxID];
 					},
@@ -72,7 +73,7 @@ var boto_web = {
 		}
 
 		var page = 0;
-		var process = function(xml){
+		var process = function(xml, xhr){
 			var data = [];
 			$(xml).find(obj_name).each(function(){
 				var obj = boto_web.parseObject(this);
@@ -83,7 +84,7 @@ var boto_web = {
 			url = $(xml).find('link[rel=next]').attr('href');
 
 			// Get the next page
-			if (fnc(data, page++) && url)
+			if (fnc(data, page++, xhr.getResponseHeader('X-Result-Count')) && url)
 				boto_web.ajax.get(url, process);
 		}
 
@@ -117,7 +118,7 @@ var boto_web = {
 		url += "?query=[" + escape(parts.join(",") + "]");
 
 		var page = 0;
-		var process = function(xml){
+		var process = function(xml, xhr){
 			var data = [];
 			$(xml).find(obj_name).each(function(){
 				var obj = boto_web.parseObject(this);
@@ -128,7 +129,7 @@ var boto_web = {
 			url = $(xml).find('link[rel=next]').attr('href');
 
 			// Get the next page
-			if (fnc(data, page++) && url)
+			if (fnc(data, page++, xhr.getResponseHeader('X-Result-Count')) && url)
 				boto_web.ajax.get(url, process);
 		}
 
@@ -335,7 +336,7 @@ var boto_web = {
 			type: "HEAD",
 			url: url,
 			complete: function(data) {
-				fnc(data.getResponseHeader('Count'));
+				fnc(data.getResponseHeader('X-Result-Count'));
 			}
 		});
 	},
@@ -477,28 +478,28 @@ var boto_web = {
 
 		this.find = function(filters, fnc){
 			var self = this;
-			boto_web.find(boto_web.env.base_url + this.href, filters, $.map(boto_web.env.routes, function(m) { return m.obj }).join(', '), function(data, page){
+			boto_web.find(boto_web.env.base_url + this.href, filters, $.map(boto_web.env.routes, function(m) { return m.obj }).join(', '), function(data, page, count){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
 						var model = boto_web.env.models[data[x].model];
 						objects[x] = new boto_web.Model(model.href, model.name, data[x]);
 					}
-					return fnc(objects, page);
+					return fnc(objects, page, count);
 				}
 			});
 		}
 
 		this.query = function(query, fnc){
 			var self = this;
-			boto_web.query(boto_web.env.base_url + this.href, query, $.map(boto_web.env.routes, function(m) { return m.obj }).join(', '), function(data, page){
+			boto_web.query(boto_web.env.base_url + this.href, query, $.map(boto_web.env.routes, function(m) { return m.obj }).join(', '), function(data, page, count){
 				if(fnc){
 					var objects = [];
 					for(var x=0; x < data.length; x++){
 						var model = boto_web.env.models[data[x].model];
 						objects[x] = new boto_web.Model(model.href, model.name, data[x]);
 					}
-					return fnc(objects, page);
+					return fnc(objects, page, count);
 				}
 			});
 		}

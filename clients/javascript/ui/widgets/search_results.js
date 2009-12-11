@@ -22,7 +22,7 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 	self.opts = opts || {};
 	self.num_results = 0;
 
-	self.update = function(results, append) {
+	self.update = function(results, append, count) {
 		if (!results || results.length == 0)
 			return;
 
@@ -36,7 +36,13 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 		}
 
 		if (self.data_table) {
-			var indices = self.data_table.append(nodes, {no_redraw: (self.opts.min_memory && self.num_results > 50)});
+			if (count) {
+				self.data_table.update_progress(100 * self.num_results / count, 'Total ' + count + ' results');
+			}
+
+			self.data_table.opts.no_redraw = self.opts.min_memory;
+
+			var indices = self.data_table.append(nodes);
 
 			$(indices).each(function (i, row) {
 				if (!(objects[i].obj.id in self.model.data_tables))
@@ -61,16 +67,16 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 	}
 
 	if (self.def == 'all') {
-		self.model.all(function(results, page) { self.update(results, page); return ((self.limit_pages == "none") || (page < eval(self.limit_pages) )); });
+		self.model.all(function(results, page, count) { self.update(results, page, count); return ((self.limit_pages == "none") || (page < eval(self.limit_pages) )); });
 	}
 	else if (self.def) {
 		// Evaluate JSON search filters
 		eval('self.def = ' + self.def);
 
 		if ($.isArray(self.def))
-			self.model.query(self.def, function(results, page) { self.update(results, page); return ((self.limit_pages == "none") || (page < eval(self.limit_pages))); });
+			self.model.query(self.def, function(results, page, count) { self.update(results, page, count); return ((self.limit_pages == "none") || (page < eval(self.limit_pages))); });
 		else
-			self.model.find(self.def, function(results, page) { self.update(results, page); return ((self.limit_pages == "none") || (page < eval(self.limit_pages))); });
+			self.model.find(self.def, function(results, page, count) { self.update(results, page, count); return ((self.limit_pages == "none") || (page < eval(self.limit_pages))); });
 	}
 
 	if (self.node.is('tr, tbody')) {
