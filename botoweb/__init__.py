@@ -19,3 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 __version__ = "0.6"
+
+def set_env(name, conf=None):
+	from botoweb.environment import Environment
+	env = Environment(name, conf)
+	import boto
+	boto.config = env.config
