@@ -89,7 +89,7 @@ boto_web.ui.widgets.Report = function(node) {
 						});
 					}
 					else {
-						self.node.find('.filter').show();
+						self.node.find('.attribute').show();
 					}
 				})
 				.appendTo(self.node.find('#step_2 .attributes'));
@@ -98,6 +98,9 @@ boto_web.ui.widgets.Report = function(node) {
 		}
 
 		var add_filter = function(e, property) {
+			// Create a field which allows multiple selections regardless of the item type
+			var field = boto_web.ui.forms.property_field(property, { allow_multiple: true, read_only: false });
+
 			$('<div/>')
 				.addClass('filter editor ui-button ui-state-default ui-corner-all')
 				.appendTo(self.node.find('.filters'))
@@ -128,9 +131,10 @@ boto_web.ui.widgets.Report = function(node) {
 							})
 						),
 					$('<br class="clear" />'),
-					$(boto_web.ui.forms.property_field(property).field_container)
+					field.field_container,
+					field.button_add
 				)
-				.find('.ui-button').remove();
+				.find('.field_container br.clear, .field_container .ui-button').remove();
 			e.preventDefault();
 		};
 
@@ -140,19 +144,26 @@ boto_web.ui.widgets.Report = function(node) {
 			self.node.find('.filter').each(function() {
 				var prop = $(this).find('.property').attr('id').replace('property_', '');
 				var op = $(this).find('.operator').val();
-				var val = $(this).find('.field_container').data('get_value')();
+				val = $(this).find('.field_container').data('get_value')();
+
+				if (!$.isArray(val))
+					val = [val];
+
 				op = {'is': '=', 'is not': '!=', 'contains': 'like'}[op] || op;
 
 				if (op == 'like')
-					val = '%' + val + '%';
+					val = $.map(val, function(v) { return v ? '%' + v + '%' : null; });
 				if (op == 'starts with') {
-					val = val + '%';
+					val = $.map(val, function(v) { return v ? v + '%' : null; });
 					op = 'like';
 				}
 				if (op == 'ends with') {
-					val = '%' + val;
+					val = $.map(val, function(v) { return v ? '%' + v : null; });
 					op = 'like';
 				}
+
+				if (val.length == 1)
+					val = val[0];
 
 				if (!filter_columns[prop])
 					filter_columns[prop] = 1;
