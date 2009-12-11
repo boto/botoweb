@@ -185,12 +185,13 @@ boto_web.ui.forms = {
 			.addClass('clear')
 			.appendTo(self.field_container);
 
+		this.button_add = $('<span/>')
+			.html('<span class="ui-icon ui-icon-triangle-1-s"></span>Add another value')
+			.addClass('ui-button ui-state-default ui-corner-all')
+			.click(function(e) { self.add_field(); e.preventDefault(); })
+
 		if (properties._type == 'list') {
-			$('<span/>')
-				.html('<span class="ui-icon ui-icon-triangle-1-s"></span>Add another value')
-				.addClass('ui-button ui-state-default ui-corner-all')
-				.click(function(e) { self.add_field(); e.preventDefault(); })
-				.appendTo(self.field_container);
+			this.button_add.appendTo(self.field_container);
 		}
 
 		if (properties._item_type in boto_web.env.models) {
@@ -542,7 +543,7 @@ boto_web.ui.forms = {
 										.attr({id: 'search_option_' + obj[i].id, href: '#'})
 										.text(obj[i].properties.name)
 										.click(function(e){
-											if (self.properties._type != 'list')
+											if (self.properties._type != 'list' && !self.opts.allow_multiple)
 												node.siblings('.selections').empty();
 
 											add_selection($(this).attr('id').replace('search_option_',''), $(this).html());
@@ -555,12 +556,14 @@ boto_web.ui.forms = {
 						})
 						.appendTo(self.field_container);
 
+					self.button_add = $('<span/>');
+
 					$('<div/>')
 						.addClass('search_results')
 						.appendTo(self.field_container);
 
 					$('<strong/>')
-						.text('Your selection' + ((self.properties._type == 'list') ? 's' : '') + ':')
+						.text('Your selection' + ((self.properties._type == 'list' || self.opts.allow_multiple) ? 's' : '') + ':')
 						.appendTo(self.field_container);
 					$('<div/>')
 						.addClass('selections')
