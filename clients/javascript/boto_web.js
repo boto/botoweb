@@ -675,7 +675,7 @@ var boto_web = {
 // 504 - Gateway Timeout
 //
 $(document).ajaxError(function(e, request, opts, err){
-	if(request.status == 408 || request.status == 502 || request.status == 504){
+	if(request.status == 408 || request.status == 502 || request.status == 504 || request.status == 503){
 		$.ajax(opts);
 	}
 });
