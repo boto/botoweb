@@ -26,7 +26,7 @@ boto_web.ui.Desktop = function() {
 		//TODO Trigger appropriate actions on pages.
 		for (var i in self.pages) {
 			if (self.pages[i].node) {
-				self.pages[i].node.hide();
+				self.pages[i].node.remove();
 				if (i.indexOf('section_') >= 0) {
 					// This fails sometimes due to timing issues
 					try {
@@ -41,11 +41,12 @@ boto_web.ui.Desktop = function() {
 
 		if (!self.pages[page.id]) {
 			self.pages[page.id] = page;
-			self.node.append(page.node);
 			self.num_pages++;
 		} else {
 			page = self.pages[page.id]
 		}
+
+		self.node.append(page.node);
 
 		page.node.show();
 	}
