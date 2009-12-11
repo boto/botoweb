@@ -323,6 +323,7 @@ class DBHandler(RequestHandler):
 			response.write(str(val))
 		elif isinstance(val, Query):
 			val = self.build_query(request.GET.mixed(), query=val, user=request.user)
+			response.headers['X-Result-Count'] = str(val.count())
 			response.write("<%s>" % property)
 			for o in val:
 				response.write(xmlize.dumps(o))
