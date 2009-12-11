@@ -693,3 +693,10 @@ $.equals = function(o, compareTo) {
 
 	return o === compareTo;
 }
+
+$('body').ajaxStop(function(){
+	var table = $('.dataTables_wrapper table').data('data_table');
+
+	if (table)
+		table.fnDraw();
+});
