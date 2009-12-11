@@ -83,8 +83,13 @@ var boto_web = {
 			});
 			url = $(xml).find('link[rel=next]').attr('href');
 
+			var count;
+
+			if (xhr && typeof xhr.getResponseHeader == 'function')
+				count = xhr.getResponseHeader('X-Result-Count');
+
 			// Get the next page
-			if (fnc(data, page++, xhr.getResponseHeader('X-Result-Count')) && url)
+			if (fnc(data, page++, count) && url)
 				boto_web.ajax.get(url, process);
 		}
 
@@ -128,8 +133,13 @@ var boto_web = {
 			});
 			url = $(xml).find('link[rel=next]').attr('href');
 
+			var count;
+
+			if (xhr && typeof xhr.getResponseHeader == 'function')
+				count = xhr.getResponseHeader('X-Result-Count');
+
 			// Get the next page
-			if (fnc(data, page++, xhr.getResponseHeader('X-Result-Count')) && url)
+			if (fnc(data, page++, count) && url)
 				boto_web.ajax.get(url, process);
 		}
 
