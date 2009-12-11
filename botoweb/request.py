@@ -3,6 +3,20 @@ from botoweb.resources.user import User
 import logging
 log = logging.getLogger("vermouth.request")
 from botoweb.response import Response
+import time
+
+CACHE_TIMEOUT = 300 # Keep user objects around for 300 seconds (5 minutes)
+USER_CACHE = {}
+def getCachedUser(username):
+	if USER_CACHE.has_key(username):
+		user, t = USER_CACHE[username]
+		if (time.time() - t) < CACHE_TIMEOUT:
+			return user
+	return None
+
+def addCachedUser(user):
+	USER_CACHE[user.username] = (user, time.time())
+	return user
 
 class Request(webob.Request):
 	"""We add in a few special extra functions for us here."""
@@ -71,10 +85,13 @@ class Request(webob.Request):
 					unencoded_info = encoded_info.decode('base64')
 					username, password = unencoded_info.split(':', 1)
 					log.info("Looking up user: %s" % username)
-					try:
-						user = User.find(username=username).next()
-					except:
-						user = None
+					user = getCachedUser(username)
+					if not user:
+						try:
+							user = User.find(username=username).next()
+							addCachedUser(user)
+						except:
+							user = None
 					if user and user.password == password:
 						self._user = user
 		return self._user
