@@ -149,16 +149,20 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		// Add attribute lists
 		sel = boto_web.ui.selectors.attribute_list;
 
+		var attribute_lists = 0;
+
 		self.node.find(sel).each(function() {
 			new boto_web.ui.widgets.AttributeList(this, self.model, self.obj);
+			attribute_lists++;
 		});
 
-		self.parse_attributes({attribute_lists: true});
+		if (attribute_lists)
+			self.parse_attributes({attribute_lists: true});
 
 		// Insert object attributes as classNames
-		sel = boto_web.ui.selectors.class_name;
+		/*sel = boto_web.ui.selectors.class_name;
 		prop = boto_web.ui.properties.class_name;
-		self.parse_attributes({sel:sel, prop:prop});
+		self.parse_attributes({sel:sel, prop:prop});*/
 
 		// Toggle details
 		sel = boto_web.ui.selectors.details;
