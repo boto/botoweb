@@ -8,7 +8,7 @@
  *
  * @param node the node containing the search parameters.
  */
-boto_web.ui.widgets.DataTable = function(table) {
+boto_web.ui.widgets.DataTable = function(table, opts) {
 	this.data_table = table.dataTable({
 		bJQueryUI: true,
 		oLanguage: {
@@ -19,6 +19,8 @@ boto_web.ui.widgets.DataTable = function(table) {
 		sDom: '<"fg-toolbar ui-widget-header ui-corner-tl ui-corner-tr ui-helper-clearfix"lTfr>t<"fg-toolbar ui-widget-header ui-corner-bl ui-corner-br ui-helper-clearfix"ip>',
 		sPaginationType: 'full_numbers'
 	});
+
+	this.opts = opts || {};
 
 	var settings = this.data_table.fnSettings();
 	if (!settings) return;
@@ -61,7 +63,7 @@ boto_web.ui.widgets.DataTable = function(table) {
 		}
 	});
 
-	this.data_table.parent().find('.fg-toolbar.ui-corner-bl').append(
+	/*this.data_table.parent().find('.fg-toolbar.ui-corner-bl').append(
 		$('<div/>')
 			.addClass('selection-buttons')
 			.append(
@@ -78,9 +80,37 @@ boto_web.ui.widgets.DataTable = function(table) {
 						table.find('tr').removeClass('row_selected');
 					})
 			)
+	);*/
+
+	this.status = $('<div/>')
+		.addClass('selection-buttons');
+
+	this.data_table.parent().find('.fg-toolbar.ui-corner-bl').append(
+		this.status
 	);
 
+	this.update_progress = function(percent, text) {
+		if (!this.progressbar) {
+			this.progressbar = $('<div/>')
+				.addClass('data_progress')
+				.appendTo(this.status);
+			this.progress_text = $('<div/>')
+				.appendTo(this.status);
+
+			this.progressbar.progressbar({ value: percent });
+		}
+
+		this.progressbar.progressbar('option', 'value', percent);
+		this.progress_text.text(text);
+
+		if (percent == 100) {
+			//this.status.hide();
+			this.data_table.fnDraw();
+		}
+	}
+
 	this.add_events = function() {
+		return;
 		table.find('tr')
 			.addClass('selectable')
 			.mousedown(function(e) {
@@ -118,12 +148,9 @@ boto_web.ui.widgets.DataTable = function(table) {
 			});
 	}
 
-	this.append = function(rows, opts) {
+	this.append = function(rows) {
 		if (!$.isArray(rows))
 			return;
-
-		if (!opts)
-			opts = {};
 
 		var self = this;
 		var settings = this.data_table.fnSettings();
@@ -144,11 +171,10 @@ boto_web.ui.widgets.DataTable = function(table) {
 		if (data.length == 0)
 			return;
 
-		var redraw = !opts.no_redraw;
-		var indices = this.data_table.fnAddData(data, redraw);
+		var indices = this.data_table.fnAddData(data, !this.opts.no_redraw);
 
-		if (redraw)
-			this.add_events();
+		//if (redraw)
+		//	this.add_events();
 
 		return indices;
 	}
@@ -164,7 +190,7 @@ boto_web.ui.widgets.DataTable = function(table) {
 		});
 
 		if (item.length == settings.aoColumns.length)
-			this.data_table.fnUpdate(item, row);
+			this.data_table.fnUpdate(item, row, null, !this.opts.no_redraw);
 	}
 
 	this.del = function(row) {
