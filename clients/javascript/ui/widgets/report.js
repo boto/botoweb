@@ -277,7 +277,12 @@ boto_web.ui.widgets.Report = function(node) {
 			});
 		}
 
-		$(self.model.properties).each(function() {
+		// Make a copy of the properties array and sort it alphabetically
+		var props = self.model.properties.splice(0);
+
+		props.sort(boto_web.ui.sort_props);
+
+		$(props).each(function() {
 			if ($.inArray('read', this._perm) < 0) return;
 
 			var prop = this;
