@@ -424,8 +424,7 @@ boto_web.ui.widgets.Report = function(node) {
 			}
 			else {
 				$('<td/>')
-					.append(
-					)
+					.append(node)
 					.appendTo(trbody);
 			}
 		});
