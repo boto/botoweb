@@ -695,8 +695,11 @@ $.equals = function(o, compareTo) {
 }
 
 $('body').ajaxStop(function(){
-	var table = $('.dataTables_wrapper table').data('data_table');
+	$('.dataTables_wrapper table').each(function() {
+		var table = $(this).data('data_table');
 
-	if (table)
-		table.fnDraw();
+		if (table) {
+			table.fnDraw();
+		}
+	});
 });
