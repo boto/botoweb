@@ -277,7 +277,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		delete self.nested_obj_nodes;
 	};
 
-	self.submit = function(closeFcn) {
+	self.submit = function() {
 		var self = this;
 
 		var data = {};
@@ -336,8 +336,6 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 							if ($(this.field).val())
 								$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
 
-							closeFcn.call(self.node);
-
 							boto_web.ui.alert('The database has been updated.');
 
 							if (opts.callback) {
@@ -375,7 +373,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 
 	self.update_tables = function() {
 		$(self.data_tables).each(function() {
-			if (!this.table)
+			if (!this.table || !this.table.append)
 				return;
 			if (this.row != undefined)
 				this.table.update(this.row, self.node);
