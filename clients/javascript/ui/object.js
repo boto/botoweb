@@ -116,25 +116,23 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				}
 			}
 
-			var template = $(this).contents().clone();
-			$(this).empty();
-
 			var node = $(this).clone();
-			self.nested_obj_nodes.push([this, node]);
 
 			for (var i in relations) {
-				self.obj.follow(relations[i].name, function(data) {
-					var table = new boto_web.ui.widgets.DataTable(node.parent('table'));
-					$(data).each(function() {
-						var o = new boto_web.ui.Object(template.clone(), boto_web.env.models[this.name], this, {
-							parent: self,
-							data_tables: {
-								table: table
-							}
-						});
+				var model = boto_web.env.models[self.model.prop_map[relations[i].name]._item_type];
+				(function(results, prop) {
+					self.obj.follow(prop, function(data, page, count) {
+						if (page == 0)
+							results.reset();
+
+						results.update(data, page, count);
+
+						return true;
 					});
-				});
+				})(new boto_web.ui.widgets.SearchResults(node.clone().appendTo($(this).parent()), model), relations[i].name);
 			}
+
+			$(this).remove();
 
 			// If no relations are found, return an error
 			if (props.length == 0) {
@@ -152,12 +150,12 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		var attribute_lists = 0;
 
 		self.node.find(sel).each(function() {
-			new boto_web.ui.widgets.AttributeList(this, self.model, self.obj);
 			attribute_lists++;
+			new boto_web.ui.widgets.AttributeList(this, self.model, self.obj);
 		});
 
 		if (attribute_lists)
-			self.parse_attributes({attribute_lists: true});
+		self.parse_attributes({attribute_lists: true});
 
 		// Insert object attributes as classNames
 		/*sel = boto_web.ui.selectors.class_name;
