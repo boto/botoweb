@@ -65,7 +65,8 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 	}
 
 	self.reset = function() {
-		self.data_table.reset();
+		if (self.data_table)
+			self.data_table.reset();
 		self.num_results = 0;
 	}
 
@@ -85,6 +86,11 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 	if (self.node.is('tr, tbody')) {
 		setTimeout(function() {
 			self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'));
+		}, 10);
+	}
+	else if (self.node.is('table')) {
+		setTimeout(function() {
+			self.data_table = new boto_web.ui.widgets.DataTable(self.node);
 		}, 10);
 	}
 };
