@@ -259,7 +259,7 @@ boto_web.ui = {
 		if (!opts)
 			opts = {};
 
-		opts = $.extend({read_only: false, hide: {}}, opts);
+		opts = $.extend({read_only: false, hide: []}, opts);
 
 		self.node = $('<div/>')
 			.addClass('editor')
@@ -305,7 +305,7 @@ boto_web.ui = {
 		$(self.properties).each(function(num, props) {
 			if ('def' in opts && props.name in opts.def) {
 				props = $.extend(props, {value: opts.def[props.name]});
-				opts.hide[props.name] = true;
+				opts.hide.push(props.name);
 			}
 
 			if (typeof obj != 'undefined')
@@ -338,7 +338,7 @@ boto_web.ui = {
 
 			self.fields.push(field);
 
-			if (!(props.name in opts.hide)) {
+			if ($.inArray(props.name, opts.hide) < 0) {
 				field.node.addClass(num % 2 ? 'even' : 'odd');
 				field.node.appendTo(self.columns[Math.floor(num / self.per_column)]);
 			}
