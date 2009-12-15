@@ -617,19 +617,19 @@ var boto_web = {
 				if (typeof this.id != 'undefined') {
 					if (this.item_type) {
 						boto_web.env.models[this.item_type].get(this.id, function(obj) {
-							return fnc([obj]);
+							return fnc([obj], 0, 1);
 						});
 					}
 					return;
 				} else {
-					boto_web.query(boto_web.env.base_url + self.href + '/' + self.id + '/' + this.href, filters, '*>*[id]', function(data) {
+					boto_web.query(boto_web.env.base_url + self.href + '/' + self.id + '/' + this.href, filters, '*>*[id]', function(data, page, count) {
 						if(fnc){
 							var objects = [];
 							for(var x=0; x < data.length; x++){
 								var model = boto_web.env.models[data[x].model];
 								objects[x] = new boto_web.Model(model.href, model.name, data[x]);
 							}
-							return fnc(objects);
+							return fnc(objects, page, count);
 						}
 					});
 				}
