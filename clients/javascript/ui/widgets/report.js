@@ -362,11 +362,11 @@ boto_web.ui.widgets.Report = function(node) {
 
 		self.node.find("#step_4 .results").empty();
 
-		var query = 'model=' + self.model.name
+		self.query = 'model=' + self.model.name
 			+ '&filters=' + escape($.toJSON(self.filters))
 			+ '&columns=' + escape($.toJSON(self.columns));
 		$("<a/>")
-			.attr("href", document.location + "?" + query)
+			.attr("href", document.location + "?" + self.query)
 			.text("Click here to link to this report")
 			.appendTo(self.node.find("#step_4 .results"));
 
@@ -376,7 +376,7 @@ boto_web.ui.widgets.Report = function(node) {
 			.addClass('ui-button ui-state-default ui-corner-all')
 			.html('<span class="ui-icon ui-icon-refresh"></span>Save Report')
 			.click(function() {
-				var editor = boto_web.env.models.Report.create({def: {query: self.query}, hide: ['query']});
+				var editor = boto_web.env.models.Report.create({def: {query: self.query}, hide: ['query','target_class_name','filters']});
 			})
 			.appendTo(self.node.find('#step_4 .results'));
 		self.build_results(false, self.node.find("#step_4 .results"));
