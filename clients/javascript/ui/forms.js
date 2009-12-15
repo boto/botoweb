@@ -398,6 +398,9 @@ boto_web.ui.forms = {
 	 * @param {Object} properties HTML node properties.
 	 */
 	file: function(properties, opts) {
+		if (properties.value) {
+			return new boto_web.ui.forms.textarea(properties, opts);
+		}
 		properties.type = 'file';
 		boto_web.ui.forms._field.call(this, properties, opts);
 
