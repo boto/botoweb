@@ -27,15 +27,7 @@ boto_web.ui.Desktop = function() {
 		for (var i in self.pages) {
 			if (self.pages[i].node) {
 				self.pages[i].node.remove();
-				if (i.indexOf('section_') >= 0) {
-					// This fails sometimes due to timing issues
-					try {
-						self.pages[i].node.remove(true);
-						delete self.pages[i];
-					} catch(e) {
-						//console.log(e);
-					}
-				}
+				delete self.pages[i];
 			}
 		}
 
