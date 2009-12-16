@@ -68,6 +68,9 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 		if (self.data_table)
 			self.data_table.reset();
 		self.num_results = 0;
+
+		// Stop any existing searches
+		boto_web.ajax.stop_by_url(self.model.href);
 	}
 
 	if (self.def == 'all') {

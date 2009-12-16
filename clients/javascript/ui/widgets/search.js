@@ -91,10 +91,10 @@ boto_web.ui.widgets.Search = function(node) {
 				query.push([this.field.attr('name'), 'like', '%' + val + '%']);
 		});
 
+		self.results.reset();
+
 		self.model.query(query, function(results, page, count) {
 			if (results.length) {
-				if (page == 0)
-					self.results.reset();
 				self.results.update(results, page, count);
 
 				return page < 10;
