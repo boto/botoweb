@@ -30,6 +30,11 @@ var boto_web = {
 			boto_web.ajax.cachedRequests = {};
 			boto_web.ajax.manager.abort(name, id);
 		},
+		stop_by_url: function(url){
+			var ajaxID = 'GET_'+ url.replace(/\./g, '_');
+			boto_web.ajax.cachedRequests = {};
+			boto_web.ajax.manager.abort(null, ajaxID);
+		},
 		get: function(url, callback){
 			var ajaxID = 'GET_'+ url.replace(/\./g, '_');
 			var cachedRequests = boto_web.ajax.cachedRequests;
