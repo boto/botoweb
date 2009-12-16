@@ -155,7 +155,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		});
 
 		if (attribute_lists)
-		self.parse_attributes({attribute_lists: true});
+			self.parse_attributes({attribute_lists: true});
 
 		// Insert object attributes as classNames
 		/*sel = boto_web.ui.selectors.class_name;

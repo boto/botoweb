@@ -11,7 +11,7 @@
 boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 	var self = this;
 
-	self.node = $(node).addClass('widget-attribute_list clear').attr(boto_web.ui.properties.attribute_list, '');
+	self.node = $(node).addClass('widget-attribute_list clear').attr(boto_web.ui.properties.widget, '');
 	self.template = $('<div/>').append(self.node.contents().clone()).addClass('template');
 	self.node.empty();
 	self.model = model;
