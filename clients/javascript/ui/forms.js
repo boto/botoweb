@@ -516,7 +516,21 @@ boto_web.ui.forms = {
 						}
 						else {
 							selection.find('span').click(function() {
-								$(this).parent().remove();
+								var removable = 0;
+
+								self.nested_objs = $.map(self.nested_objs, function(o) {
+									if (o.obj.id == id) {
+										if (++removable == 1) {
+											$(o.node).siblings('br:eq(0)').remove();
+											$(o.node).remove();
+											return null;
+										}
+									}
+									return o;
+								});
+
+								if (removable == 1)
+									$(this).parent().remove();
 							});
 						}
 
