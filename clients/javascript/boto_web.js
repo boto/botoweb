@@ -587,9 +587,9 @@ var boto_web = {
 		this.del = function(id, fnc){
 			ref = this.href;
 			return boto_web.del(boto_web.env.base_url + ref + "/" + id, function(x) {
-				$(self.data_tables[id]).each(function() {
+				/*$(self.data_tables[id]).each(function() {
 					this.table.del(this.row);
-				});
+				});*/
 				delete self.data_tables[id];
 				delete self._cache[id];
 				return fnc(x);
