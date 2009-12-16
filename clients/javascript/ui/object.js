@@ -122,9 +122,6 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				var model = boto_web.env.models[self.model.prop_map[relations[i].name]._item_type];
 				(function(results, prop) {
 					self.obj.follow(prop, function(data, page, count) {
-						if (page == 0)
-							results.reset();
-
 						results.update(data, page, count);
 
 						return true;
