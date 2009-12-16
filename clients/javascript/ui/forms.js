@@ -521,8 +521,8 @@ boto_web.ui.forms = {
 								self.nested_objs = $.map(self.nested_objs, function(o) {
 									if (o.obj.id == id) {
 										if (++removable == 1) {
-											$(o.node).siblings('br:eq(0)').remove();
 											$(o.node).remove();
+											try { $(o.node).siblings('br:eq(0)').remove(); } catch (e) {}
 											return null;
 										}
 									}
