@@ -322,11 +322,22 @@ class DBHandler(RequestHandler):
 			response.content_type = "text/plain"
 			response.write(str(val))
 		elif isinstance(val, Query):
-			val = self.build_query(request.GET.mixed(), query=val, user=request.user)
-			response.headers['X-Result-Count'] = str(val.count())
+			objs = self.build_query(request.GET.mixed(), query=val, user=request.user)
+			response.headers['X-Result-Count'] = str(objs.count())
 			response.write("<%s>" % property)
-			for o in val:
+
+			objs.limit = self.page_size
+			for o in objs:
 				response.write(xmlize.dumps(o))
+			params = request.GET.mixed()
+			if objs.next_token:
+				if params.has_key("next_token"):
+					del(params['next_token'])
+				self_link = '%s%s%s/%s/%s?%s' % (request.real_host_url, request.base_url, request.script_name, obj.id, property, urllib.urlencode(params).replace("&", "&amp;"))
+				params['next_token'] = objs.next_token
+				next_link = '%s%s%s/%s/%s?%s' % (request.real_host_url, request.base_url, request.script_name, obj.id, property, urllib.urlencode(params).replace("&", "&amp;"))
+				response.write('<link type="text/xml" rel="next" href="%s"/>' % (next_link))
+				response.write('<link type="text/xml" rel="self" href="%s"/>' % (self_link))
 			response.write("</%s>" % property)
 		elif val:
 			response.write("<response>%s</response>" % xmlize.dumps(val, property))
