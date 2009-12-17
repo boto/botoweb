@@ -463,19 +463,6 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 
 		self.node.find(sel).each(function() {
 			var val = $(this).attr(prop).split('.');
-
-			var editable = $(this).parents(boto_web.ui.selectors.editable).attr(boto_web.ui.properties.editable) == 'true' ? 'true' : '';
-
-			// Ignore nested attributes
-			if (!val || !opt.attribute_lists && $(this).is(boto_web.ui.selectors.attribute_list + ' ' + sel)) {
-				return;
-			}
-
-			if (!self.obj.properties)
-				return;
-
-			$(this).attr(prop, '');
-			var container = $(this);
 			var follow_props;
 
 			// Allow a.b.c reference attribute following
@@ -485,6 +472,19 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			}
 			else
 				val = val[0];
+
+			// Ignore nested attributes
+			if (!val || !opt.attribute_lists && $(this).is(boto_web.ui.selectors.attribute_list + ' ' + sel)) {
+				return;
+			}
+
+			if (!self.obj.properties)
+				return;
+
+			var editable = $(this).parents(boto_web.ui.selectors.editable).attr(boto_web.ui.properties.editable) == 'true' ? 'true' : '';
+
+			$(this).attr(prop, '');
+			var container = $(this);
 
 			// Decide whether this is a valid property.
 			if (val in self.model.properties && self.model.properties[val]._perm && $.inArray('read', self.model.properties[val]._perm) == -1) {
@@ -570,7 +570,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 							self.update_tables();
 						}, filters);
 					}
-					else {
+					else if (!editing_template) {
 						var n = $('<span/>').append(node.clone()).appendTo(container);
 						new boto_web.ui.Object(n, boto_web.env.models[self.model.prop_map[val]._item_type], null, {parent: self});
 					}
@@ -628,7 +628,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				var choices;
 
 				// TODO Generalize complexType options
-				if (self.obj && self.model.prop_map[val]._type == 'complexType') {
+				if (self.obj.id && self.model.prop_map[val]._type == 'complexType') {
 					choices = [{text: 'ID', value: 'id'}];
 					if (self.obj.properties.primary_key && self.obj.properties.primary_key != 'id')
 						choices.push({text: self.obj.properties.primary_key, value: self.obj.properties.primary_key});
