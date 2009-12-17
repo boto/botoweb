@@ -279,7 +279,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		var uploads = [];
 		self.submitted = true;
 
-		if (self.obj)
+		if (self.obj.id)
 			data.id = self.obj.id;
 
 		var has_nested = false;
