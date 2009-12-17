@@ -321,7 +321,9 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		self.model.save(data, function(data) {
 			self.submitted = true;
 			if (data.status < 300) {
-				var id = self.obj.id || data.getResponseHeader('Location').replace(/.*\//, '');
+				var id = self.obj.id;
+				if(!id && data.getResponseHeader("Location"))
+					id = data.getResponseHeader('Location').replace(/.*\//, '');
 
 				self.obj.id = id;
 
