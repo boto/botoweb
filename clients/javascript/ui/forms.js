@@ -282,8 +282,8 @@ boto_web.ui.forms = {
 			if (!this.name) return;
 
 			var inpt = null;
-			if(this.opts.choices){
-				inpt = new boto_web.ui.forms.dropdown({name: this.name, choices: this.opts.choices}).field.val(this.value || '');
+			if(self.opts.choices){
+				inpt = new boto_web.ui.forms.dropdown({name: this.name, choices: self.opts.choices}).field.val(this.value || '');
 			} else {
 				inpt = new boto_web.ui.forms.text({name: this.name}).field.val(this.value || '');
 			}

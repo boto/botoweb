@@ -325,30 +325,26 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				if(!id && data.getResponseHeader("Location"))
 					id = data.getResponseHeader('Location').replace(/.*\//, '');
 
-				self.obj.id = id;
-
 				if (uploads.length) {
 					var upload_fnc = function(obj) {
 						$(uploads).each(function() {
-							if ($(this.field).val())
+							if ($(this.field).val()) {
 								$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
-
-							boto_web.ui.alert('The database has been updated.');
-
-							if (opts.callback) {
-								opts.callback();
 							}
-
-							document.location.href = ('' + document.location.href).replace(/#.*/, self.get_link('view'))
-
-							document.location.reload(true);
 						});
 					};
 
-					if (self.obj)
+					if (self.obj.id)
 						upload_fnc(self.obj);
 					else
-						self.model.get(data.getResponseHeader('Location'), upload_fnc);
+						setTimeout(function() { self.model.get(id, upload_fnc) }, 500);
+
+					self.obj.id = id;
+
+					boto_web.ui.alert('Please press OK when your browser status bar indicates that the upload is complete.', 'Please wait for the upload to finish', function() {
+						document.location.href = ('' + document.location.href).replace(/#.*/, self.get_link('view'))
+						document.location.reload(true);
+					});
 				}
 				else if (self.parent)
 					self.parent.submit();
@@ -609,6 +605,11 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					self.obj.load(val, function (html) {
 						node.html(html);
 					});
+				}
+				else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'complexType') {
+					$(this).html($.map(self.obj.properties[val], function(o) {
+						return '<div class="p50 al jr">' + o.name + ' &rarr;</div><div class="p50 al">&nbsp;' + o.value + '</div><br class="clear" />';
+					}).join(''));
 				}
 				else if (prop == boto_web.ui.properties.class_name) {
 					$(this).addClass('model-' + self.obj.properties.model);

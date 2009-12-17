@@ -240,7 +240,7 @@ boto_web.ui = {
 			})
 	},
 
-	alert: function(msg, title) {
+	alert: function(msg, title, callback) {
 		$('<div/>')
 			.html(msg)
 			.dialog({
@@ -248,7 +248,7 @@ boto_web.ui = {
 				dialogClass: 'alert',
 				title: title || 'Alert',
 				buttons: {
-					Ok: function() { $(this).dialog('close'); }
+					Ok: function() { $(this).dialog('close'); if (callback) callback(); }
 				}
 			})
 			.dialog('show')
@@ -472,8 +472,10 @@ boto_web.ui = {
 				if (data.status < 300) {
 					boto_web.ui.alert('The database has been updated.');
 
+					var safety = 0;
+
 					// Go back until we hit a page that doesn't belong to this object.
-					while (document.location.hash.indexOf('id=' + self.obj.id) >= 0) {
+					while (document.location.hash.indexOf('id=' + self.obj.id) >= 0 && safety++ < 20) {
 						history.go(-1);
 					}
 
