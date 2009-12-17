@@ -152,9 +152,9 @@ class XMLSerializer(object):
 		if string.startswith("u"):
 			string = string[1:]
 		if string.startswith("'"):
-			string.strip("'")
+			string = string.strip("'")
 		elif string.startswith('"'):
-			string.strip('"')
+			string = string.strip('"')
 		string = string.replace("\\n", "\n")
 
 		for ch in BAD_CHARS:
