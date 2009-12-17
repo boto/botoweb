@@ -148,7 +148,15 @@ class XMLSerializer(object):
 		"""Return what might be a CDATA encoded string"""
 		if string == None:
 			return None
-		string = repr(string.encode("ascii", "xmlcharrefreplace")).strip("'").strip('"').replace("\\n", "\n");
+		string = repr(string)
+		if string.startswith("u"):
+			string = string[1:]
+		if string.startswith("'"):
+			string.strip("'")
+		elif string.startswith('"'):
+			string.strip('"')
+		string = string.replace("\\n", "\n")
+
 		for ch in BAD_CHARS:
 			if ch in string:
 				return "<![CDATA[ %s ]]>" % string
