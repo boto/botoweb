@@ -437,8 +437,7 @@ boto_web.ui.widgets.Report = function(node) {
 		self.results = new boto_web.ui.widgets.SearchResults(tbody, self.model, {min_memory: !preview});
 
 		self.model.query(self.filters, function(data, page, count) {
-			self.results.update(data, page, count);
-			return !preview;
+			return self.results.update(data, page, count) && !preview;
 		});
 
 	}

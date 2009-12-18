@@ -702,7 +702,8 @@ $('body').ajaxStop(function(){
 		var table = $(this).data('data_table');
 
 		if (table) {
-			table.fnDraw();
+			table.stop();
+			table.data_table.fnDraw();
 		}
 	});
 });

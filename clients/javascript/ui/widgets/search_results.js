@@ -21,6 +21,7 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 	self.limit_pages = self.node.attr("bwLimit");
 	self.opts = opts || { };
 	self.num_results = 0;
+	self.stopped = false;
 
 	self.update = function(results, append, count) {
 		if (!results || results.length == 0)
@@ -37,9 +38,10 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 
 		if (self.data_table) {
 			if (count) {
-				if (count > 50) {
+				if (count > 50)
 					self.opts.min_memory = true;
-				}
+				else
+					self.opts.min_memory = false;
 				self.data_table.update_progress(100 * self.num_results / count, 'Total ' + count + ' results');
 			}
 
@@ -62,9 +64,25 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 		}
 		else
 			$(nodes).each(function() { self.node.append(this); });
+
+		if (self.stopped) {
+			if (self.data_table)
+				self.data_table.stop();
+
+			self.stopped = false;
+			return false;
+		}
+		else
+			return true;
+	}
+
+	self.stop = function() {
+		self.stopped = true;
 	}
 
 	self.reset = function() {
+		self.stopped = false;
+
 		if (self.data_table)
 			self.data_table.reset();
 		self.num_results = 0;
@@ -86,14 +104,20 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 			self.model.find(self.def, function(results, page, count) { self.update(results, page, count); return ((self.limit_pages == "none") || (page < eval(self.limit_pages))); });
 	}
 
+	var dt_opts = {
+		stop: function() {
+			self.stop();
+		}
+	};
+
 	if (self.node.is('tr, tbody')) {
 		setTimeout(function() {
-			self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'));
+			self.data_table = new boto_web.ui.widgets.DataTable(self.node.parent('table'), dt_opts);
 		}, 10);
 	}
 	else if (self.node.is('table')) {
 		setTimeout(function() {
-			self.data_table = new boto_web.ui.widgets.DataTable(self.node);
+			self.data_table = new boto_web.ui.widgets.DataTable(self.node, dt_opts);
 		}, 10);
 	}
 };

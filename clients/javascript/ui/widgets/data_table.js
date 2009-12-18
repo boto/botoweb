@@ -21,7 +21,8 @@ boto_web.ui.widgets.DataTable = function(table, opts) {
 		sPaginationType: 'full_numbers'
 	});
 
-	table.data('data_table', this.data_table);
+	var self = this;
+	table.data('data_table', self);
 
 	this.opts = opts || {};
 
@@ -103,8 +104,45 @@ boto_web.ui.widgets.DataTable = function(table, opts) {
 			this.progressbar.progressbar({ value: percent });
 		}
 
+		if (this.opts.stop && !this.button_stop) {
+			var self = this;
+
+			this.button_stop = $('<div/>')
+				.css('display', 'inline-block')
+				.addClass('ac')
+				.append(
+					/*$('<div/>')
+						.addClass('ui-button ui-corner-tl ui-corner-bl ui-state-default')
+						.html('<span class="ui-icon ui-icon-circle-close"></span> Stop Loading')
+						.click(function() {
+							$(this)
+								.unbind()
+								.html('<span class="ui-icon ui-icon-clock"></span> Please Wait');
+							self.opts.stop();
+						}),*/
+					$('<div/>')
+						.addClass('ui-button ui-corner-all ui-state-default')
+						.html('<span class="ui-icon ui-icon-circle-zoomout"></span> Preview Results')
+						.click(function() {
+							self.data_table.fnDraw();
+						})
+				)
+				.appendTo(this.status);
+		}
+
 		this.progressbar.progressbar('option', 'value', percent);
 		this.progress_text.text(text);
+
+		if (percent >= 100)
+			this.stop();
+	}
+
+	this.stop = function() {
+		if (this.button_stop) {
+			this.button_stop.remove();
+		}
+
+		this.button_stop = null;
 	}
 
 	this.add_events = function() {
@@ -196,6 +234,10 @@ boto_web.ui.widgets.DataTable = function(table, opts) {
 	}
 
 	this.reset = function() {
+		if (this.progressbar) {
+			this.status.empty()
+			this.progressbar = null;
+		}
 		this.data_table.fnClearTable();
 	}
 };

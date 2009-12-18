@@ -95,9 +95,7 @@ boto_web.ui.widgets.Search = function(node) {
 
 		self.model.query(query, function(results, page, count) {
 			if (results.length) {
-				self.results.update(results, page, count);
-
-				return page < 10;
+				return self.results.update(results, page, count) && page < 10;
 			}
 			else if (page == 0){
 				boto_web.ui.alert('The search did not return any results.');
