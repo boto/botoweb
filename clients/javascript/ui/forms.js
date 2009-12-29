@@ -649,7 +649,7 @@ boto_web.ui.forms = {
 
 						if (val.length == 1)
 							val = val[0];
-						if (val.length == 0)
+						else if (val.length == 0)
 							val = '';
 
 						return val;
