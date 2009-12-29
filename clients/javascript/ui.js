@@ -311,6 +311,8 @@ boto_web.ui = {
 
 			if (typeof obj != 'undefined')
 				props = $.extend(props, {value: obj.properties[props.name]});
+			else
+				opts.allow_default = true;
 
 			if (props._perm && $.inArray('write', props._perm) == -1)
 				return;

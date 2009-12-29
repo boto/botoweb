@@ -172,6 +172,9 @@ boto_web.ui.forms = {
 			return self.field.val();
 		});
 
+		if (this.opts.allow_default && (!properties.value || properties.value.length == 0))
+			properties.value = properties._default_value;
+
 		if ($.isArray(properties.value)) {
 			$(properties.value).each(function(i ,prop) {
 				if (i == 0)

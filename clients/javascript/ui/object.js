@@ -652,7 +652,8 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					no_label: !needs_label,
 					editing_template: editing_template,
 					choices: choices,
-					existing_only: $(this).is(boto_web.ui.selectors.existing_only)
+					existing_only: $(this).is(boto_web.ui.selectors.existing_only),
+					allow_default: !self.obj.id // Only set defaults for new objects
 				});
 				self.fields.push(field);
 				field.field_container.hide();
