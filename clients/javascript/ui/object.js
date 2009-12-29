@@ -349,6 +349,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				else if (self.parent)
 					self.parent.submit();
 				else {
+					self.obj.id = id;
 					boto_web.ui.alert('The database has been updated.');
 					document.location.href = ('' + document.location.href).replace(/#.*/, self.get_link('view'))
 					document.location.reload(true);
