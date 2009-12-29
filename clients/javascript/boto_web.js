@@ -681,6 +681,8 @@ var boto_web = {
 //
 $(document).ajaxError(function(e, request, opts, err){
 	if(request.status == 408 || request.status == 502 || request.status == 504 || request.status == 503){
-		$.ajax(opts);
+		setTimeout(function() {
+			$.ajax(opts);
+		}, 500);
 	}
 });
