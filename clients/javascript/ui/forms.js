@@ -85,6 +85,10 @@ boto_web.ui.forms = {
 		this.add_field = function(value) {
 			var field;
 
+			// Unescape HTML entities
+			if (value)
+				value = $('<div/>').html(value || '').text();
+
 			if (this.editing_template) {
 				if (this.properties._type != 'list' && this.fields.length >= 2)
 					return;
@@ -171,13 +175,13 @@ boto_web.ui.forms = {
 		if ($.isArray(properties.value)) {
 			$(properties.value).each(function(i ,prop) {
 				if (i == 0)
-					self.field.val(prop || '');
+					self.field.val($('<div/>').html(prop || '').text());
 				else
 					self.add_field(prop);
 			});
 		}
 		else
-			this.field.val(properties.value || '');
+			this.field.val($('<div/>').html(properties.value || '').text());
 
 		this.text.html(this.field.val() || '&nbsp;');
 
@@ -462,7 +466,7 @@ boto_web.ui.forms = {
 
 						if (self.properties.value)
 							self.field.val(self.properties.value.id);
-						self.text.text(value_text);
+						self.text.html(value_text);
 
 						return page < 10;
 					});
@@ -558,7 +562,7 @@ boto_web.ui.forms = {
 									$('<a/>')
 										.css('display', 'block')
 										.attr({id: 'search_option_' + obj[i].id, href: '#'})
-										.text(obj[i].properties.name)
+										.html(obj[i].properties.name)
 										.click(function(e){
 											if (self.properties._type != 'list' && !self.opts.allow_multiple)
 												node.siblings('.selections').empty();

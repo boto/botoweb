@@ -616,7 +616,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					$(this).addClass('value-' + self.obj.properties[val].toString().replace(/\s[\s\S]*$/, ''));
 				}
 				else {
-					$(this).append($('<span/>').text(self.obj.properties[val].toString()));
+					$(this).append($('<span/>').html(self.obj.properties[val].toString()));
 				}
 			}
 			else {
