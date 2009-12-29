@@ -40,7 +40,7 @@ class DBHandler(RequestHandler):
 	* db_class: Required, the class to use for this interface
 	"""
 	db_class = None
-	page_size = 15
+	page_size = 50
 
 	def __init__(self, env, config):
 		RequestHandler.__init__(self, env, config)
