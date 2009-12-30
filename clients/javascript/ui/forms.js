@@ -545,7 +545,6 @@ boto_web.ui.forms = {
 						}
 
 						if (self.editing_template) {
-							alert(self.model.name + ' ' + id);
 							self.model.get(id, function(obj) {
 								self.add_field(obj);
 							});
