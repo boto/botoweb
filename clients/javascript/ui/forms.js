@@ -13,9 +13,11 @@ boto_web.ui.forms = {
 	property_field: function(props, opts) {
 		var self = this;
 
+		if (!opts) opts = {read_only: false};
+
 		if (!props || !props.name) return;
 
-		switch ((props._type == 'list') ? (props._item_type) : props._type) {
+		switch (opts.input_type || ((props._type == 'list') ? (props._item_type) : props._type)) {
 			case 'string':
 			case 'str':
 			case 'integer':
@@ -26,6 +28,7 @@ boto_web.ui.forms = {
 				else
 					return new self.text(props, opts);
 			case 'text':
+			case 'textarea':
 				return new self.textarea(props, opts);
 			case 'password':
 				return new self.password(props, opts);

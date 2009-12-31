@@ -54,7 +54,8 @@ boto_web.ui = {
 		'filter':         'bwFilter',
 		'existing_only':  'bwExistingOnly',
 		'def':            'bwDefault',
-		'widget':         'bwWidget'
+		'widget':         'bwWidget',
+		'input_type':     'bwInputType'
 	},
 
 	handlers: {

@@ -653,7 +653,8 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					editing_template: editing_template,
 					choices: choices,
 					existing_only: $(this).is(boto_web.ui.selectors.existing_only),
-					allow_default: !self.obj.id // Only set defaults for new objects
+					allow_default: !self.obj.id, // Only set defaults for new objects
+					input_type: $(this).attr(boto_web.ui.properties.input_type)
 				});
 				self.fields.push(field);
 				field.field_container.hide();
@@ -664,6 +665,12 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						$(objs).each(function() {
 							field.add_field(this);
 						});
+					}}(field));
+				}
+
+				if (self.obj.properties[val] && field.opts.input_type && self.obj.properties[val].type == 'blob') {
+					self.obj.load(val, function(field) { return function(content) {
+						field.field.val(content);
 					}}(field));
 				}
 			}
