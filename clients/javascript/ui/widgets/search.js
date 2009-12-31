@@ -52,6 +52,8 @@ boto_web.ui.widgets.Search = function(node) {
 		}
 
 		var prop = self.props[i];
+
+		prop.value = '';
 		var field = boto_web.ui.forms.property_field(prop);
 
 		if (!field)
