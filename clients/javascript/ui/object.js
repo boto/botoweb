@@ -346,8 +346,10 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						document.location.reload(true);
 					});
 				}
-				else if (self.parent)
+				else if (self.parent) {
+					self.obj.id = id;
 					self.parent.submit();
+				}
 				else {
 					self.obj.id = id;
 					boto_web.ui.alert('The database has been updated.');
