@@ -645,8 +645,14 @@ boto_web.ui.watch_url = function() {
 
 			if (boto_web.ui.current_url != static_url)
 				boto_web.ui.current_url = static_url;
-			else
+			else {
+				for (var page in boto_web.ui.desktop.pages) {
+					if (boto_web.ui.desktop.pages[page].listener) {
+						boto_web.ui.desktop.pages[page].listener.update();
+					}
+				}
 				return;
+			}
 
 			$.get(static_url, null, function(data) {
 				data = $(data);
