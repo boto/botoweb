@@ -81,7 +81,7 @@ boto_web.ui.widgets.Report = function(node) {
 					var input = this;
 
 					if (e.keyCode == 13) {
-						self.node.find('.attribute:visible:eq(0)').click();
+						self.node.find('.attributes .attribute:visible:eq(0)').click();
 						$(input).val('').keyup();
 					}
 					else if (input.value) {
@@ -243,23 +243,21 @@ boto_web.ui.widgets.Report = function(node) {
 					var input = this;
 
 					if (e.keyCode == 13) {
-						self.node.find('.attributes input:visible:eq(0)').click().change();
+						self.node.find('.attributes .attribute:visible:eq(0)').click();
 						$(input).val('').keyup();
 					}
 					if (input.value) {
 						self.node.find('label').each(function() {
 							if ($(this).text().toLowerCase().indexOf(input.value.toLowerCase()) >= 0) {
-								$(this).show()
-								$('#' + $(this).attr('for')).show();
+								$(this).parent().show()
 							}
 							else {
-								$(this).hide();
-								$('#' + $(this).attr('for')).hide();
+								$(this).parent().hide();
 							}
 						});
 					}
 					else {
-						self.node.find('label, input').show();
+						self.node.find('.attribute').show();
 					}
 				})
 				.insertBefore(self.node.find('#step_3 .attributes'));
@@ -293,6 +291,14 @@ boto_web.ui.widgets.Report = function(node) {
 
 			var prop = this;
 
+			var container = $('<div/>')
+				.addClass('attribute ui-button ui-state-default ui-corner-all')
+				.click(function(e) {
+					e.stopPropagation();
+					$(this).find('input').attr('checked', !$(this).find('input:checked').length).change();
+				})
+				.appendTo(self.node.find('#step_3 .attributes'));
+
 			$('<input/>')
 				.attr({id: this.name, value: this._label, type: 'checkbox'})
 				.change(function() {
@@ -309,11 +315,11 @@ boto_web.ui.widgets.Report = function(node) {
 
 					set_sort_icons();
 				})
-				.appendTo(self.node.find('#step_3 .attributes'));
+				.appendTo(container);
 			$('<label/>')
 				.attr({'for': this.name})
 				.html(' ' + this._label + '<br />')
-				.appendTo(self.node.find('#step_3 .attributes'));
+				.appendTo(container);
 		});
 
 		$('<ul/>')
@@ -329,7 +335,7 @@ boto_web.ui.widgets.Report = function(node) {
 		$('<div/>')
 			.attr("id", "preview_button")
 			.addClass('ui-button ui-state-default ui-corner-all')
-			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview with Attributes')
+			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview with selected columns')
 			.click(function() {
 				get_columns();
 				self.node.find('#step_3 .preview').empty();
