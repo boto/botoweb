@@ -606,7 +606,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'blob') {
 					var node = $(this);
 					self.obj.load(val, function (html) {
-						node.html(html);
+						$('<span/>').html(html).prependTo(node);
 					});
 				}
 				else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'complexType') {
