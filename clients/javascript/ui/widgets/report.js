@@ -45,7 +45,7 @@ boto_web.ui.widgets.Report = function(node) {
 					self.model = boto_web.env.models[name];
 					document.title = name + ' Report';
 					$('h1').text(document.title);
-					document.location.href = ('' + document.location.href).replace(/\?.*|$/, '?step=2&model=' + name);
+					document.location.href = self.get_link(2);
 				}}(name))
 				.appendTo(self.node.find('.new_report'))
 				.each(function() {
@@ -77,9 +77,11 @@ boto_web.ui.widgets.Report = function(node) {
 		self.node.find('#step_1').hide();
 		self.template.find('#step_2').clone(true).appendTo(self.node);
 
+		var has_columns = self.columns.length > 0;
+
 		// Add the breadcrumbs
 		self.breadcrumbs.empty();
-		self.add_breadcrumb(self.step_1, "Reporting");
+		self.add_breadcrumb(1, "Reporting");
 		self.breadcrumbs.append('<li>' + self.model.name + '</li>');
 
 		if (self.model.properties.length > 10) {
@@ -230,9 +232,11 @@ boto_web.ui.widgets.Report = function(node) {
 				self.filters.push([prop, op, val]);
 			});
 
-			self.columns = [];
-			for (var prop in filter_columns) {
-				self.columns.push(self.model.prop_map[prop]);
+			if (!has_columns) {
+				self.columns = [];
+				for (var prop in filter_columns) {
+					self.columns.push(self.model.prop_map[prop]);
+				}
 			}
 		};
 
@@ -275,7 +279,7 @@ boto_web.ui.widgets.Report = function(node) {
 			.show()
 			.click(function() {
 				get_filters();
-				document.location.href = ('' + document.location.href).replace(/\?.*|$/, '?step=3&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)));
+				document.location.href = self.get_link(3);
 			})
 			.find('em').html('<strong>Modify the report</strong> by choosing the appropriate columns.');
 
@@ -299,8 +303,8 @@ boto_web.ui.widgets.Report = function(node) {
 
 		// Add the breadcrumbs
 		self.breadcrumbs.empty();
-		self.add_breadcrumb(self.step_1, "Reporting");
-		self.add_breadcrumb(self.step_2, self.model.name);
+		self.add_breadcrumb(1, "Reporting");
+		self.add_breadcrumb(2, self.model.name);
 		self.breadcrumbs.append('<li>Attributes</li>');
 
 		if (self.model.properties.length > 10) {
@@ -347,19 +351,19 @@ boto_web.ui.widgets.Report = function(node) {
 		}
 
 		var set_sort_icons = function() {
-			if (self.node.find('.columns li').length > 1) {
-				self.node.find('.columns li span').attr('className', 'ui-icon ui-icon-arrowthick-2-n-s');
-				self.node.find('.columns li:first span').attr('className', 'ui-icon ui-icon-arrowthick-1-s');
-				self.node.find('.columns li:last span').attr('className', 'ui-icon ui-icon-arrowthick-1-n');
+			if (self.node.find('.column_list li').length > 1) {
+				self.node.find('.column_list li span').attr('className', 'ui-icon ui-icon-arrowthick-2-n-s');
+				self.node.find('.column_list li:first span').attr('className', 'ui-icon ui-icon-arrowthick-1-s');
+				self.node.find('.column_list li:last span').attr('className', 'ui-icon ui-icon-arrowthick-1-n');
 			}
 			else {
-				self.node.find('.columns li span').attr('className', 'ui-icon ui-icon-bullet');
+				self.node.find('.column_list li span').attr('className', 'ui-icon ui-icon-bullet');
 			}
 		};
 
 		var get_columns = function() {
 			self.columns = [];
-			self.node.find('.columns ul li').each(function() {
+			self.node.find('.column_list ul li').each(function() {
 				self.columns.push({name: this.id.replace('column_', ''), _label: $(this).text()});
 			});
 		}
@@ -394,7 +398,7 @@ boto_web.ui.widgets.Report = function(node) {
 							.appendTo(self.node.find('ul'))
 					}
 					else {
-						$('.columns #column_' + this.id).remove();
+						$('.column_list #column_' + this.id).remove();
 					}
 
 					set_sort_icons();
@@ -413,7 +417,7 @@ boto_web.ui.widgets.Report = function(node) {
 				}
 			})
 			.disableSelection()
-			.appendTo(self.node.find('.columns'));
+			.appendTo(self.node.find('.column_list'));
 
 		self.node.find("#preview_button").remove();
 		$('<div/>')
@@ -438,7 +442,7 @@ boto_web.ui.widgets.Report = function(node) {
 			.unbind()
 			.click(function() {
 				get_columns();
-				document.location.href = ('' + document.location.href).replace(/\?.*|$/, '?step=4&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)) + '&columns=' + escape($.toJSON(self.columns)));
+				document.location.href = self.get_link(4);
 			})
 			.find('em').html('<strong>Generate the report</strong> and export the results.');
 
@@ -459,9 +463,9 @@ boto_web.ui.widgets.Report = function(node) {
 
 		// Add the breadcrumbs
 		self.breadcrumbs.empty();
-		self.add_breadcrumb(self.step_1, "Reporting");
-		self.add_breadcrumb(self.step_2, self.model.name);
-		self.add_breadcrumb(self.step_3, "Attributes");
+		self.add_breadcrumb(1, "Reporting");
+		self.add_breadcrumb(2, self.model.name);
+		self.add_breadcrumb(3, "Attributes");
 		self.breadcrumbs.append('<li>Results</li>');
 
 		$('#next_step').hide();
@@ -549,6 +553,9 @@ boto_web.ui.widgets.Report = function(node) {
 	}
 
 	self.update = function() {
+		if (self.results) {
+			self.results.stop();
+		}
 		if (/model=(.*?)(?:&filters=(.*?)(?:&columns=(.*?))?)?(&|$)/.test(document.location.href)) {
 			self.query = RegExp.lastMatch;
 			self.model = boto_web.env.models[RegExp.$1];
@@ -573,11 +580,19 @@ boto_web.ui.widgets.Report = function(node) {
 		}
 	}
 
+	self.get_link = function(step) {
+		var base = ('' + document.location.href).replace(/\?.*|$/, '');
+
+		if (step > 1)
+			return base + '?step=' + step + '&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)) + '&columns=' + escape($.toJSON(self.columns));
+
+		return base;
+	}
+
 	self.add_breadcrumb = function(step, name){
 		var step_link = document.createElement("a");
-		step_link.href = "#pages/reporting.html";
+		step_link.href = self.get_link(step);
 		step_link.innerHTML = name;
-		$(step_link).bind("click", step);
 		var crumb = document.createElement("li");
 		$(crumb).append(step_link);
 		self.breadcrumbs.append(crumb);
