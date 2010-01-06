@@ -18,9 +18,12 @@ boto_web.ui.widgets.Report = function(node) {
 	self.columns = [];
 
 	self.step_1 = function() {
-		self.node.parent().find('#next_step').hide();
-		self.node.find("article").hide();
+		if (!self.template) {
+			self.template = $(self.node).clone(true);
+		}
+		self.node.find('article:not(#step_1)').remove();
 		self.node.find('#step_1').show();
+		self.node.parent().find('#next_step').hide();
 		self.filters = [];
 		self.columns = [];
 
@@ -42,7 +45,7 @@ boto_web.ui.widgets.Report = function(node) {
 					self.model = boto_web.env.models[name];
 					document.title = name + ' Report';
 					$('h1').text(document.title);
-					self.step_2();
+					document.location.href = ('' + document.location.href).replace(/\?.*|$/, '?step=2&model=' + name);
 				}}(name))
 				.appendTo(self.node.find('.new_report'))
 				.each(function() {
@@ -67,20 +70,45 @@ boto_web.ui.widgets.Report = function(node) {
 	}
 
 	self.step_2 = function(e) {
-		self.node.find("article").hide();
-		self.node.find('#step_2').show();
+		if (!self.template) {
+			self.template = $(self.node).clone(true);
+		}
+		self.node.find('article:not(#step_1)').remove();
+		self.node.find('#step_1').hide();
+		self.template.find('#step_2').clone(true).appendTo(self.node);
 
 		// Add the breadcrumbs
 		self.breadcrumbs.empty();
 		self.add_breadcrumb(self.step_1, "Reporting");
 		self.breadcrumbs.append('<li>' + self.model.name + '</li>');
 
-		if (self.model.properties.length > 15) {
-			$('<input/>')
-				.keyup(function() {
+		if (self.model.properties.length > 10) {
+			var blur_text = 'Find an attribute';
+			self.narrow_filters = $('<input/>')
+				.val(blur_text)
+				.css('color', '#999')
+				.focus(function() {
+					if (this.value == blur_text) {
+						$(this)
+							.val('')
+							.css('color', '');
+					}
+				})
+				.blur(function() {
+					if (!this.value) {
+						$(this)
+							.val(blur_text)
+							.css('color', '#999');
+					}
+				})
+				.keyup(function(e) {
 					var input = this;
 
-					if (input.value) {
+					if (e.keyCode == 13) {
+						self.node.find('.attributes .attribute:visible:eq(0)').click();
+						$(input).val('').keyup();
+					}
+					else if (input.value) {
 						self.node.find('.attribute').each(function() {
 							if ($(this).text().toLowerCase().indexOf(input.value.toLowerCase()) >= 0)
 								$(this).show();
@@ -92,14 +120,42 @@ boto_web.ui.widgets.Report = function(node) {
 						self.node.find('.attribute').show();
 					}
 				})
-				.appendTo(self.node.find('#step_2 .attributes'));
-
-			$('<br/>').appendTo(self.node.find('#step_2 .attributes'));
+				.insertBefore(self.node.find('#step_2 .attributes'));
 		}
 
-		var add_filter = function(e, property) {
+		var add_filter = function(e, property, operator, value) {
+			if (operator == 'like') {
+				var val = value;
+				if ($.isArray(val))
+					val = val[0];
+
+				if (/^%.*%$/.test(value))
+					operator = 'contains'
+				else if (/^%/.test(value))
+					operator = 'ends with'
+				else if (/%$/.test(value))
+					operator = 'starts with'
+
+				if ($.isArray(value)) {
+					value = $.map(value, function(v) {
+						return v.replace(/^%|%$/g,'');
+					});
+				}
+				else
+					value = value.replace(/^%|%$/g,'');
+			}
+			else if (operator == '=')
+				operator = 'is';
+			else if (operator == '!=')
+				operator = 'is not';
+
 			// Create a field which allows multiple selections regardless of the item type
-			var field = boto_web.ui.forms.property_field(property, { allow_multiple: true, read_only: false });
+			var field = boto_web.ui.forms.property_field(property, {
+				allow_multiple: true,
+				allow_default: true,
+				read_only: false,
+				_default_value: value || ''
+			});
 
 			$('<div/>')
 				.addClass('filter editor ui-button ui-state-default ui-corner-all')
@@ -119,7 +175,7 @@ boto_web.ui.widgets.Report = function(node) {
 							$(operators).each(function() {
 								$('<option/>').attr({text: this, value: this}).appendTo(select);
 							})
-						}),
+						}).val(operator || ''),
 					$('<h3/>')
 						.addClass('property')
 						.attr('id', 'property_' + property.name)
@@ -135,7 +191,10 @@ boto_web.ui.widgets.Report = function(node) {
 					field.button_add
 				)
 				.find('.field_container br.clear, .field_container .ui-button').remove();
-			e.preventDefault();
+
+			field.field_container.find('input, select, textarea').focus();
+			if (e)
+				e.preventDefault();
 		};
 
 		var get_filters = function() {
@@ -212,20 +271,31 @@ boto_web.ui.widgets.Report = function(node) {
 			.addClass('clear')
 			.appendTo(self.node.find('.preview'));
 
-		$('#next_step')
+		self.node.parent().find('#next_step')
 			.show()
 			.click(function() {
 				get_filters();
-				self.step_3();
+				document.location.href = ('' + document.location.href).replace(/\?.*|$/, '?step=3&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)));
 			})
 			.find('em').html('<strong>Modify the report</strong> by choosing the appropriate columns.');
 
 		boto_web.ui.decorate(self.node);
+
+		if (self.filters.length) {
+			$(self.filters).each(function() {
+				if (this[0] in self.model.prop_map)
+					add_filter(null, self.model.prop_map[this[0]], this[1], this[2]);
+			});
+		}
 	}
 
 	self.step_3 = function() {
-		self.node.find("article").hide();
-		self.node.find('#step_3').show();
+		if (!self.template) {
+			self.template = $(self.node).clone(true);
+		}
+		self.node.find('article:not(#step_1)').remove();
+		self.node.find('#step_1').hide();
+		self.template.find('#step_3').clone(true).appendTo(self.node);
 
 		// Add the breadcrumbs
 		self.breadcrumbs.empty();
@@ -233,30 +303,47 @@ boto_web.ui.widgets.Report = function(node) {
 		self.add_breadcrumb(self.step_2, self.model.name);
 		self.breadcrumbs.append('<li>Attributes</li>');
 
-		if (self.model.properties.length > 15) {
+		if (self.model.properties.length > 10) {
+			var blur_text = 'Find an attribute';
 			$('<input/>')
-				.keyup(function() {
+				.val(blur_text)
+				.css('color', '#999')
+				.focus(function() {
+					if (this.value == blur_text) {
+						$(this)
+							.val('')
+							.css('color', '');
+					}
+				})
+				.blur(function() {
+					if (!this.value) {
+						$(this)
+							.val(blur_text)
+							.css('color', '#999');
+					}
+				})
+				.keyup(function(e) {
 					var input = this;
 
+					if (e.keyCode == 13) {
+						self.node.find('.attributes .attribute:visible:eq(0)').click();
+						$(input).val('').keyup();
+					}
 					if (input.value) {
 						self.node.find('label').each(function() {
 							if ($(this).text().toLowerCase().indexOf(input.value.toLowerCase()) >= 0) {
-								$(this).show()
-								$('#' + $(this).attr('for')).show();
+								$(this).parent().show()
 							}
 							else {
-								$(this).hide();
-								$('#' + $(this).attr('for')).hide();
+								$(this).parent().hide();
 							}
 						});
 					}
 					else {
-						self.node.find('label, input').show();
+						self.node.find('.attribute').show();
 					}
 				})
-				.appendTo(self.node.find('#step_3 .attributes'));
-
-			$('<br/>').appendTo(self.node.find('#step_3 .attributes'));
+				.insertBefore(self.node.find('#step_3 .attributes'));
 		}
 
 		var set_sort_icons = function() {
@@ -277,15 +364,24 @@ boto_web.ui.widgets.Report = function(node) {
 			});
 		}
 
-		// Make a copy of the properties array and sort it alphabetically
-		var props = self.model.properties.splice(0);
-
-		props.sort(boto_web.ui.sort_props);
+		// Add ID to the property list... pushing the properties array does not work
+		var props = [{_label: 'ID', name: 'id', _perm: ['read'], _type: 'string'}];
+		$(self.model.properties).each(function() { props.push(this); });
+		props.sort(boto_web.ui.sort_props)
 
 		$(props).each(function() {
 			if ($.inArray('read', this._perm) < 0) return;
 
 			var prop = this;
+
+			var container = $('<div/>')
+				.addClass('attribute ui-button ui-state-default ui-corner-all')
+				.click(function(e) {
+					e.stopPropagation();
+					$(this).find('input').attr('checked', !$(this).find('input:checked').length).change();
+					return false;
+				})
+				.appendTo(self.node.find('#step_3 .attributes'));
 
 			$('<input/>')
 				.attr({id: this.name, value: this._label, type: 'checkbox'})
@@ -303,11 +399,11 @@ boto_web.ui.widgets.Report = function(node) {
 
 					set_sort_icons();
 				})
-				.appendTo(self.node.find('#step_3 .attributes'));
+				.appendTo(container);
 			$('<label/>')
 				.attr({'for': this.name})
 				.html(' ' + this._label + '<br />')
-				.appendTo(self.node.find('#step_3 .attributes'));
+				.appendTo(container);
 		});
 
 		$('<ul/>')
@@ -323,7 +419,7 @@ boto_web.ui.widgets.Report = function(node) {
 		$('<div/>')
 			.attr("id", "preview_button")
 			.addClass('ui-button ui-state-default ui-corner-all')
-			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview with Attributes')
+			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview with selected columns')
 			.click(function() {
 				get_columns();
 				self.node.find('#step_3 .preview').empty();
@@ -337,19 +433,29 @@ boto_web.ui.widgets.Report = function(node) {
 			.appendTo(self.node.find('.preview'));
 
 
-		$('#next_step')
+		self.node.parent().find('#next_step')
 			.show()
 			.unbind()
 			.click(function() {
 				get_columns();
-				self.step_4();
+				document.location.href = ('' + document.location.href).replace(/\?.*|$/, '?step=4&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)) + '&columns=' + escape($.toJSON(self.columns)));
 			})
 			.find('em').html('<strong>Generate the report</strong> and export the results.');
+
+		if (self.columns) {
+			$(self.columns).each(function() {
+				self.node.find('.attribute #' + this.name).parent().click();
+			});
+		}
 	}
 
 	self.step_4 = function() {
-		self.node.find("article").hide();
-		self.node.find('#step_4').show();
+		if (!self.template) {
+			self.template = $(self.node).clone(true);
+		}
+		self.node.find('article:not(#step_1)').remove();
+		self.node.find('#step_1').hide();
+		self.template.find('#step_4').clone(true).appendTo(self.node);
 
 		// Add the breadcrumbs
 		self.breadcrumbs.empty();
@@ -395,8 +501,8 @@ boto_web.ui.widgets.Report = function(node) {
 				.text(p._label)
 				.appendTo(trhead);
 
-			var is_list = self.model.prop_map[p.name]._type == 'list';
-			var is_ref = self.model.prop_map[p.name]._item_type in boto_web.env.models;
+			var is_list = p.name in self.model.prop_map && self.model.prop_map[p.name]._type == 'list';
+			var is_ref = p.name in self.model.prop_map && self.model.prop_map[p.name]._item_type in boto_web.env.models;
 			var linked_name = $('<a/>')
 				.attr(boto_web.ui.properties.attribute, 'name')
 				.attr(boto_web.ui.properties.link, 'view');
@@ -443,15 +549,24 @@ boto_web.ui.widgets.Report = function(node) {
 	}
 
 	self.update = function() {
-		if (/model=(.*?)&filters=(.*?)&columns=(.*?)(&|$)/.test(document.location.href)) {
+		if (/model=(.*?)(?:&filters=(.*?)(?:&columns=(.*?))?)?(&|$)/.test(document.location.href)) {
 			self.query = RegExp.lastMatch;
 			self.model = boto_web.env.models[RegExp.$1];
-			self.filters = $.evalJSON(unescape(RegExp.$2));
-			self.columns = $.evalJSON(unescape(RegExp.$3));
-			self.step_4();
+			if (RegExp.$2)
+				self.filters = $.evalJSON(unescape(RegExp.$2));
+			if (RegExp.$3)
+				self.columns = $.evalJSON(unescape(RegExp.$3));
 		}
-		else if (/step=(\d+)/.test(document.location.href)) {
+		else {
+			self.step_1();
+			return;
+		}
+
+		if (/step=(\d+)/.test(document.location.href)) {
 			self['step_' + RegExp.$1]();
+		}
+		else if (self.model && self.filters && self.columns) {
+			self.step_4();
 		}
 		else {
 			self.step_1();
@@ -467,6 +582,4 @@ boto_web.ui.widgets.Report = function(node) {
 		$(crumb).append(step_link);
 		self.breadcrumbs.append(crumb);
 	}
-
-	self.update();
 };

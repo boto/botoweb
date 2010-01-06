@@ -13,7 +13,7 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 
 	self.node = $(node);
 	self.model = model;
-	self.template = self.node.find(boto_web.ui.selectors.object)
+	self.template = self.node.find(boto_web.ui.selectors.object + ':eq(0)')
 		.addClass('object')
 		.clone();
 	self.node.empty();
