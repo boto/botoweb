@@ -14,6 +14,7 @@ boto_web.ui.widgets.Report = function(node) {
 	self.node = $(node);
 	self.breadcrumbs = self.node.parent().find("ul.breadcrumbs");
 	self.model = null;
+	self.obj = {};
 	self.filters = [];
 	self.columns = [];
 
@@ -475,10 +476,6 @@ boto_web.ui.widgets.Report = function(node) {
 		self.query = 'model=' + self.model.name
 			+ '&filters=' + escape($.toJSON(self.filters))
 			+ '&columns=' + escape($.toJSON(self.columns));
-		$("<a/>")
-			.attr("href", document.location + "?" + self.query)
-			.text("Click here to link to this report")
-			.appendTo(self.node.find("#step_4 .results"));
 
 		$("<br/>").addClass("clear").appendTo(self.node.find("#step_4 .results"));
 
@@ -486,10 +483,24 @@ boto_web.ui.widgets.Report = function(node) {
 			.addClass('ui-button ui-state-default ui-corner-all')
 			.html('<span class="ui-icon ui-icon-refresh"></span>Save Report')
 			.click(function() {
-				var editor = boto_web.env.models.Report.create({def: {query: self.query}, hide: ['query','target_class_name','filters']});
+				if (self.obj.id) {
+					self.obj.properties.query = self.query;
+					self.obj.edit({hide: ['query','target_class_name','filters']});
+				}
+				else
+					boto_web.env.models.Report.create({def: {query: self.query}, hide: ['query','target_class_name','filters']});
 			})
 			.appendTo(self.node.find('#step_4 .results'));
 		self.build_results(false, self.node.find("#step_4 .results"));
+
+		setTimeout(function() {
+			if (self.obj.id) {
+				$("<div/>")
+					.addClass('smaller jr')
+					.html("<strong>Link to this report:</strong> " + self.get_link(1) + '?id=' + self.obj.id)
+					.appendTo(self.node.find("#step_4 .results"));
+			}
+		}, 1000);
 	}
 
 	self.build_results = function(preview, resultNode){
@@ -556,13 +567,18 @@ boto_web.ui.widgets.Report = function(node) {
 		if (self.results) {
 			self.results.stop();
 		}
-		if (/model=(.*?)(?:&filters=(.*?)(?:&columns=(.*?))?)?(&|$)/.test(document.location.href)) {
+		if (/model=(.*?)(?:&filters=(.*?)(?:&columns=(.*?)(?:&id=(.*?))?)?)?(&|$)/.test(document.location.href)) {
 			self.query = RegExp.lastMatch;
 			self.model = boto_web.env.models[RegExp.$1];
 			if (RegExp.$2)
 				self.filters = $.evalJSON(unescape(RegExp.$2));
 			if (RegExp.$3)
 				self.columns = $.evalJSON(unescape(RegExp.$3));
+			if (RegExp.$4 && !self.obj.id) {
+				boto_web.env.models.Report.get(RegExp.$4, function(obj) {
+					self.obj = obj;
+				});
+			}
 		}
 		else {
 			self.step_1();
@@ -584,7 +600,7 @@ boto_web.ui.widgets.Report = function(node) {
 		var base = ('' + document.location.href).replace(/\?.*|$/, '');
 
 		if (step > 1)
-			return base + '?step=' + step + '&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)) + '&columns=' + escape($.toJSON(self.columns));
+			return base + '?step=' + step + '&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)) + '&columns=' + escape($.toJSON(self.columns)) + '&id=' + self.obj.id;
 
 		return base;
 	}
