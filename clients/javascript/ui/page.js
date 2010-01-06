@@ -227,4 +227,7 @@ boto_web.ui.Page = function(html) {
 			}}(templates[template]));
 		}
 	}
+
+	if (self.listener)
+		self.listener.update();
 };
