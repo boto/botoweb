@@ -152,6 +152,9 @@ boto_web.ui.widgets.Report = function(node) {
 			else if (operator == '!=')
 				operator = 'is not';
 
+			// Avoid the phantom field value bug
+			property.value = null;
+
 			// Create a field which allows multiple selections regardless of the item type
 			var field = boto_web.ui.forms.property_field(property, {
 				allow_multiple: true,
