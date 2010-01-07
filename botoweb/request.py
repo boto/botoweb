@@ -1,4 +1,5 @@
 import webob
+import cgi
 from botoweb.resources.user import User
 import logging
 log = logging.getLogger("vermouth.request")
@@ -37,7 +38,7 @@ class Request(webob.Request):
 			self.real_host_url = self.host_url
 
 	def get(self, argument_name, default_value='', allow_multiple=False):
-		param_value = self.get_all(argument_name)
+		param_value = self.get_all(argument_name, default_value)
 		if allow_multiple:
 			return param_value
 		else:
@@ -46,7 +47,7 @@ class Request(webob.Request):
 			else:
 				return default_value
 
-	def get_all(self, argument_name):
+	def get_all(self, argument_name, default_value=''):
 		if self.charset:
 			argument_name = argument_name.encode(self.charset)
 

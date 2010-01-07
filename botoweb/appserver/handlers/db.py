@@ -1,27 +1,25 @@
 # Author: Chris Moyer
-from botoweb.exceptions import NotFound, Unauthorized, BadRequest
+from botoweb.exceptions import NotFound, Unauthorized, BadRequest, Conflict
 from botoweb.appserver.handlers import RequestHandler
 
 import boto
 from boto.utils import find_class, Password
 from boto.sdb.db.blob import Blob
 from boto.sdb.db.model import Model
-from boto.sdb.db.key import Key
 
 import urllib
 
-import re
 from datetime import datetime
 
 import logging
 log = logging.getLogger("botoweb.handlers.db")
 
-from lxml import etree
 from botoweb import xmlize
 
 
 try:
 	import json
+	json.loads("[]")
 except ImportError:
 	import simplejson as json
 
