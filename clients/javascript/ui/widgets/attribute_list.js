@@ -26,6 +26,9 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 		self.sequence = $.map(self.model.properties, function(prop) { return prop.name });
 
 	self.properties = $.map(self.sequence, function(name, num) {
+		if (!name) {
+			return {_label: '&nbsp;'};
+		}
 		var n = name.replace(/\..*/, '');
 		if (!(n in self.model.prop_map))
 			return;
