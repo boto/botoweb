@@ -239,7 +239,11 @@ boto_web.ui.widgets.Report = function(node) {
 			if (!has_columns) {
 				self.columns = [];
 				for (var prop in filter_columns) {
-					self.columns.push(self.model.prop_map[prop]);
+					var c = self.model.prop_map[prop];
+					self.columns.push({
+						name: c.name,
+						label: c._label
+					});
 				}
 			}
 		};
@@ -283,6 +287,10 @@ boto_web.ui.widgets.Report = function(node) {
 			.show()
 			.click(function() {
 				get_filters();
+
+				if (!has_columns)
+					self.columns = [];
+
 				document.location.href = self.get_link(3);
 			})
 			.find('em').html('<strong>Modify the report</strong> by choosing the appropriate columns.');
@@ -463,6 +471,7 @@ boto_web.ui.widgets.Report = function(node) {
 		}
 		self.node.find('article:not(#step_1)').remove();
 		self.node.find('#step_1').hide();
+		self.node.parent().find('#next_step').hide();
 		self.template.find('#step_4').clone(true).appendTo(self.node);
 
 		// Add the breadcrumbs
@@ -575,8 +584,9 @@ boto_web.ui.widgets.Report = function(node) {
 			self.model = boto_web.env.models[RegExp.$1];
 			if (RegExp.$2)
 				self.filters = $.evalJSON(unescape(RegExp.$2));
-			if (RegExp.$3)
+			if (RegExp.$3) {
 				self.columns = $.evalJSON(unescape(RegExp.$3));
+			}
 			if (RegExp.$4 && !self.obj.id) {
 				boto_web.env.models.Report.get(RegExp.$4, function(obj) {
 					self.obj = obj;
@@ -603,7 +613,7 @@ boto_web.ui.widgets.Report = function(node) {
 		var base = ('' + document.location.href).replace(/\?.*|$/, '');
 
 		if (step > 1)
-			return base + '?step=' + step + '&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)) + '&columns=' + escape($.toJSON(self.columns)) + '&id=' + self.obj.id;
+			return base + '?step=' + step + '&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)) + '&columns=' + escape($.toJSON(self.columns)) + '&id=' + (self.obj.id || '');
 
 		return base;
 	}
