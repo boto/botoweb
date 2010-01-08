@@ -393,9 +393,11 @@ boto_web.ui.widgets.Report = function(node) {
 			var container = $('<div/>')
 				.addClass('attribute ui-button ui-state-default ui-corner-all')
 				.click(function(e) {
-					e.stopPropagation();
-					$(this).find('input').attr('checked', !$(this).find('input:checked').length).change();
-					return false;
+					if (!$(e.target).is('input')) {
+						e.stopPropagation();
+						$(this).find('input').attr('checked', !$(this).find('input:checked').length).change();
+						return false;
+					}
 				})
 				.appendTo(self.node.find('#step_3 .attributes'));
 
