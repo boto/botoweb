@@ -242,7 +242,7 @@ boto_web.ui.widgets.Report = function(node) {
 					var c = self.model.prop_map[prop];
 					self.columns.push({
 						name: c.name,
-						label: c._label
+						_label: c._label
 					});
 				}
 			}
