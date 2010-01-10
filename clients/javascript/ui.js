@@ -378,26 +378,26 @@ boto_web.ui = {
 				if (data.status < 300) {
 					if (uploads.length) {
 						var upload_fnc = function(obj) {
-							$(uploads).each(function() {
-								if ($(this.field).val())
-									$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
+							var num_uploads = 0;
 
+							$(uploads).each(function() {
+								if ($(this.field).val()) {
+									num_uploads++;
+									$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
+								}
+							});
+
+							if (closeFcn)
 								closeFcn.call(self.node);
 
-								boto_web.ui.alert('The database has been updated.');
+							boto_web.ui.alert('The database has been updated.');
 
-								if (opts.callback) {
-									opts.callback();
-								}
+							if (num_uploads == 0)
+								document.location.reload(true);
 
-								//document.location.reload(true);
-								//$(this.field).uploadifySettings('script', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name'));
-								/*$(this.field).uploadifySettings('onComplete', function() {
-									closeFcn();
-									boto_web.ui.alert('The database has been updated.');
-								});*/
-								//$(this.field).uploadifyUpload();
-							});
+							if (opts.callback)
+								opts.callback();
+
 						};
 
 						if (self.obj)
@@ -406,7 +406,8 @@ boto_web.ui = {
 							self.model.get(data.getResponseHeader('Location'), upload_fnc);
 					}
 					else {
-						closeFcn.call(self.node);
+						if (closeFcn)
+							closeFcn.call(self.node);
 						boto_web.ui.alert('The database has been updated.');
 						document.location.reload(true);
 					}
