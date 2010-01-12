@@ -72,6 +72,7 @@ boto_web.ui = {
 			data.id = obj[2];
 			boto_web.env.models[obj[1]].save(data, function() {
 				boto_web.ui.alert('The database has been updated.');
+				document.location.reload(true);
 			});
 			var href = '' + document.location.href;
 			document.location.href = href.replace(/(&|\?)action=update[^&]*&data=[^&]*/, '');
@@ -566,7 +567,7 @@ boto_web.ui = {
 	},
 
 	sort_props: function(a,b) {
-		return (a._label || a.name || a).toLowerCase() > (b._label || b.name || b).toLowerCase() ? 1 : -1;
+		return (a._label || a.name || a.text || a).toLowerCase() > (b._label || b.name || b.text || b).toLowerCase() ? 1 : -1;
 	}
 };
 
