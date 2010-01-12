@@ -308,7 +308,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 			if (typeof val == 'undefined')
 				return;
 
-			if (val != '' && !self.obj || self.obj && !$.equals((self.obj.properties[name] || ''), val))
+			if (val != '' && (!self.obj || !self.obj.id) || self.obj && !$.equals((self.obj.properties[name] || ''), val))
 				data[name] = val;
 		});
 
