@@ -327,24 +327,33 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 
 				if (uploads.length) {
 					var upload_fnc = function(obj) {
+						var num_uploads = 0;
+
 						$(uploads).each(function() {
 							if ($(this.field).val()) {
+								num_uploads++;
 								$(this.field).parent('form').attr('action', boto_web.env.base_url + obj.href + '/' + obj.id + '/' + this.field.attr('name')).submit();
 							}
 						});
+
+						self.obj.id = obj.id;
+
+						if (num_uploads == 0) {
+							boto_web.ui.alert('The database has been updated.');
+							document.location.reload(true);
+						}
+						else {
+							boto_web.ui.alert('Please press OK when your browser status bar indicates that the upload is complete.', 'Please wait for the upload to finish', function() {
+								document.location.href = ('' + document.location.href).replace(/#.*/, self.get_link('view'))
+								document.location.reload(true);
+							});
+						}
 					};
 
 					if (self.obj.id)
 						upload_fnc(self.obj);
 					else
 						setTimeout(function() { self.model.get(id, upload_fnc) }, 500);
-
-					self.obj.id = id;
-
-					boto_web.ui.alert('Please press OK when your browser status bar indicates that the upload is complete.', 'Please wait for the upload to finish', function() {
-						document.location.href = ('' + document.location.href).replace(/#.*/, self.get_link('view'))
-						document.location.reload(true);
-					});
 				}
 				else if (self.parent) {
 					self.obj.id = id;

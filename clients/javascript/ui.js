@@ -391,10 +391,15 @@ boto_web.ui = {
 							if (closeFcn)
 								closeFcn.call(self.node);
 
-							boto_web.ui.alert('The database has been updated.');
-
-							if (num_uploads == 0)
+							if (num_uploads == 0) {
+								boto_web.ui.alert('The database has been updated.');
 								document.location.reload(true);
+							}
+							else {
+								boto_web.ui.alert('Please press OK when your browser status bar indicates that the upload is complete.', 'Please wait for the upload to finish', function() {
+									document.location.reload(true);
+								});
+							}
 
 							if (opts.callback)
 								opts.callback();
