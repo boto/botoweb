@@ -374,10 +374,120 @@ boto_web.ui.widgets.Report = function(node) {
 		};
 
 		var get_columns = function() {
+			// Finalize any changes made in the column editor
+			edit_column(self.model, '');
+
 			self.columns = [];
 			self.node.find('.column_list ul li').each(function() {
-				self.columns.push({name: this.id.replace('column_', ''), _label: $(this).text()});
+				var query = [];
+
+				// Start with the column name
+				query.push($(this).find('strong:eq(0)').text().replace(/ \(was.*/, ''));
+
+				// Reference properties may be nested to change what is displayed
+				if ($(this).find('.editor .display .display .display').length) {
+					var expand_query = function(prop, parent) {
+						var q = [prop];
+						var sub_prop = parent.find('select').val() || 'name';
+
+						if (parent.find('.display .display').length) {
+							q.push(expand_query(sub_prop, parent.find('.display:eq(0)')));
+						}
+						else {
+							q.push(sub_prop);
+						}
+
+						// TODO push filtering details
+
+						return q;
+					};
+
+					query.push(expand_query(this.id.replace('column_', ''), $(this).find('.editor .display:eq(0)')));
+				}
+				else {
+					query.push(this.id.replace('column_', ''));
+				}
+
+				alert($.dump(query));
+
+				self.columns.push(query);
 			});
+		}
+
+		var edit_column = function(model, prop, parent) {
+			var prop = model.prop_map[prop];
+			var nested = false;
+
+			// Renaming a column should only be shown once for reference types
+			if (!parent) {
+				// Move the editor to the column node (it will be hidden)
+				$('.column_list #column_' + $('#column_editor').data('prop') + ' .editor').append(
+					$('#column_editor').contents()
+				);
+
+				if (!prop)
+					return;
+
+				$('#column_editor').empty();
+				$('#column_editor').data('prop', prop.name);
+
+				var old_editor = $('.column_list #column_' + prop.name + ' .editor');
+				if (old_editor.contents().length) {
+					$('#column_editor').append(old_editor.contents());
+					return;
+				}
+
+				var name_field = new boto_web.ui.forms.text({name: prop.name, _label: '', value: prop._label});
+
+				$('#column_editor').append(
+					$('<strong>Property Name &nbsp; </strong>' + prop._label + '<br />'),
+					$('<strong>Rename Column &nbsp; </strong>'),
+					name_field.field,
+					$('<div class="display"/>')
+				);
+
+				name_field.field.keyup(function() {
+					var col = $('.column_list #column_' + this.name + ' strong');
+
+					if (this.value && this.value != col.text())
+						col.html(this.value + ' <small>(was: ' + prop._label + ')</small>');
+					else
+						col.text(prop._label);
+				});
+
+				parent = $('#column_editor .display');
+			}
+			else {
+				nested = true;
+			}
+
+			if (prop._item_type in boto_web.env.models) {
+				var ref_model = boto_web.env.models[prop._item_type];
+
+				var prop_choices = $.map(ref_model.properties, function(p) {
+					return {text: p._label, value: p.name};
+				});
+
+				prop_choices = prop_choices.sort(boto_web.ui.sort_props);
+
+				prop_choices.unshift({text: 'default', value: ''});
+
+				var property_field = new boto_web.ui.forms.dropdown({
+					name: prop.name,
+					choices: prop_choices
+				});
+
+				parent.append(
+					$('<strong>Display property &nbsp; </strong>'),
+					property_field.field,
+					$('<div class="display"/>')
+				);
+
+				property_field.field.change(function() {
+					parent.find('.display').empty();
+					edit_column(ref_model, this.value, parent.find('.display'));
+				});
+			}
 		}
 
 		// Add ID to the property list... pushing the properties array does not work
@@ -408,8 +518,13 @@ boto_web.ui.widgets.Report = function(node) {
 						$('<li/>')
 							.addClass('ui-state-default')
 							.attr('id', 'column_' + this.id)
-							.html('<span></span>' + this.value)
+							.html('<span></span><strong>' + this.value + '</strong><div class="hidden editor"></div>')
 							.appendTo(self.node.find('ul'))
+							.click(function() {
+								edit_column(self.model, this.id.replace('column_', ''));
+							});
+
+						edit_column(self.model, this.id);
 					}
 					else {
 						$('.column_list #column_' + this.id).remove();
@@ -525,7 +640,14 @@ boto_web.ui.widgets.Report = function(node) {
 			.addClass('bwObject')
 			.appendTo(tbody);
 
-		$.map(self.columns, function(p) {
+		$.map(self.columns, function(c) {
+			var p;
+			try { p = {_label: c[0], name: c[1][0]}; } catch (e) {
+				try { p = {_label: c[0], name: c[1]}; } catch (e) {
+					try { p = {_label: self.model.prop_map[c]._label, name: c}; } catch (e) {}
+				}
+			}
+
 			$('<th/>')
 				.text(p._label)
 				.appendTo(trhead);
@@ -553,9 +675,28 @@ boto_web.ui.widgets.Report = function(node) {
 					.appendTo(trbody);
 			}
 			else if (is_ref) {
-				$('<td/>')
-					.append(node.append(linked_name))
-					.appendTo(trbody);
+				if ($.isArray(c[1])) {
+					var nested_markup = function(prop) {
+						var n = $('<span/>')
+							.attr(boto_web.ui.properties.attribute, prop[0])
+
+						if ($.isArray(prop[1]))
+							return n.append(nested_markup(prop[1]));
+						else if (prop.length > 1)
+							return n.append(nested_markup([prop[1]]))
+						else
+							return n
+					};
+
+					$('<td/>')
+						.append(nested_markup(c[1]))
+						.appendTo(trbody);
+				}
+				else {
+					$('<td/>')
+						.append(node.append(linked_name))
+						.appendTo(trbody);
+				}
 			}
 			else {
 				$('<td/>')
@@ -629,3 +770,4 @@ boto_web.ui.widgets.Report = function(node) {
 		self.breadcrumbs.append(crumb);
 	}
 };
+
