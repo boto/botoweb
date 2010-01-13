@@ -78,193 +78,14 @@ boto_web.ui.widgets.Report = function(node) {
 		self.node.find('#step_1').hide();
 		self.template.find('#step_2').clone(true).appendTo(self.node);
 
-		var has_columns = self.columns.length > 0;
+		self.has_columns = self.columns.length > 0;
 
 		// Add the breadcrumbs
 		self.breadcrumbs.empty();
 		self.add_breadcrumb(1, "Reporting");
 		self.breadcrumbs.append('<li>' + self.model.name + '</li>');
 
-		if (self.model.properties.length > 10) {
-			var blur_text = 'Find an attribute';
-			self.narrow_filters = $('<input/>')
-				.val(blur_text)
-				.css('color', '#999')
-				.focus(function() {
-					if (this.value == blur_text) {
-						$(this)
-							.val('')
-							.css('color', '');
-					}
-				})
-				.blur(function() {
-					if (!this.value) {
-						$(this)
-							.val(blur_text)
-							.css('color', '#999');
-					}
-				})
-				.keyup(function(e) {
-					var input = this;
-
-					if (e.keyCode == 13) {
-						self.node.find('.attributes .attribute:visible:eq(0)').click();
-						$(input).val('').keyup();
-					}
-					else if (input.value) {
-						self.node.find('.attribute').each(function() {
-							if ($(this).text().toLowerCase().indexOf(input.value.toLowerCase()) >= 0)
-								$(this).show();
-							else
-								$(this).hide();
-						});
-					}
-					else {
-						self.node.find('.attribute').show();
-					}
-				})
-				.insertBefore(self.node.find('#step_2 .attributes'));
-		}
-
-		var add_filter = function(e, property, operator, value) {
-			if (operator == 'like') {
-				var val = value;
-				if ($.isArray(val))
-					val = val[0];
-
-				if (/^%.*%$/.test(value))
-					operator = 'contains'
-				else if (/^%/.test(value))
-					operator = 'ends with'
-				else if (/%$/.test(value))
-					operator = 'starts with'
-
-				if ($.isArray(value)) {
-					value = $.map(value, function(v) {
-						return v.replace(/^%|%$/g,'');
-					});
-				}
-				else
-					value = value.replace(/^%|%$/g,'');
-			}
-			else if (operator == '=')
-				operator = 'is';
-			else if (operator == '!=')
-				operator = 'is not';
-
-			// Avoid the phantom field value bug
-			property.value = null;
-
-			// Create a field which allows multiple selections regardless of the item type
-			var field = boto_web.ui.forms.property_field(property, {
-				allow_multiple: true,
-				allow_default: true,
-				read_only: false,
-				_default_value: value || ''
-			});
-
-			$('<div/>')
-				.addClass('filter editor ui-button ui-state-default ui-corner-all')
-				.appendTo(self.node.find('.filters'))
-				.append(
-					$('<select/>')
-						.addClass('operator ar')
-						.each(function() {
-							var select = this;
-							var operators = ['contains', 'starts with', 'ends with', 'is', 'is not', '>', '<', '>=', '<='];
-							if (property._type == 'reference')
-								operators = ['is', 'is not'];
-							if (property._type == 'boolean')
-								operators = ['is'];
-							if (property._type == 'dateTime')
-								operators = ['is', 'is not', '>', '<', '>=', '<='];
-							$(operators).each(function() {
-								$('<option/>').attr({text: this, value: this}).appendTo(select);
-							})
-						}).val(operator || ''),
-					$('<h3/>')
-						.addClass('property')
-						.attr('id', 'property_' + property.name)
-						.text(property._label)
-						.prepend($('<span/>')
-							.addClass('ui-icon ui-icon-closethick')
-							.click(function() {
-								$(this).parents('.filter').remove()
-							})
-						),
-					$('<br class="clear" />'),
-					field.field_container,
-					field.button_add
-				)
-				.find('.field_container br.clear, .field_container .ui-button').remove();
-
-			field.field_container.find('input, select, textarea').focus();
-			if (e)
-				e.preventDefault();
-		};
-
-		var get_filters = function() {
-			var filter_columns = {name: 1};
-			self.filters = [];
-			self.node.find('.filter').each(function() {
-				var prop = $(this).find('.property').attr('id').replace('property_', '');
-				var op = $(this).find('.operator').val();
-				val = $(this).find('.field_container').data('get_value')();
-
-				if (!$.isArray(val))
-					val = [val];
-
-				op = {'is': '=', 'is not': '!=', 'contains': 'like'}[op] || op;
-
-				if (op == 'like')
-					val = $.map(val, function(v) { return v ? '%' + v + '%' : null; });
-				if (op == 'starts with') {
-					val = $.map(val, function(v) { return v ? v + '%' : null; });
-					op = 'like';
-				}
-				if (op == 'ends with') {
-					val = $.map(val, function(v) { return v ? '%' + v : null; });
-					op = 'like';
-				}
-
-				if (val.length == 1)
-					val = val[0];
-
-				if (!filter_columns[prop])
-					filter_columns[prop] = 1;
-
-				self.filters.push([prop, op, val]);
-			});
-
-			if (!has_columns) {
-				self.columns = [];
-				for (var prop in filter_columns) {
-					var c = self.model.prop_map[prop];
-					self.columns.push({
-						name: c.name,
-						_label: c._label
-					});
-				}
-			}
-		};
-
-		// Add ID to the property list... pushing the properties array does not work
-		var props = [{_label: 'ID', name: 'id', _perm: ['read'], _type: 'string'}];
-		$(self.model.properties).each(function() { props.push(this); });
-		props.sort(boto_web.ui.sort_props)
-
-		$.map(props, function(p) {
-			if ($.inArray('read', p._perm) < 0)
-				return;
-
-			$('<div/>')
-				.addClass('attribute ui-button ui-state-default ui-corner-all')
-				.html(p._label)
-				.click(function(e) {
-					add_filter(e, p)
-				})
-				.appendTo(self.node.find('#step_2 .attributes'));
-		});
+		self.build_filter_choices();
 
 		self.node.find("#preview_button").remove();
 		$('<div/>')
@@ -272,7 +93,7 @@ boto_web.ui.widgets.Report = function(node) {
 			.addClass('ui-button ui-state-default ui-corner-all')
 			.html('<span class="ui-icon ui-icon-refresh"></span>Refresh result preview')
 			.click(function() {
-				get_filters();
+				self.get_filters();
 				self.node.find('#step_2 .preview').empty();
 				self.build_results(true, self.node.find("#step_2 .preview"));
 			})
@@ -286,9 +107,9 @@ boto_web.ui.widgets.Report = function(node) {
 		self.node.parent().find('#next_step')
 			.show()
 			.click(function() {
-				get_filters();
+				self.get_filters();
 
-				if (!has_columns)
+				if (!self.has_columns)
 					self.columns = [];
 
 				document.location.href = self.get_link(3);
@@ -300,7 +121,7 @@ boto_web.ui.widgets.Report = function(node) {
 		if (self.filters.length) {
 			$(self.filters).each(function() {
 				if (this[0] in self.model.prop_map)
-					add_filter(null, self.model.prop_map[this[0]], this[1], this[2]);
+					self.add_filter(null, self.model.prop_map[this[0]], this[1], this[2]);
 			});
 		}
 	}
@@ -391,7 +212,7 @@ boto_web.ui.widgets.Report = function(node) {
 						var sub_prop = parent.find('select').val() || 'name';
 
 						if (parent.find('.display .display').length) {
-							q.push(expand_query(sub_prop, parent.find('.display:eq(0)')));
+							q.push(expand_query(sub_prop, parent.find('> .display')));
 						}
 						else {
 							q.push(sub_prop);
@@ -402,23 +223,26 @@ boto_web.ui.widgets.Report = function(node) {
 						return q;
 					};
 
-					query.push(expand_query(this.id.replace('column_', ''), $(this).find('.editor .display:eq(0)')));
+					query.push(expand_query(this.id.replace('column_', ''), $(this).find('.editor > .display')));
 				}
 				else {
 					query.push(this.id.replace('column_', ''));
 				}
-
-				alert($.dump(query));
 
 				self.columns.push(query);
 			});
 		}
 
 		var edit_column = function(model, prop, parent) {
-			var prop = model.prop_map[prop];
-			var nested = false;
+			// id is not in prop_map
+			if (prop == 'id') {
+				prop = { _label: 'ID', name: 'id' };
+			}
+			else {
+				prop = model.prop_map[prop];
+			}
 
-			// Renaming a column should only be shown once for reference types
+			// Renaming a column should not be nested for reference types
 			if (!parent) {
 				// Move the editor to the column node (it will be hidden)
 				$('.column_list #column_' + $('#column_editor').data('prop') + ' .editor').append(
@@ -440,14 +264,14 @@ boto_web.ui.widgets.Report = function(node) {
 				var name_field = new boto_web.ui.forms.text({name: prop.name, _label: '', value: prop._label});
 
 				$('#column_editor').append(
-					$('<strong>Property Name &nbsp; </strong>' + prop._label + '<br />'),
-					$('<strong>Rename Column &nbsp; </strong>'),
+					$('<label>Property Name &nbsp; </label>' + prop._label + '<br />' + ((prop._item_type in boto_web.env.models) ? '<label>Property Type &nbsp; </label>' + prop._item_type + '<br />' : '')),
+					$('<label>Rename Column &nbsp; </label>'),
 					name_field.field,
 					$('<div class="display"/>')
 				);
 
 				name_field.field.keyup(function() {
-					var col = $('.column_list #column_' + this.name + ' strong');
+					var col = $('.column_list #column_' + this.name + ' label');
 
 					if (this.value && this.value != col.text())
 						col.html(this.value + ' <small>(was: ' + prop._label + ')</small>');
@@ -457,11 +281,13 @@ boto_web.ui.widgets.Report = function(node) {
 
 				parent = $('#column_editor .display');
 			}
-			else {
-				nested = true;
-			}
 
 			if (prop._item_type in boto_web.env.models) {
+				parent.append(
+					$('<label>Filter column &nbsp; </label>'),
+					$('<div class="filters"/>')
+				);
+
 				var ref_model = boto_web.env.models[prop._item_type];
 
 				var prop_choices = $.map(ref_model.properties, function(p) {
@@ -478,7 +304,7 @@ boto_web.ui.widgets.Report = function(node) {
 				});
 
 				parent.append(
-					$('<strong>Display property &nbsp; </strong>'),
+					$('<label>Display property &nbsp; </label>'),
 					property_field.field,
 					$('<div class="display"/>')
 				);
@@ -649,7 +475,7 @@ boto_web.ui.widgets.Report = function(node) {
 			}
 
 			$('<th/>')
-				.text(p._label)
+				.text(p._label || '')
 				.appendTo(trhead);
 
 			var is_list = p.name in self.model.prop_map && self.model.prop_map[p.name]._type == 'list';
@@ -750,6 +576,206 @@ boto_web.ui.widgets.Report = function(node) {
 		else {
 			self.step_1();
 		}
+	}
+
+	self.build_filter_choices = function(model, base_node) {
+		if (!base_node)
+			base_node = self.node;
+
+		if (!model)
+			model = self.model;
+
+		if (self.model.properties.length > 10) {
+			var blur_text = 'Find an attribute';
+			self.narrow_filters = $('<input/>')
+				.val(blur_text)
+				.css('color', '#999')
+				.focus(function() {
+					if (this.value == blur_text) {
+						$(this)
+							.val('')
+							.css('color', '');
+					}
+				})
+				.blur(function() {
+					if (!this.value) {
+						$(this)
+							.val(blur_text)
+							.css('color', '#999');
+					}
+				})
+				.keyup(function(e) {
+					var input = this;
+
+					if (e.keyCode == 13) {
+						base_node.find('.attributes .attribute:visible:eq(0)').click();
+						$(input).val('').keyup();
+					}
+					else if (input.value) {
+						base_node.find('.attribute').each(function() {
+							if ($(this).text().toLowerCase().indexOf(input.value.toLowerCase()) >= 0)
+								$(this).show();
+							else
+								$(this).hide();
+						});
+					}
+					else {
+						base_node.find('.attribute').show();
+					}
+				})
+				.insertBefore(base_node.find('.attributes'));
+		}
+
+		// Add ID to the property list... pushing the properties array does not work
+		var props = [{_label: 'ID', name: 'id', _perm: ['read'], _type: 'string'}];
+		$(self.model.properties).each(function() { props.push(this); });
+		props.sort(boto_web.ui.sort_props)
+
+		$.map(props, function(p) {
+			if ($.inArray('read', p._perm) < 0)
+				return;
+
+			$('<div/>')
+				.addClass('attribute ui-button ui-state-default ui-corner-all')
+				.html(p._label)
+				.click(function(e) {
+					self.add_filter(e, p)
+				})
+				.appendTo(base_node.find('.attributes'));
+		});
+	}
+
+	self.get_filters = function(base_node) {
+		if (!base_node)
+			base_node = self.node;
+
+		var filter_columns = {name: 1};
+		self.filters = [];
+		base_node.find('.filter').each(function() {
+			var prop = $(this).find('.property').attr('id').replace('property_', '');
+			var op = $(this).find('.operator').val();
+			val = $(this).find('.field_container').data('get_value')();
+
+			if (!$.isArray(val))
+				val = [val];
+
+			op = {'is': '=', 'is not': '!=', 'contains': 'like'}[op] || op;
+
+			if (op == 'like')
+				val = $.map(val, function(v) { return v ? '%' + v + '%' : null; });
+			if (op == 'starts with') {
+				val = $.map(val, function(v) { return v ? v + '%' : null; });
+				op = 'like';
+			}
+			if (op == 'ends with') {
+				val = $.map(val, function(v) { return v ? '%' + v : null; });
+				op = 'like';
+			}
+
+			if (val.length == 1)
+				val = val[0];
+
+			if (!filter_columns[prop])
+				filter_columns[prop] = 1;
+
+			self.filters.push([prop, op, val]);
+		});
+
+		if (!self.has_columns) {
+			self.columns = [];
+			for (var prop in filter_columns) {
+				var c = self.model.prop_map[prop];
+				self.columns.push([c._label, c.name]);
+			}
+		}
+	}
+
+	self.add_filter = function(e, property, operator, value, base_node) {
+		if (!base_node)
+			base_node = self.node
+
+		if (operator == 'like') {
+			var val = value;
+			if ($.isArray(val))
+				val = val[0];
+
+			if (/^%.*%$/.test(value))
+				operator = 'contains'
+			else if (/^%/.test(value))
+				operator = 'ends with'
+			else if (/%$/.test(value))
+				operator = 'starts with'
+
+			if ($.isArray(value)) {
+				value = $.map(value, function(v) {
+					return v.replace(/^%|%$/g,'');
+				});
+			}
+			else
+				value = value.replace(/^%|%$/g,'');
+		}
+		else if (operator == '=')
+			operator = 'is';
+		else if (operator == '!=')
+			operator = 'is not';
+
+		// Avoid the phantom field value bug
+		property.value = null;
+
+		// Create a field which allows multiple selections regardless of the item type
+		var field = boto_web.ui.forms.property_field(property, {
+			allow_multiple: true,
+			allow_default: true,
+			read_only: false,
+			_default_value: value || ''
+		});
+
+		$('<div/>')
+			.addClass('filter editor ui-button ui-state-default ui-corner-all')
+			.appendTo(base_node.find('.filters'))
+			.append(
+				$('<select/>')
+					.addClass('operator ar')
+					.each(function() {
+						var select = this;
+						var operators = ['contains', 'starts with', 'ends with', 'is', 'is not', '>', '<', '>=', '<='];
+						if (property._type == 'reference')
+							operators = ['is', 'is not'];
+						if (property._type == 'boolean')
+							operators = ['is'];
+						if (property._type == 'dateTime')
+							operators = ['is', 'is not', '>', '<', '>=', '<='];
+						$(operators).each(function() {
+							$('<option/>').attr({text: this, value: this}).appendTo(select);
+						})
+					}).val(operator || ''),
+				$('<h3/>')
+					.addClass('property')
+					.attr('id', 'property_' + property.name)
+					.text(property._label)
+					.prepend($('<span/>')
+						.addClass('ui-icon ui-icon-closethick')
+						.click(function() {
+							$(this).parents('.filter').remove()
+						})
+					),
+				$('<br class="clear" />'),
+				field.field_container,
+				field.button_add
+			)
+			.find('.field_container br.clear, .field_container .ui-button').remove();
+
+		field.field_container.find('input, select, textarea').focus();
+		if (e)
+			e.preventDefault();
+	}
+
+	self.get_columns = function() {
+
+	}
+
+	self.edit_column = function() {
+
 	}
 
 	self.get_link = function(step) {
