@@ -570,7 +570,8 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 					if (self.obj.follow) {
 						var filters = $(this).attr(boto_web.ui.properties.filter);
 						if(filters){
-							filters = eval(filters);
+							// " will be converted to &quote; and other characters may be as well so we need to fix that
+							filters = eval($('<div/>').html(filters).text());
 						}
 						self.obj.follow(val, function(objs) {
 							$(objs).each(function() {
