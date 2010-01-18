@@ -277,10 +277,16 @@ boto_web.ui.widgets.Report = function(node) {
 
 		$.map(self.columns, function(c) {
 			var p;
-			try { p = {_label: c[0], name: c[1][0]}; } catch (e) {
-				try { p = {_label: c[0], name: c[1]}; } catch (e) {
-					try { p = {_label: self.model.prop_map[c]._label, name: c}; } catch (e) {}
+			if ($.isArray(c)) {
+				if ($.isArray(c[1])) {
+					p = {_label: c[0], name: c[1][0]};
 				}
+				else {
+					p = {_label: c[0], name: c[1]};
+				}
+			}
+			else {
+				p = {_label: self.model.prop_map[c]._label, name: c};
 			}
 
 			$('<th/>')
@@ -326,9 +332,9 @@ boto_web.ui.widgets.Report = function(node) {
 							return n
 					};
 
-					alert($('<td/>')
+					$('<td/>')
 						.append(nested_markup(c[1]))
-						.appendTo(trbody).html());
+						.appendTo(trbody);
 				}
 				else {
 					$('<td/>')
@@ -342,6 +348,8 @@ boto_web.ui.widgets.Report = function(node) {
 					.appendTo(trbody);
 			}
 		});
+
+		alert(tbody.html());
 
 		$('<table/>')
 			.append(thead)
@@ -599,15 +607,21 @@ boto_web.ui.widgets.Report = function(node) {
 			e.preventDefault();
 	}
 
-	self.get_columns = function(base_node) {
+	self.get_columns = function(base_node, single_column) {
 		if (!base_node)
 			base_node = self.node.find('.column_list ul li');
 
 		// Finalize any changes made in the column editor
-		//self.edit_column(self.model, '');
+		if (!single_column)
+			self.edit_column(self.model, '');
 
 		var columns = [];
 		base_node.each(function() {
+			if ($(this).find('.column_editor').data('column_data')) {
+				columns.push($(this).find('.column_editor').data('column_data'));
+				return true;
+			}
+
 			var query = [];
 
 			// Start with the column name
@@ -679,7 +693,7 @@ boto_web.ui.widgets.Report = function(node) {
 		// Renaming a column should not be nested for reference types
 		if (!parent) {
 			if ($('#column_editor').data('prop')) {
-				var col = self.get_columns($('#column_editor'))
+				var col = self.get_columns($('#column_editor'), true)
 
 				// Move the editor to the column node (it will be hidden)
 				$('#column_editor').data('column_node').data('column_data', col[0]);
@@ -774,11 +788,11 @@ boto_web.ui.widgets.Report = function(node) {
 				var new_model = boto_web.env.models[model.prop_map[col_data[0]]._item_type];
 
 				if ($.isArray(col_data[1])) {
-					base_node.find('.sub_prop:first').val(col_data[1][0]).change();
+					base_node.find('.display .sub_prop').val(col_data[1][0]).change();
 					fill_data(col_data[1], new_model, base_node.find('.display'));
 				}
 				else if (col_data[1]) {
-					base_node.find('.sub_prop:first').val(col_data[1]).change();
+					base_node.find('.display .sub_prop').val(col_data[1]).change();
 				}
 
 				if (new_model && col_data[2]) {
