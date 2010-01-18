@@ -37,7 +37,7 @@ setup(name = "botoweb",
 		packages = find_packages(exclude=['ez_setup', 'example']),
 		include_package_data = True,
 		license = 'MIT',
-		scripts = ['tools/botoweb', 'tools/botoweb_client'],
+		scripts = ['tools/botoweb', 'tools/botoweb_client', 'tools/bw_client_upload'],
 		platforms = 'Posix; MacOS X; Windows',
 		classifiers = [ 
 			'Development Status :: 3 - Alpha',

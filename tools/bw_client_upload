@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+import os.path
+import sys
+
+def upload_dir(dir_name, bucket, prefix="", ignore_prefix=False):
+	"""Upload all files in this directory to a bucket/prefix/
+	@param dir_name: Name of the directory to upload from
+	@param bucket: Bucket to upload to
+	@param prefix: Prefix to append to the front of all uploaded files
+	"""
+	for item in os.listdir(dir_name):
+		if not item[0] == ".":
+			f_name = os.path.join(dir_name, item)
+			if not ignore_prefix:
+				newprefix = "%s/%s" % (prefix, os.path.basename(dir_name))
+			else:
+				newprefix = prefix
+			if os.path.isdir(f_name):
+				upload_dir(f_name, bucket, newprefix)
+			else:
+				upload_file(f_name, bucket, newprefix)
+
+def upload_file(file_path, bucket, prefix=""):
+	"""Upload a single file to bucket/prefix/file_name
+	@param file_path: Full path to the file
+	@param bucket: Bucket to upload this file to
+	@param prefix: Prefix to append before the file name
+	"""
+	f = open(file_path, "r")
+	file_name = os.path.basename(file_path)
+	s3_path = "%s/%s" % (prefix, file_name)
+	update_file(f, bucket, s3_path)
+	if file_name == "index.html":
+		update_file(f, bucket, "%s/" % prefix)
+
+def update_file(fp, bucket, key_name):
+	"""Upload the file if it's been changed"""
+	fp.seek(0)
+	try:
+		k = bucket.get_key(key_name)
+	except:
+		k = None
+	if not k:
+		k = bucket.new_key(key_name)
+	if not k.etag or not k.etag.strip('"') == k.compute_md5(fp)[0]:
+		print "Updating: %s => %s/%s" % (fp.name, bucket.name, key_name)
+		k.set_contents_from_file(fp)
+		k.make_public()
+	else:
+		print "Ignoring %s, files match" % fp.name
+
+
+if __name__ == "__main__":
+	if len(sys.argv) != 4:
+		print "Usage: %s static_dir prefix bucket_name" % sys.argv[0]
+		sys.exit(1)
+	import boto
+	s3 = boto.connect_s3()
+	b = s3.get_bucket(sys.argv[3])
+	upload_dir(sys.argv[1],b, sys.argv[2], True)

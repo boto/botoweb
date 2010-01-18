@@ -16,6 +16,8 @@ boto_web.ui = {
 
 	widgets: {},
 
+	params: {},
+
 	selectors: {
 		'section':        'section',
 		'object':         'article, .bwObject',
