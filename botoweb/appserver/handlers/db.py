@@ -251,6 +251,7 @@ class DBHandler(RequestHandler):
 				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
 					setattr(newobj, "_indexed_%s" % prop, prop_value.upper())
 		newobj.put()
+		boto.log.info("%s Created %s %s" % (user, newobj.__class__.__name__, newobj.id))
 		return newobj
 
 	def read(self, id, user):

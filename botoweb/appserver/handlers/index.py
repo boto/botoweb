@@ -19,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from botoweb.appserver.handlers import RequestHandler
-from boto.sdb.db.model import Model
 from boto.utils import find_class
 from lxml import etree
-import copy
 
 import logging
 log = logging.getLogger("botoweb.handlers.db")
@@ -49,6 +47,8 @@ class IndexHandler(RequestHandler):
 		as well as properties on each object we have."""
 		response.content_type = 'text/xml'
 		doc = etree.Element("Index", name=self.env.config.get("app", "name", "botoweb application"))
+		if self.env.config.get("app", "version"):
+			doc.set("version", self.env.config.get("app", "version"))
 		if request.user:
 			user_node = etree.SubElement(doc, "User", id=request.user.id)
 			etree.SubElement(user_node, "href").text = str("users/%s" % request.user.id)
