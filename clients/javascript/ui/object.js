@@ -672,6 +672,9 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				field.field_container.hide();
 				field.label.hide();
 
+				/*
+				 * This is already done by the markup, doing it here duplicates the values.
+				 *
 				if (self.obj.properties[val] && self.obj.properties[val].type == 'reference') {
 					self.obj.follow(val, function(field) { return function(objs) {
 						$(objs).each(function() {
@@ -679,6 +682,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						});
 					}}(field));
 				}
+				*/
 
 				if (self.obj.properties[val] && field.opts.input_type && self.obj.properties[val].type == 'blob') {
 					self.obj.load(val, function(field) { return function(content) {
