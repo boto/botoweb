@@ -39,8 +39,8 @@ class URLMapper(WSGILayer):
 			if not handler:
 				raise Exception("Handler not found: %s" % route.get('handler'))
 			if route.get("db_class"):
-				model_class = find_class(route.get("db_class"))
-				if not model_class:
+				model_class = find_class(route.get("db_class").strip())
+				if model_class is None:
 					raise Exception("DB Class not found: %s" % route.get('db_class'))
 
 	def handle(self, req, response):
