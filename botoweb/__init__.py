@@ -18,7 +18,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-__version__ = "0.6"
+__version__ = "0.7"
 
 def set_env(name, conf=None):
 	from botoweb.environment import Environment
