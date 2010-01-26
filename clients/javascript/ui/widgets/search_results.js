@@ -26,6 +26,8 @@ boto_web.ui.widgets.SearchResults = function(node, model, opts) {
 	self.update = function(results, append, count) {
 		if (!results || results.length == 0)
 			return;
+		if(!self.model)
+			return;
 
 		var nodes = [];
 		var objects = [];
