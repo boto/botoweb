@@ -405,6 +405,9 @@ var boto_web = {
 		boto_web.ajax.get(self.base_url, function(xml){
 			// Setup our name
 			self.name = $(xml).find("Index").attr("name");
+			// Get our version
+			self.version = $(xml).find("Index").attr("version");
+			$("#apiversion").text(self.version);
 			// Set our routes and model APIs
 			$(xml).find('api').map(function(){
 				var mm = new boto_web.ModelMeta(this);
