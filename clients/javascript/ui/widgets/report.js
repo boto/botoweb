@@ -17,6 +17,7 @@ boto_web.ui.widgets.Report = function(node) {
 	self.obj = {};
 	self.filters = [];
 	self.columns = [];
+	self.has_columns = false;
 
 	self.step_1 = function() {
 		if (!self.template) {
@@ -78,7 +79,7 @@ boto_web.ui.widgets.Report = function(node) {
 		self.node.find('#step_1').hide();
 		self.template.find('#step_2').clone(true).appendTo(self.node);
 
-		self.has_columns = self.columns.length > 0;
+		self.has_columns = self.has_columns || self.columns.length > 0;
 
 		// Add the breadcrumbs
 		self.breadcrumbs.empty();
@@ -108,6 +109,7 @@ boto_web.ui.widgets.Report = function(node) {
 
 		self.node.parent().find('#next_step')
 			.show()
+			.unbind()
 			.click(function() {
 				self.filters = self.get_filters();
 
@@ -182,7 +184,15 @@ boto_web.ui.widgets.Report = function(node) {
 						.html(p._label),
 					$('<div class="hidden column_editor"/>')
 				)
-				.appendTo(self.node.find('ul'));
+				.appendTo(self.node.find('.column_list ul'));
+
+			// Used to preload column data when an existing report is edited
+			if ($(e.target).data('default_column')) {
+				li.find('.column_editor').data('column_data', $(e.target).data('default_column'));
+			}
+			else {
+				li.find('.column_editor').data('column_data', [p._label, p.name]);
+			}
 
 			set_sort_icons();
 
@@ -229,9 +239,9 @@ boto_web.ui.widgets.Report = function(node) {
 		if (self.columns) {
 			$(self.columns).each(function() {
 				if ($.isArray(this[1]))
-					self.node.find('.attribute #' + this[1][0]).parent().click();
+					self.node.find('#' + this[1][0] + '.attribute').data('default_column', this).click();
 				else
-					self.node.find('.attribute #' + this[1]).parent().click();
+					self.node.find('#' + this[1] + '.attribute').data('default_column', this).click();
 			});
 		}
 	}
@@ -267,11 +277,17 @@ boto_web.ui.widgets.Report = function(node) {
 			.html('<span class="ui-icon ui-icon-refresh"></span>Save Report')
 			.click(function() {
 				if (self.obj.id) {
-					self.obj.properties.query = self.query;
-					self.obj.edit({hide: ['query','target_class_name','filters']});
+					self.obj.properties.target_class_name = escape(self.model.name);
+					self.obj.properties.filters = escape($.toJSON(self.filters));
+					self.obj.properties.query = escape($.toJSON(self.columns));
+					self.obj.edit({hide: ['query','target_class_name','filters','input_params']});
 				}
 				else
-					boto_web.env.models.Report.create({def: {query: self.query}, hide: ['query','target_class_name','filters']});
+					boto_web.env.models.Report.create({def: {
+						target_class_name: escape(self.model.name),
+						filters: escape($.toJSON(self.filters)),
+						query: escape($.toJSON(self.columns))
+					}, hide: ['query','target_class_name','filters','input_params']});
 			})
 			.appendTo(self.node.find('#step_4 .results'));
 		self.build_results(false, self.node.find("#step_4 .results"));
@@ -388,6 +404,7 @@ boto_web.ui.widgets.Report = function(node) {
 		if (/model=(.*?)(?:&filters=(.*?)(?:&columns=(.*?)(?:&id=(.*?))?)?)?(&|$)/.test(document.location.href)) {
 			self.query = RegExp.lastMatch;
 			self.model = boto_web.env.models[RegExp.$1];
+
 			if (RegExp.$2)
 				self.filters = $.evalJSON(unescape(RegExp.$2));
 			if (RegExp.$3) {
