@@ -189,6 +189,7 @@ boto_web.ui.widgets.Report = function(node) {
 			// Used to preload column data when an existing report is edited
 			if ($(e.target).data('default_column')) {
 				li.find('.column_editor').data('column_data', $(e.target).data('default_column'));
+				$(e.target).data('default_column', '')
 			}
 			else {
 				li.find('.column_editor').data('column_data', [p._label, p.name]);
