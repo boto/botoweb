@@ -260,13 +260,15 @@ class XMLSerializer(object):
 			value = (self.decode_string(prop).upper() == "TRUE")
 		elif prop_type == "reference":
 			# Object (new style)
-			value = ProxyObject()
-			value.__name__ = prop.get("item_type")
-			value.__id__ = prop.get("id")
+			if prop.get("id"):
+				value = ProxyObject()
+				value.__name__ = prop.get("item_type")
+				value.__id__ = prop.get("id")
 		elif prop.get("type") in REGISTERED_CLASSES.keys():
 			# Object (old style)
-			value = REGISTERED_CLASSES[prop.get("type")]()
-			value.id = prop.text
+			if prop.text:
+				value = REGISTERED_CLASSES[prop.get("type")]()
+				value.id = prop.text
 		else:
 			# By default we assume it's a string
 			value = self.decode_string(prop)

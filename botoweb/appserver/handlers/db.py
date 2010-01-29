@@ -125,6 +125,7 @@ class DBHandler(RequestHandler):
 			prop_value = getattr(new_obj, prop)
 			if not prop.startswith("_"):
 				props[prop] = prop_value
+		print "Props: %s" % props
 		content =  self.update(obj, props, request.user, request)
 
 		response.content_type = "text/xml"
