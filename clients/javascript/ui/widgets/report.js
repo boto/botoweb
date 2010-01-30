@@ -178,7 +178,8 @@ boto_web.ui.widgets.Report = function(node) {
 						.addClass('ui-icon ui-icon-copy clickable')
 						.attr('title', 'Clone column')
 						.click(function() {
-							$(this).parent('li').clone(true).insertAfter($(this).parent('li'));
+							var new_column = $(this).parent('li').clone(true).insertAfter($(this).parent('li'));
+							self.edit_column(self.model, p.name, null, new_column.find('.column_editor'));
 						}),
 					$('<label/>')
 						.html(p._label),
@@ -755,7 +756,12 @@ boto_web.ui.widgets.Report = function(node) {
 				)
 			);
 
-			name_field.field.keyup(function() {
+			name_field.field.keyup(function(e) {
+				if (e.keyCode)
+					name_field.field.data('edited', true);
+				if (this.value == '')
+					name_field.field.data('edited', false);
+
 				var col = column_node.siblings('label');
 
 				if (this.value && this.value != col.text())
@@ -841,6 +847,11 @@ boto_web.ui.widgets.Report = function(node) {
 			property_field.field.change(function() {
 				$(this).parents('.display:first').find('.display:first').empty();
 				self.edit_column(ref_model, this.value, $(this).parents('.display:first').find('.display:first'));
+				if (!$('#column_editor .rename_column:first').data('edited')) {
+					$('#column_editor .rename_column:first')
+						.val($.map($('#column_editor .prop_name:first, #column_editor .sub_prop option:selected'), function(prop) { return $(prop).text() == 'default' ? null : $(prop).text() }).join(': '))
+						.keyup();
+				}
 			});
 		}
 
@@ -853,12 +864,14 @@ boto_web.ui.widgets.Report = function(node) {
 				if (!col_data)
 					return;
 
+				var prop_names = [model.prop_map[col_data[0]]._label];
+
 				var new_model = boto_web.env.models[model.prop_map[col_data[0]]._item_type];
 
 				if ($.isArray(col_data[1])) {
 					if (col_data[1][0]) {
 						base_node.find('.sub_prop').val(col_data[1][0]).change();
-						fill_data(col_data[1], new_model, base_node.find('.display'));
+						$.map(fill_data(col_data[1], new_model, base_node.find('.display')), function(item) { prop_names.push(item) });
 					}
 				}
 				else if (col_data[1]) {
@@ -875,9 +888,16 @@ boto_web.ui.widgets.Report = function(node) {
 						self.add_filter(null, prop, this[1], this[2], base_node);
 					});
 				}
+
+				return prop_names
 			};
 
-			fill_data(column_data[1], self.model, $('#column_editor .display'));
+			var prop_names = fill_data(column_data[1], self.model, $('#column_editor .display'));
+
+			name_field.field.val(column_data[0]);
+
+			if (column_data[0] == prop_names.join(': '))
+				name_field.field.data('edited', true);
 		}
 	}
 
