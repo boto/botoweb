@@ -83,6 +83,10 @@ class IndexHandler(RequestHandler):
 								continue
 							prop_node = etree.SubElement(props_node, "property")
 							prop_node.set("name", prop.name)
+
+							if hasattr(prop, "collection_name"):
+								prop_node.set("reference_name", prop.collection_name)
+
 							if hasattr(prop, "reference_class"):
 								prop_node.set("type", "reference")
 								prop_node.set("item_type", prop.reference_class.__name__)
