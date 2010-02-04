@@ -411,7 +411,7 @@ boto_web.ui = {
 						if (self.obj)
 							upload_fnc(self.obj);
 						else
-							self.model.get(data.getResponseHeader('Location'), upload_fnc);
+							setTimeout(function() { self.model.get(data.getResponseHeader('Location'), upload_fnc); }, 500);
 					}
 					else {
 						if (closeFcn)
