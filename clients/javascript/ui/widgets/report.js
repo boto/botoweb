@@ -189,8 +189,12 @@ boto_web.ui.widgets.Report = function(node) {
 
 			// Used to preload column data when an existing report is edited
 			if ($(e.target).data('default_column')) {
-				li.find('.column_editor').data('column_data', $(e.target).data('default_column'));
+				var data = $(e.target).data('default_column');
+				li.find('.column_editor').data('column_data', data);
 				$(e.target).data('default_column', '')
+
+				if (data[0] != p._label)
+					li.find('label').html(data[0] + ' <small>(was: ' + p._label + ')</small>');
 			}
 			else {
 				li.find('.column_editor').data('column_data', [p._label, p.name]);
@@ -337,6 +341,7 @@ boto_web.ui.widgets.Report = function(node) {
 				.attr(boto_web.ui.properties.link, 'view');
 			var node = $('<span/>')
 				.attr(boto_web.ui.properties.attribute, p.name);
+			var list_node;
 
 
 			if (p.name == 'name') {
@@ -344,29 +349,27 @@ boto_web.ui.widgets.Report = function(node) {
 					.append(linked_name)
 					.appendTo(trbody);
 			}
-			else if (is_list) {
-				$('<td/>')
-					.append($('<ul/>').append($('<li/>')
-						.attr(boto_web.ui.properties.attribute, p.name)
-						.append(is_ref ? linked_name : null)
-					))
-					.appendTo(trbody);
-			}
 			else if (is_ref) {
 				if ($.isArray(c[1])) {
-					var nested_markup = function(prop) {
-						var n = $('<span/>')
+					var nested_markup = function(prop, nested) {
+						var n = $((is_list && !nested) ? '<li/>' : '<span/>')
 							.attr(boto_web.ui.properties.attribute, prop[0])
+
+						if (is_list && nested)
+							is_list = false;
 
 						if (prop.length == 3)
 							n.attr(boto_web.ui.properties.filter, $.toJSON(prop[2]));
 
 						if ($.isArray(prop[1]))
-							return n.append(nested_markup(prop[1]));
+							n.append(nested_markup(prop[1], true));
 						else if (prop.length > 1)
-							return n.append(nested_markup([prop[1] || 'name']))
-						else
-							return n
+							n.append(nested_markup([prop[1] || 'name'], true))
+
+						if (n.is('li'))
+							n = $('<ul/>').append(n);
+
+						return n
 					};
 
 					$('<td/>')
@@ -379,12 +382,23 @@ boto_web.ui.widgets.Report = function(node) {
 						.appendTo(trbody);
 				}
 			}
+			else if (is_list) {
+				list_node = $('<li/>')
+					.attr(boto_web.ui.properties.attribute, p.name)
+					.append(is_ref ? linked_name : null)
+
+				$('<td/>')
+					.append($('<ul/>').append(list_node))
+					.appendTo(trbody);
+			}
 			else {
 				$('<td/>')
 					.append(node)
 					.appendTo(trbody);
 			}
 		});
+
+		alert(tbody.html());
 
 		$('<table/>')
 			.append(thead)

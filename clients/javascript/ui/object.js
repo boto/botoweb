@@ -574,9 +574,9 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 							filters = eval($('<div/>').html(filters).text());
 						}
 						self.obj.follow(val, function(objs) {
-							$(objs).each(function() {
+							$(objs).each(function(i, o) {
 								var n = $('<span/>').append(node.clone()).appendTo(container);
-								new boto_web.ui.Object(n, boto_web.env.models[this.properties.model], this, {parent: self});
+								new boto_web.ui.Object(n, boto_web.env.models[o.properties.model], o, {parent: self});
 							});
 							self.update_tables();
 						}, filters);
@@ -593,7 +593,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						if (!$.isArray(values))
 							values = [values];
 
-						$(values).each(function() {
+						$(values).each(function(i, v) {
 							if (self.model.prop_map[val]._type == 'blob') {
 								self.obj.load(val, function (html) {
 									node.clone()
@@ -603,7 +603,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 							}
 							else {
 								node.clone()
-									.html(this.toString())
+									.html(v.toString() + ((!node.is('li') && i + 1 != values.length) ? ', ' : ''))
 									.appendTo(container);
 							}
 						});
