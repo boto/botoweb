@@ -278,24 +278,35 @@ boto_web.ui.widgets.Report = function(node) {
 
 		$("<br/>").addClass("clear").appendTo(self.node.find("#step_4 .results"));
 
-		$('<div/>')
-			.addClass('ui-button ui-state-default ui-corner-all')
-			.html('<span class="ui-icon ui-icon-refresh"></span>Save Report')
-			.click(function() {
-				if (self.obj.id) {
+		if (self.obj.id) {
+			$('<div/>')
+				.addClass('ui-button ui-state-default ui-corner-all')
+				.html('<span class="ui-icon ui-icon-disk"></span>Update Report')
+				.click(function() {
 					self.obj.properties.target_class_name = escape(self.model.name);
 					self.obj.properties.filters = escape($.toJSON(self.filters));
 					self.obj.properties.query = escape($.toJSON(self.columns));
 					self.obj.edit({hide: ['query','target_class_name','filters','input_params']});
-				}
-				else
-					boto_web.env.models.Report.create({def: {
-						target_class_name: escape(self.model.name),
-						filters: escape($.toJSON(self.filters)),
-						query: escape($.toJSON(self.columns))
-					}, hide: ['query','target_class_name','filters','input_params']});
+				})
+				.appendTo(self.node.find('#step_4 .results'));
+		}
+
+		$('<div/>')
+			.addClass('ui-button ui-state-default ui-corner-all')
+			.html('<span class="ui-icon ui-icon-document"></span>Save as New Report')
+			.click(function() {
+				// Ensure that fields are blank.
+				$.each(boto_web.env.models.Report.properties, function() {
+					delete this.value;
+				});
+				boto_web.env.models.Report.create({def: {
+					target_class_name: escape(self.model.name),
+					filters: escape($.toJSON(self.filters)),
+					query: escape($.toJSON(self.columns))
+				}, hide: ['query','target_class_name','filters','input_params']});
 			})
 			.appendTo(self.node.find('#step_4 .results'));
+
 		self.build_results(false, self.node.find("#step_4 .results"));
 
 		setTimeout(function() {
@@ -398,8 +409,6 @@ boto_web.ui.widgets.Report = function(node) {
 			}
 		});
 
-		alert(tbody.html());
-
 		$('<table/>')
 			.append(thead)
 			.append(tbody)
@@ -427,6 +436,7 @@ boto_web.ui.widgets.Report = function(node) {
 				self.columns = $.evalJSON(unescape(RegExp.$3));
 			}
 			if (RegExp.$4 && !self.obj.id) {
+				self.obj = {id: RegExp.$4, properties: {}};
 				boto_web.env.models.Report.get(RegExp.$4, function(obj) {
 					self.obj = obj;
 				});
