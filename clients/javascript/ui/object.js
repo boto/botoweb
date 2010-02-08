@@ -619,6 +619,9 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 						$('<span/>').html(html).prependTo(node);
 					});
 				}
+				else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'dateTime') {
+					new boto_web.ui.widgets.DateTime($(this), self.obj.properties[val]);
+				}
 				else if (self.model.prop_map[val] && self.model.prop_map[val]._type == 'complexType') {
 					$(this).html($.map(self.obj.properties[val], function(o) {
 						return '<div class="p50 al jr">' + o.name + ' &rarr;</div><div class="p50 al">&nbsp;' + o.value + '</div><br class="clear" />';

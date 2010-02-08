@@ -30,8 +30,9 @@ boto_web.ui.widgets.DataTable = function(table, opts) {
 	if (!settings) return;
 	$(settings.aoColumns).each(function() {
 		// Sort on raw value, not HTML markup
-		this.bUseRendered = false;
+		this.bUseRendered = true;
 		var col_class = false;
+		this.sType = 'html';
 
 		// Expose dataTables functionality through classNames on the TH element
 		//if (/\bno-sort\b/.test(this.nTh.className))
@@ -200,9 +201,13 @@ boto_web.ui.widgets.DataTable = function(table, opts) {
 			if (item.length == settings.aoColumns.length)
 				data.push(item);
 		});
+		/*
 		var raw_data = $.map(data, function(cols) {
-			return [$.map(cols, function(col) { return col.replace(/<[^>]*>/g, ''); })]
-		});
+			return [$.map(cols, function(col) {
+
+				return $(col).html().replace(/<[^>]*>/g, '');
+			})]
+		});*/
 
 		if (data.length == 0)
 			return;
