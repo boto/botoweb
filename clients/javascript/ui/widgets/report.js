@@ -705,7 +705,10 @@ boto_web.ui.widgets.Report = function(node) {
 					}
 
 					// TODO push filtering details
-					var filters = self.get_filters(parent);
+					var filter_parent = parent.parent('.display');
+					filter_parent.find('.display').remove();
+					var filters = self.get_filters(filter_parent);
+
 					if (filters.length) {
 						/*if (!expanded) {
 							q[1] = [q[1], ''];
@@ -755,7 +758,7 @@ boto_web.ui.widgets.Report = function(node) {
 		// Renaming a column should not be nested for reference types
 		if (!parent) {
 			if ($('#column_editor').data('prop') && $('#column_editor').is(':visible')) {
-				var col = self.get_columns($('#column_editor'), true)
+				var col = self.get_columns($('#column_editor'), true);
 
 				// Move the editor to the column node (it will be hidden)
 				$('#column_editor').data('column_node').data('column_data', col[0]);
@@ -894,16 +897,16 @@ boto_web.ui.widgets.Report = function(node) {
 
 				if ($.isArray(col_data[1])) {
 					if (col_data[1][0]) {
-						base_node.find('.sub_prop').val(col_data[1][0]).change();
-						$.map(fill_data(col_data[1], new_model, base_node.find('.display')), function(item) { prop_names.push(item) });
+						base_node.find('.sub_prop:first').val(col_data[1][0]).change();
+						$.map(fill_data(col_data[1], new_model, base_node.find('.display:first')), function(item) { prop_names.push(item) });
 					}
 				}
 				else if (col_data[1]) {
-					base_node.find('.sub_prop').val(col_data[1]).change();
+					base_node.find('.sub_prop:first').val(col_data[1]).change();
 				}
 
 				if (new_model && col_data[2]) {
-					$(col_data[2]).each(function() {
+					$.each(col_data[2], function() {
 						var prop = new_model.prop_map[this[0]];
 
 						if (this[0] == 'id')
@@ -916,7 +919,7 @@ boto_web.ui.widgets.Report = function(node) {
 				return prop_names
 			};
 
-			var prop_names = fill_data(column_data[1], self.model, $('#column_editor .display'));
+			var prop_names = fill_data(column_data[1], self.model, $('#column_editor .display:first'));
 
 			name_field.field.val(column_data[0]);
 
