@@ -17,10 +17,10 @@ boto_web.ui.widgets.EditingTools = function(node, model, actions) {
 	self.node = $(node).addClass('widget-editing_tools');
 	self.model = model;
 
-	actions = actions || 'delete clone edit';
-	actions = actions.split(' ');
+	actions = actions || 'edit clone delete';
+	actions = actions.split(/[, ]+/);
 
-	for (i in actions) {
+	for (i in actions.reverse()) {
 		switch (actions[i]) {
 			case 'create':
 				if ('post' in self.model.methods)

@@ -179,7 +179,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 		sel = boto_web.ui.selectors.editing_tools;
 
 		self.node.find(sel).each(function() {
-			new boto_web.ui.widgets.EditingTools(this, self.model);
+			new boto_web.ui.widgets.EditingTools(this, self.model, ($(this).attr(boto_web.ui.properties.attributes) || ''));
 		});
 
 		// Add links
