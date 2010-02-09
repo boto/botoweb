@@ -313,7 +313,7 @@ boto_web.ui.widgets.Report = function(node) {
 			if (self.obj.id) {
 				$("<div/>")
 					.addClass('smaller jr')
-					.html("<strong>Link to this report:</strong> " + self.get_link(1) + '?id=' + self.obj.id)
+					.html("<strong>Link to this report:</strong> " + self.get_link('report') + '?id=' + self.obj.id)
 					.appendTo(self.node.find("#step_4 .results"));
 			}
 		}, 1000);
@@ -931,6 +931,10 @@ boto_web.ui.widgets.Report = function(node) {
 
 	self.get_link = function(step) {
 		var base = ('' + document.location.href).replace(/\?.*|$/, '');
+
+		if (step == 'report') {
+			return ('' + document.location.href).replace(/#.*/, '') + '#' + boto_web.env.opts.model_template.replace('*', 'Report');
+		}
 
 		if (step > 1)
 			return base + '?step=' + step + '&model=' + self.model.name + '&filters=' + escape($.toJSON(self.filters)) + '&columns=' + escape($.toJSON(self.columns)) + '&id=' + (self.obj.id || '');
