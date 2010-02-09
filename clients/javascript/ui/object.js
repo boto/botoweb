@@ -148,7 +148,7 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 
 		self.node.find(sel).each(function() {
 			attribute_lists++;
-			new boto_web.ui.widgets.AttributeList(this, self.model, self.obj);
+			new boto_web.ui.widgets.AttributeList(this, self.model);
 		});
 
 		if (attribute_lists)
@@ -492,6 +492,10 @@ boto_web.ui.Object = function(html, model, obj, opts) {
 				return;
 
 			var editable = $(this).parents(boto_web.ui.selectors.editable).attr(boto_web.ui.properties.editable) == 'true' ? 'true' : '';
+
+			if (/(false|true)/.test($(this).attr(boto_web.ui.properties.editable))) {
+				editable = ((RegExp.$1 == 'true') ? 'true' : '');
+			}
 
 			$(this).attr(prop, '');
 			var container = $(this);

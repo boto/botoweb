@@ -41,8 +41,9 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 		if (props._perm && $.inArray('read', props._perm) == -1)
 			return;
 
-		if (n != name)
+		if (n != name) {
 			props.name = name;
+		}
 
 		//if (!obj.properties[props.name])
 		//	return;
@@ -87,20 +88,26 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 		var c = self.columns[Math.floor(num / self.per_column)];
 
 		var template = self.template.find(boto_web.ui.selectors.attribute.replace(']', '=' + props.name + ']'));
+		var label = self.template.find('label[for=' + props.name + ']:first');
 
 		if (template.length) {
 			// Ignore nested attributes, these may belong to different objects via references
 			if (template.parents(boto_web.ui.selectors.attribute).length)
 				template = {};
 			else
-				template = template.parent('*:not(.template):last');
+				var t = template.parent('*:not(.template):last');
+				if (t.length)
+					template = t;
 		}
+
+		if (!label.length)
+			label = null;
 
 		var container = $('<div/>')
 			.addClass('property');
 
 		if (template.length)
-			container.append(template);
+			container.append(template.clone());
 		else if (props._type in {list:1,query:1,reference:1}) {
 			var field = $('<div/>').attr(boto_web.ui.properties.attribute, props.name);
 
@@ -116,9 +123,9 @@ boto_web.ui.widgets.AttributeList = function(node, model, obj) {
 			$('<div/>')
 				.addClass('row ' + (((num % self.per_column) % 2) ? 'odd' : 'even'))
 				.append(
-					$('<label/>')
+					(label || $('<label/>')
 						.addClass('property_label')
-						.html(props._label + ' &nbsp; '),
+						.html(props._label + ' &nbsp; ')),
 					container,
 					$('<br class="clear"/>')
 				)
