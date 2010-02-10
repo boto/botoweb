@@ -29,6 +29,10 @@ boto_web.ui.widgets.Report = function(node) {
 		self.filters = [];
 		self.columns = [];
 
+		self.node.find('a[bwLink=delete]').each(function() {
+			this.href = this.href.replace(/\?.*?action=/, '?action=');
+		});
+
 		// Add the breadcrumbs
 		self.breadcrumbs.html('<li>Reporting</li>');
 
@@ -179,7 +183,7 @@ boto_web.ui.widgets.Report = function(node) {
 						.attr('title', 'Clone column')
 						.click(function() {
 							var new_column = $(this).parent('li').clone(true).insertAfter($(this).parent('li'));
-							self.edit_column(self.model, p.name, null, new_column.find('.column_editor'));
+							self.edit_column(self.model, p.name, null, new_column.find('.column_editor'), { cancel_deletes_column: true });
 						}),
 					$('<label/>')
 						.html(p._label),
@@ -742,7 +746,11 @@ boto_web.ui.widgets.Report = function(node) {
 		return columns;
 	}
 
-	self.edit_column = function(model, prop, parent, column_node) {
+	self.edit_column = function(model, prop, parent, column_node, opts) {
+		if (!opts) {
+			opts = {};
+		}
+
 		// id is not in prop_map
 		if (prop == 'id') {
 			prop = { _label: 'ID', name: 'id' };
@@ -812,6 +820,9 @@ boto_web.ui.widgets.Report = function(node) {
 					.click(function() {
 						$('#column_editor').empty();
 						$('#column_editor_container').hide();
+						if (opts.cancel_deletes_column) {
+							$(column_node).parent('li').remove();
+						}
 					})
 			);
 
