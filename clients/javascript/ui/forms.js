@@ -176,7 +176,7 @@ boto_web.ui.forms = {
 		});
 
 		if (this.opts.allow_default && (!properties.value || properties.value.length == 0))
-			properties.value = properties._default_value || this.opts._default_value || '';
+			properties.value = this.opts._default_value || properties._default_value || '';
 
 		if ($.isArray(properties.value)) {
 			$(properties.value).each(function(i ,prop) {
