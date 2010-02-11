@@ -443,6 +443,7 @@ boto_web.ui.widgets.Report = function(node) {
 				self.obj = {id: RegExp.$4, properties: {}};
 				boto_web.env.models.Report.get(RegExp.$4, function(obj) {
 					self.obj = obj;
+					document.title = self.obj.properties.name;
 				});
 			}
 		}
