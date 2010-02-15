@@ -36,5 +36,5 @@ class TestEnvironment:
 		"""
 		env = Environment("example", "test")
 		assert env.config['test']['test_bool'] == False
-		assert env.config['Name'] == "Test Environment"
+		assert env.config['app']['name'] == "Test App"
 

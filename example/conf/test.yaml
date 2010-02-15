@@ -1,0 +1,5 @@
+name: foo
+list:
+   - bar
+   - biz
+test_bool: False

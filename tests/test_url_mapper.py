@@ -16,24 +16,30 @@ class XMLString(object):
 		self.val = val
 
 	def to_xml(self):
-		return "<string>%s</string>" % val
+		return "<string>%s</string>" % self.val
 
 class SimpleHandler(RequestHandler):
 	"""
 	Simple test handler
 	"""
 
-	def get(self, req, id=None):
+	def _get(self, request, response, id=None):
+		val = None
 		if id == None:
-			return XMLString("GET")
+			val = XMLString("GET")
 		else:
-			return XMLString("GET: %s" % id)
+			val = XMLString("GET: %s" % id)
+		response.write(val.to_xml())
+		return response
 
-	def post(self, req, id=None):
+	def _post(self, request, response, id=None):
+		val = None
 		if id == None:
-			return XMLString("POST")
+			val = XMLString("POST")
 		else:
-			return XMLString("POST: %s" % id)
+			val = XMLString("POST: %s" % id)
+		response.write(val.to_xml())
+		return response
 
 
 class TestURLMapper:
@@ -46,7 +52,7 @@ class TestURLMapper:
 		"""
 		cls.env = Environment("example")
 		cls.url_mapper = URLMapper(cls.env)
-		cls.env.config['handlers'] = [ {"url": "/foo", "handler": "%s.SimpleHandler" % cls.__module__} ]
+		cls.env.config['botoweb']['handlers'] = [ {"url": "/foo", "handler": "%s.SimpleHandler" % cls.__module__} ]
 
 	def teardown_class(cls):
 		"""
@@ -57,24 +63,24 @@ class TestURLMapper:
 
 
 	def test_path_no_object(self):
-		(handler, obj_id) = self.url_mapper.parse_path("/foo")
+		(handler, obj_id) = self.url_mapper.parse_path(Request.blank("/foo"))
 		assert(handler.__class__.__name__ == "SimpleHandler")
 		assert(obj_id == None)
 
 	def test_path_with_object_id(self):
 		my_obj_id = "2934823-423423432-asdf34AA-5498574298.avi"
-		(handler, obj_id) = self.url_mapper.parse_path("/foo/%s" % my_obj_id)
+		(handler, obj_id) = self.url_mapper.parse_path(Request.blank("/foo/%s" % my_obj_id))
 		assert(handler.__class__.__name__ == "SimpleHandler")
 		assert(obj_id == my_obj_id)
 
 	def test_path_with_trailing_slash(self):
-		(handler, obj_id) = self.url_mapper.parse_path("/foo/")
+		(handler, obj_id) = self.url_mapper.parse_path(Request.blank("/foo/"))
 		assert(handler.__class__.__name__ == "SimpleHandler")
 		assert(obj_id == None)
 
 	def test_path_with_object_id_with_slash(self):
 		my_obj_id = "bucket_name/key_name/foo.avi"
-		(handler, obj_id) = self.url_mapper.parse_path("/foo/%s" % my_obj_id)
+		(handler, obj_id) = self.url_mapper.parse_path(Request.blank("/foo/%s" % my_obj_id))
 		assert(handler.__class__.__name__ == "SimpleHandler")
 		assert(obj_id == my_obj_id)
 
@@ -86,8 +92,7 @@ class TestURLMapper:
 		r = Request.blank("/foo")
 		r.method = "GET"
 		content = self.url_mapper.handle(r, Response())
-		print content
-		assert(content.val == "GET")
+		assert(content.body == "<string>GET</string>")
 
 	def test_handle_get_with_args(self):
 		"""
@@ -96,7 +101,7 @@ class TestURLMapper:
 		r = Request.blank("/foo?bar=biz&diz=dazzle")
 		r.method = "GET"
 		content = self.url_mapper.handle(r, Response())
-		assert(content.val == "GET")
+		assert(content.body == "<string>GET</string>")
 
 	def test_handle_get_with_args_and_id(self):
 		"""
@@ -105,10 +110,10 @@ class TestURLMapper:
 		r = Request.blank("/foo/my_object_id?bar=biz&diz=dazzle")
 		r.method = "GET"
 		content = self.url_mapper.handle(r, Response())
-		assert(content.val == "GET: my_object_id")
+		assert(content.body == "<string>GET: my_object_id</string>")
 
 	def test_handle_post_with_args_and_id(self):
 		r = Request.blank("/foo/my_object_id?bar=biz&diz=dazzle")
 		r.method = "POST"
 		content = self.url_mapper.handle(r, Response())
-		assert(content.val == "POST: my_object_id")
+		assert(content.body == "<string>POST: my_object_id</string>")
