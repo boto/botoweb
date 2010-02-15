@@ -251,6 +251,8 @@ class DBHandler(RequestHandler):
 				# Set an index, if it exists
 				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
 					setattr(newobj, "_indexed_%s" % prop, prop_value.upper())
+		newobj.created_by = user
+		newobj.modified_by = user
 		newobj.put()
 		boto.log.info("%s Created %s %s" % (user, newobj.__class__.__name__, newobj.id))
 		return newobj
@@ -301,6 +303,7 @@ class DBHandler(RequestHandler):
 				setattr(obj, "_indexed_%s" % prop_name, prop_val.upper())
 				boto.log.debug("Indexed: %s" % prop_name)
 		boto.log.debug("===========================")
+		obj.modified_by = user
 		obj.put()
 		return obj
 
@@ -359,6 +362,7 @@ class DBHandler(RequestHandler):
 			setattr(obj, "_indexed_%s" % property, val.upper())
 			boto.log.debug("Indexed: %s" % property)
 
+		obj.modified_by = request.user
 		obj.put()
 		log.info("Updated %s<%s>.%s" % (obj.__class__.__name__, obj.id, property))
 		response.set_status(204)

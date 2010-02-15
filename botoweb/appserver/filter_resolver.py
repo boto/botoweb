@@ -19,7 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from lxml import etree
-from cStringIO import StringIO
 from pkg_resources import resource_string
 import re
 import boto
@@ -36,6 +35,11 @@ class S3FilterResolver (etree.Resolver):
 		etree.Resolver.__init__(self)
 
 	def resolve(self, url, pubid, context):
+		ret = self.fetch_url(url)
+		if ret:
+			return self.resolve_string(ret, context)
+
+	def fetch_url(self, url):
 		if not self.files.has_key(url):
 			match = re.match("^s3:\/\/([^\/]*)\/(.*)$", url)
 			if match:
@@ -43,9 +47,9 @@ class S3FilterResolver (etree.Resolver):
 				b = s3.get_bucket(match.group(1))
 				k = b.get_key(match.group(2))
 				if k:
-					self.files[url] = k.read()
+					self.files[url] = k.get_contents_as_string()
 		if self.files.has_key(url):
-			return self.resolve_string(self.file[url], context)
+			return self.files[url]
 
 class PythonFilterResolver(etree.Resolver):
 	"""Resolves the follwing URIs
@@ -54,8 +58,13 @@ class PythonFilterResolver(etree.Resolver):
 	prefix = "python"
 
 	def resolve(self, url, pubid, context):
+		ret = self.fetch_url(url)
+		if ret:
+			return self.resolve_string(ret, context)
+
+	def fetch_url(self, url):
 		match = re.match("^python:\/\/([^\/]*)\/(.*)$", url)
 		if match:
 			module = match.group(1)
 			name = match.group(2)
-			return self.resolve_string(resource_string(module, name), context)
+			return resource_string(module, name)
