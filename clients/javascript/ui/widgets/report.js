@@ -364,6 +364,11 @@ boto_web.ui.widgets.Report = function(node) {
 					.append(linked_name)
 					.appendTo(trbody);
 			}
+			else if (p.name == 'id') {
+				$('<td/>')
+					.append(linked_name.attr(boto_web.ui.properties.attribute, 'id'))
+					.appendTo(trbody);
+			}
 			else if (is_ref) {
 				if ($.isArray(c[1])) {
 					var nested_markup = function(prop, nested) {
