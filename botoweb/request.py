@@ -79,6 +79,7 @@ class Request(webob.Request):
 		@rtype: User or None
 		"""
 		if not self._user:
+			# Basic Authentication
 			auth_header =  self.environ.get("HTTP_AUTHORIZATION")
 			if auth_header:
 				auth_type, encoded_info = auth_header.split(None, 1)
@@ -95,6 +96,23 @@ class Request(webob.Request):
 							user = None
 					if user and user.password == password:
 						self._user = user
+						return self._user
+			# Cookie based Authentication Token
+			auth_token_header = self.cookies.get("BW_AUTH_TOKEN")
+			if auth_token_header:
+				unencoded_info = auth_token_header.decode('base64')
+				username, auth_token = unencoded_info.split(':', 1)
+				if username and auth_token:
+					user = getCachedUser(username)
+					if not user:
+						try:
+							user = User.find(username=username).next()
+							addCachedUser(user)
+						except:
+							user = None
+					if user and user.auth_token == auth_token:
+						self._user = user
+						return self._user
 		return self._user
 
 	user = property(getUser, None, None)

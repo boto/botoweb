@@ -37,6 +37,8 @@ class User(Model):
 	email = property.StringProperty(verbose_name="Email Adress")
 	auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
 	password = property.PasswordProperty(verbose_name="Password")
+	auth_token = property.StringProperty(verbose_name="Authentication Token")
+	authorizations = None
 
 	def __str__(self):
 		return self.name
@@ -85,4 +87,39 @@ class User(Model):
 		return (group in self.auth_groups)
 
 	def has_auth_group_ctx(self, ctx, group):
-		return (group in self.auth_groups)
+		return self.has_auth_group(group)
+
+	def load_auths(self):
+		"""Load up all the authorizations this user has"""
+		from botoweb.resources.authorization import Authorization
+		self.authorizations = {"*": {"*": {"*": False} } }
+		query = Authorization.all()
+		query.filter("auth_group =", self.auth_groups)
+		for auth in query:
+			if not self.authorizations.has_key(auth.method):
+				self.authorizations[auth.method] = {}
+			if not self.authorizations[auth.method].has_key(auth.obj_name):
+				self.authorizations[auth.method][auth.obj_name] = {}
+			self.authorizations[auth.method][auth.obj_name][auth.prop_name] = True
+		return self.authorizations
+
+	def has_auth(self, method="*", obj_name="*", prop_name="*"):
+		if self.has_auth_group("admin"):
+			return True
+		if not self.authorizations:
+			self.load_auths()
+
+		if not self.authorizations.has_key(method):
+			method = "*"
+		if not self.authorizations[method].has_key(obj_name):
+			obj_name = "*"
+			if not self.authorizations[method].has_key(obj_name):
+				return False
+		if not self.authorizations[method][obj_name].has_key(prop_name):
+			prop_name = "*"
+			if not self.authorizations[method][obj_name].has_key(prop_name):
+				return False
+		return self.authorizations[method][obj_name][prop_name]
+
+	def has_auth_ctx(self, method="*", obj_name="*", prop_name="*"):
+		return self.has_auth(method=method, obj_name=obj_name, prop_name=prop_name)
