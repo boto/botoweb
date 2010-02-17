@@ -33,6 +33,9 @@ class TestDBAuth(object):
 		"""Test someone that should have every authorization to everything"""
 		auth = Authorization()
 		auth.auth_group = "test_auth_group"
+		auth.method = "*"
+		auth.obj_name = "*"
+		auth.prop_name = "*"
 		auth.put()
 		time.sleep(5)
 		self.authorizations.append(auth)
@@ -52,11 +55,14 @@ class TestDBAuth(object):
 		auth = Authorization()
 		auth.auth_group = "test_auth_group"
 		auth.method = "GET"
+		auth.obj_name = "*"
+		auth.prop_name = "*"
 		auth.put()
 		time.sleep(5)
 		self.authorizations.append(auth)
 		self.user.load_auths()
 		assert(self.user.has_auth("GET"))
+		assert(self.user.has_auth("GET", "*", "*"))
 		assert(self.user.has_auth("POST") == False)
 		assert(self.user.has_auth("PUT") == False)
 		assert(self.user.has_auth("DELETE") == False)
@@ -74,6 +80,7 @@ class TestDBAuth(object):
 		auth.auth_group = "test_auth_group"
 		auth.method = "GET"
 		auth.obj_name = "Foo"
+		auth.prop_name = "*"
 		auth.put()
 		time.sleep(5)
 		self.authorizations.append(auth)
@@ -96,10 +103,29 @@ class TestDBAuth(object):
 		time.sleep(5)
 		self.authorizations.append(auth)
 		self.user.load_auths()
-		assert(self.user.has_auth("GET") == False)
-		assert(self.user.has_auth("GET", "Bar") == False)
+		assert(self.user.has_auth("GET", "*", "*") == False)
+		assert(self.user.has_auth("GET", "Bar", "*") == False)
 		assert(self.user.has_auth("GET", "Bar", "bar") == False)
 		assert(self.user.has_auth("GET", "*", "bar") == False)
-		assert(self.user.has_auth("GET", "Foo") == False)
+		assert(self.user.has_auth("GET", "Foo", "*") == False)
 		assert(self.user.has_auth("GET", "Foo", "bar"))
 		auth.delete()
+
+	def test_get_only_overall_object(self):
+		"""Test only allowing them to know about the object, not get any specific parameters"""
+		auth = Authorization()
+		auth.auth_group = "test_auth_group"
+		auth.method = "GET"
+		auth.obj_name = "Foo"
+		auth.put()
+		time.sleep(5)
+		self.authorizations.append(auth)
+		self.user.load_auths()
+		assert(self.user.has_auth("GET") == False)
+		assert(self.user.has_auth("GET", "Bar") == False)
+		assert(self.user.has_auth("GET", "*") == False)
+		assert(self.user.has_auth("GET", "Foo"))
+		assert(self.user.has_auth("GET", "Foo", "bar") == False)
+		auth.delete()
+
+

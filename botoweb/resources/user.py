@@ -103,7 +103,7 @@ class User(Model):
 			self.authorizations[auth.method][auth.obj_name][auth.prop_name] = True
 		return self.authorizations
 
-	def has_auth(self, method="*", obj_name="*", prop_name="*"):
+	def has_auth(self, method="", obj_name="", prop_name=""):
 		if self.has_auth_group("admin"):
 			return True
 		if not self.authorizations:
@@ -121,5 +121,5 @@ class User(Model):
 				return False
 		return self.authorizations[method][obj_name][prop_name]
 
-	def has_auth_ctx(self, method="*", obj_name="*", prop_name="*"):
+	def has_auth_ctx(self, method="", obj_name="", prop_name=""):
 		return self.has_auth(method=method, obj_name=obj_name, prop_name=prop_name)

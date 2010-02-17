@@ -23,7 +23,7 @@ from boto.sdb.db import property
 
 class Authorization(Model):
 	"""Authorization Grant"""
-	auth_group = property.StringProperty(default="*", verbose_name="Authorization Group")
-	obj_name = property.StringProperty(default="*", verbose_name="Object Name")
-	prop_name = property.StringProperty(default="*", verbose_name="Property Name")
+	auth_group = property.StringProperty(verbose_name="Authorization Group")
 	method = property.StringProperty(default="*", verbose_name="Permission", choices=["*", "GET", "POST", "PUT", "DELETE"])
+	obj_name = property.StringProperty(default="", verbose_name="Object Name")
+	prop_name = property.StringProperty(default="", verbose_name="Property Name")
