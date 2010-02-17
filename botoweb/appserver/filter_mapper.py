@@ -141,7 +141,8 @@ class FilterMapper(WSGILayer):
 			extensions = {}
 			if user:
 				extensions = {
-					("python://botoweb/xslt_functions", "hasGroup"):  user.has_auth_group_ctx
+					("python://botoweb/xslt_functions", "hasGroup"):  user.has_auth_group_ctx,
+					("python://botoweb/xslt_functions", "hasAuth"):  user.has_auth_ctx
 				}
 			proc = etree.XSLT(etree.parse(uri, self.parser), extensions=extensions)
 		return proc
