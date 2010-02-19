@@ -34,6 +34,7 @@ class User(Model):
 	"""Simple user object"""
 	username = property.StringProperty(verbose_name="Username", unique=True)
 	name = property.StringProperty(verbose_name="Name")
+	_indexed_name = property.StringProperty()
 	email = property.StringProperty(verbose_name="Email Adress")
 	auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
 	password = property.PasswordProperty(verbose_name="Password")
@@ -123,3 +124,8 @@ class User(Model):
 
 	def has_auth_ctx(self, method="", obj_name="", prop_name=""):
 		return self.has_auth(method=method, obj_name=obj_name, prop_name=prop_name)
+
+	def put(self):
+		"""Auto-index"""
+		self._indexed_name = self.name.upper().strip()
+		super(self.__class__, self).put()
