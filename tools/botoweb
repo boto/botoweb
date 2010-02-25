@@ -36,7 +36,6 @@ if __name__ == "__main__":
 	from optparse import OptionParser
 	from paste import httpserver
 	import botoweb
-	from botoweb.environment import Environment
 
 	parser = OptionParser(usage="usage: %prog [options] application")
 	parser.add_option("-e", "--environment", dest="env", default=None, help="Environment file to use")
@@ -48,7 +47,7 @@ if __name__ == "__main__":
 	parser.add_option("-v", action="count", dest="verbose", default=0)
 	(options, args) = parser.parse_args()
 
-	e = Environment(args[0], options.env)
+	e = botoweb.set_env(args[0], options.env)
 	import boto
 	boto.config = e.config
 
