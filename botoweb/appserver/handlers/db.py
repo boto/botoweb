@@ -163,7 +163,7 @@ class DBHandler(RequestHandler):
 				return type(value)
 		return value
 
-	def build_query(self, params, query, user=None):
+	def build_query(self, params, query, user=None, show_deleted=False):
 		"""Build the query based on the parameters specified here, 
 		You must pass in the base query object to start with
 		"""
@@ -208,6 +208,8 @@ class DBHandler(RequestHandler):
 			query.order(sort_by)
 		if next_token:
 			query.next_token = urllib.unquote(next_token.strip()).replace(" ", "+")
+		if not show_deleted:
+			query.filter("deleted =", [False, None]) # Allow deleted to be either not set or set to false
 		return query
 
 
@@ -312,7 +314,14 @@ class DBHandler(RequestHandler):
 		Delete the object
 		"""
 		log.info("Deleted object %s" % (obj.id))
-		obj.delete()
+
+		# Don't actually remove it from the DB, just set it
+		# to "deleted" and flag who did it and when
+		# TODO: Allow them to be purged if it was just created?
+		obj.deleted = True
+		obj.deleted_at = datetime.utcnow()
+		obj.deleted_by = user
+		obj.put()
 		return obj
 
 	def get_property(self, request, response, obj, property):
