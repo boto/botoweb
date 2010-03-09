@@ -125,7 +125,6 @@ class DBHandler(RequestHandler):
 			prop_value = getattr(new_obj, prop)
 			if not prop.startswith("_"):
 				props[prop] = prop_value
-		print "Props: %s" % props
 		content =  self.update(obj, props, request.user, request)
 
 		response.content_type = "text/xml"
@@ -315,13 +314,16 @@ class DBHandler(RequestHandler):
 		"""
 		log.info("Deleted object %s" % (obj.id))
 
-		# Don't actually remove it from the DB, just set it
-		# to "deleted" and flag who did it and when
-		# TODO: Allow them to be purged if it was just created?
-		obj.deleted = True
-		obj.deleted_at = datetime.utcnow()
-		obj.deleted_by = user
-		obj.put()
+		if hasattr(obj, "deleted"):
+			# Don't actually remove it from the DB, just set it
+			# to "deleted" and flag who did it and when
+			# TODO: Allow them to be purged if it was just created?
+			obj.deleted = True
+			obj.deleted_at = datetime.utcnow()
+			obj.deleted_by = user
+			obj.put()
+		else:
+			obj.delete()
 		return obj
 
 	def get_property(self, request, response, obj, property):
