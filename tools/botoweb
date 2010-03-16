@@ -34,7 +34,6 @@ if __name__ == "__main__":
 	import sys
 	sys.path.append(".")
 	from optparse import OptionParser
-	from paste import httpserver
 	import botoweb
 
 	parser = OptionParser(usage="usage: %prog [options] application")
@@ -100,22 +99,45 @@ if __name__ == "__main__":
 						env=e), 
 					env=e)
 
-	# Use CherryPy if available
+	# Figure out which HTTP server to use,
+	# we based this off of:
+	# http://nichol.as/benchmark-of-python-web-servers
 	try:
-		from cherrypy import wsgiserver
-		print "Using CherryPyWSGIServer"
-		s = wsgiserver.CherryPyWSGIServer((options.hostname, int(options.port)),mapper)
-		try:
-			s.start()
-		finally:
-			s.stop()
+		# First up, Gevent
+		from gevent import wsgi
+		print "Using Gevent"
+		print "running on http://%s:%s" % (options.hostname, options.port)
+		wsgi.WSGIServer((options.hostname, int(options.port)), mapper).serve_forever()
 	except ImportError:
-		print "CherryPy not available, using paste.httpserver instead"
-		from paste import httpserver
-		httpserver.serve(mapper, 
-			host=options.hostname, 
-			port=int(options.port), 
-			daemon_threads=True,
-			socket_timeout=60,
-			protocol_version="HTTP/1.1",
-		)
+		try:
+			# Next, try CherryPy
+			from cherrypy import wsgiserver
+			print "Using CherryPyWSGIServer"
+			print "running on http://%s:%s" % (options.hostname, options.port)
+			s = wsgiserver.CherryPyWSGIServer((options.hostname, int(options.port)),mapper)
+			try:
+				s.start()
+			finally:
+				s.stop()
+		except ImportError:
+			try:
+				# Next, try Paste
+				from paste import httpserver
+				print "Using python paste server"
+				print "running on http://%s:%s" % (options.hostname, options.port)
+				httpserver.serve(mapper,
+					host=options.hostname,
+					port=int(options.port),
+					daemon_threads=True,
+					socket_timeout=60,
+					protocol_version="HTTP/1.1",
+				)
+			except ImportError:
+				# As a last resort, fall back to WsgiRef which has been included since Python2.5
+				from wsgiref import simple_server
+				print "No other servers available, using wsgiref instead"
+				print "running on http://%s:%s" % (options.hostname, options.port)
+				httpd = simple_server.WSGIServer((options.hostname,int(options.port)),
+										simple_server.WSGIRequestHandler)
+				httpd.set_app(mapper)
+				httpd.serve_forever()
