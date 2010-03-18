@@ -77,6 +77,8 @@ class IndexHandler(RequestHandler):
 				if route.get("db_class"):
 					model_class = find_class(route.get("db_class"))
 					if model_class:
+						if len(model_class.mro()) > 1:
+							api_node.set("parentClass", model_class.mro()[1].__name__)
 						props_node = etree.SubElement(api_node, "properties")
 						for prop in model_class.properties():
 							if prop.name.startswith("_"):
