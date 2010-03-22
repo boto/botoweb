@@ -122,7 +122,13 @@ class User(Model):
 				return False
 		return self.authorizations[method][obj_name][prop_name]
 
-	def has_auth_ctx(self, method="", obj_name="", prop_name=""):
+	def has_auth_ctx(self, ctx, method="", obj_name="", prop_name=""):
+		if isinstance(method, list):
+			method = method[0]
+		if isinstance(obj_name, list):
+			obj_name = obj_name[0]
+		if isinstance(prop_name, list):
+			prop_name = prop_name[0]
 		return self.has_auth(method=method, obj_name=obj_name, prop_name=prop_name)
 
 	def put(self):
