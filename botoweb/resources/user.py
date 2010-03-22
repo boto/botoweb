@@ -93,7 +93,10 @@ class User(Model):
 	def load_auths(self):
 		"""Load up all the authorizations this user has"""
 		from botoweb.resources.authorization import Authorization
-		self.authorizations = {"*": {"*": {"*": False} } }
+		self.authorizations = {
+			"*": {"*": {"*": False} },
+			"": {"": {"": False} }
+		}
 		query = Authorization.all()
 		query.filter("auth_group =", self.auth_groups)
 		for auth in query:
@@ -102,6 +105,20 @@ class User(Model):
 			if not self.authorizations[auth.method].has_key(auth.obj_name):
 				self.authorizations[auth.method][auth.obj_name] = {}
 			self.authorizations[auth.method][auth.obj_name][auth.prop_name] = True
+
+			# Weird indexing to say "Yes, they have a value here somewhere"
+			if not self.authorizations[auth.method].has_key(""):
+				self.authorizations[auth.method][""] = {}
+			if not self.authorizations[""].has_key(auth.obj_name):
+				self.authorizations[""][auth.obj_name] = {"": True}
+			self.authorizations[""][""][""] = True
+			self.authorizations[""][""][auth.prop_name] = True
+			self.authorizations[""][auth.obj_name][""] = True
+			self.authorizations[""][auth.obj_name][auth.prop_name] = True
+			self.authorizations[auth.method][auth.obj_name][""] = True
+			self.authorizations[auth.method][""][auth.prop_name] = True
+			self.authorizations[auth.method][""][""] = True
+
 		return self.authorizations
 
 	def has_auth(self, method="", obj_name="", prop_name=""):
@@ -110,6 +127,7 @@ class User(Model):
 		if not self.authorizations:
 			self.load_auths()
 
+		method = method.upper()
 		if not self.authorizations.has_key(method):
 			method = "*"
 		if not self.authorizations[method].has_key(obj_name):
@@ -129,6 +147,11 @@ class User(Model):
 			obj_name = obj_name[0]
 		if isinstance(prop_name, list):
 			prop_name = prop_name[0]
+		method = method.upper()
+		if method == "HEAD":
+			method = "GET"
+		if method == "OPTIONS":
+			method = "GET"
 		return self.has_auth(method=method, obj_name=obj_name, prop_name=prop_name)
 
 	def put(self):

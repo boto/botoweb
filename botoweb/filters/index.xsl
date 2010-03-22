@@ -10,17 +10,17 @@
 			</xsl:copy>
 		</xsl:if>
 	</xsl:template>
-	<xsl:template match ="Index/api/methods">
-		<xsl:if test="bw:hasAuth(local-name(), ../@name)">
+	<xsl:template match ="Index/api/methods/*">
+		<xsl:if test="bw:hasAuth(local-name(), ../../@name)">
 			<xsl:copy>
 				<xsl:apply-templates select="@*|node()"/>
 			</xsl:copy>
 		</xsl:if>
 	</xsl:template>
 	<xsl:template match ="Index/api/properties/property">
-		<xsl:if test="bw:hasAuth(@name, ../../@name)">
+		<xsl:if test="bw:hasAuth('', ../../@name, @name)">
 			<xsl:copy>
-				<xsl:attribute name="perm"><xsl:if test="bw:hasAuth(@name, ../../@name, 'GET')">read</xsl:if> <xsl:if test="bw:hasAuth(@name, ../../@name, 'PUT')"> write</xsl:if></xsl:attribute>
+				<xsl:attribute name="perm"><xsl:if test="bw:hasAuth('GET', ../../@name, @name)">read</xsl:if> <xsl:if test="bw:hasAuth('PUT', ../../@name, @name)"> write</xsl:if></xsl:attribute>
 				<xsl:apply-templates select="@*|node()"/>
 			</xsl:copy>
 		</xsl:if>
