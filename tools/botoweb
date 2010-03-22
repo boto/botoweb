@@ -103,11 +103,15 @@ if __name__ == "__main__":
 	# we based this off of:
 	# http://nichol.as/benchmark-of-python-web-servers
 	try:
-		# First up, Gevent
-		from gevent import wsgi
-		print "Using Gevent"
-		print "running on http://%s:%s" % (options.hostname, options.port)
-		wsgi.WSGIServer((options.hostname, int(options.port)), mapper).serve_forever()
+		# First up, Twisted
+		from twisted.web.server import Site
+		from twisted.web.wsgi import WSGIResource
+		from twisted.internet import reactor
+		print "Using Twisted"
+		print "running on http://localhost:%s" % (options.port)
+		resource = WSGIResource(reactor, reactor.getThreadPool(), mapper)
+		reactor.listenTCP(int(options.port),Site(resource))
+		reactor.run()
 	except ImportError:
 		try:
 			# Next, try CherryPy
