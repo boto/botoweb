@@ -41,6 +41,13 @@ class User(Model):
 	auth_token = property.StringProperty(verbose_name="Authentication Token")
 	authorizations = None
 
+
+	# These fields are easy to add in
+	created_at = property.DateTimeProperty(auto_now_add=True, verbose_name="Created Date")
+	modified_at = property.DateTimeProperty(auto_now=True, verbose_name="Last Modified Date")
+	deleted = property.BooleanProperty(verbose_name="Deleted")
+	deleted_at = property.DateTimeProperty(auto_now=True, verbose_name="Deleted Date")
+
 	def __str__(self):
 		return self.name
 

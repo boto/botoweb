@@ -27,3 +27,12 @@ class Authorization(Model):
 	method = property.StringProperty(default="*", verbose_name="Permission", choices=["*", "GET", "POST", "PUT", "DELETE"])
 	obj_name = property.StringProperty(default="", verbose_name="Object Name")
 	prop_name = property.StringProperty(default="", verbose_name="Property Name")
+
+	def put(self):
+		"""These need to be unique, so if we don't have an ID we
+		search for another authorization with all the same properties"""
+		if not self.id:
+			for obj in self.find(auth_group=self.auth_group, method=self.method, obj_name=self.obj_name, prop_name=self.prop_name):
+				self.id = obj.id
+				break
+		Model.put(self)
