@@ -26,7 +26,7 @@ except ImportError:
 class DBHandler(RequestHandler):
 	"""
 	DB Handler Base class
-	this provides a simple CRUD interface to 
+	this provides a simple CRUD interface to
 	any DB object
 
 	The simplest use of this handler would be calling it directly as such::
@@ -163,7 +163,7 @@ class DBHandler(RequestHandler):
 		return value
 
 	def build_query(self, params, query, user=None, show_deleted=False):
-		"""Build the query based on the parameters specified here, 
+		"""Build the query based on the parameters specified here,
 		You must pass in the base query object to start with
 		"""
 		query_str = params.get("query", None)
@@ -376,5 +376,8 @@ class DBHandler(RequestHandler):
 		obj.modified_by = request.user
 		obj.put()
 		log.info("Updated %s<%s>.%s" % (obj.__class__.__name__, obj.id, property))
-		response.set_status(204)
+		# 204 is the proper status code but it does not allow the onload event
+		# to fire in the browser, which expects a 200. Without the onload event
+		# we cannot determine when an upload is complete.
+		#response.set_status(204)
 		return response
