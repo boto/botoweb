@@ -97,7 +97,7 @@ class IndexHandler(RequestHandler):
 								if prop_type_name:
 									prop_node.set("type", TYPE_CONVERSIONS.get(prop_type_name, prop_type_name))
 								elif hasattr(prop, "calculated_type"):
-									prop_node.set("type", TYPE_NAMES.get(prop.calculated_type, "string"))
+									prop_node.set("type", "calculated")
 								else:
 									prop_node.set("type", TYPE_NAMES.get(prop.data_type, "string"))
 							if prop.data_type in [str, unicode]:
