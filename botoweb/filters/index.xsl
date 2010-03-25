@@ -25,4 +25,11 @@
 			</xsl:copy>
 		</xsl:if>
 	</xsl:template>
+	<xsl:template match="Index/api/properties/property[@name='created_by']|Index/api/properties/property[@name='modified_by']|Index/api/properties/property[@name='created_at']|Index/api/properties/property[@name='modified_at']" priority="10">
+		<xsl:copy>
+			<xsl:attribute name="perm">read</xsl:attribute>
+			<xsl:apply-templates select="@*|node()"/>
+		</xsl:copy>
+	</xsl:template>
+
 </xsl:stylesheet>

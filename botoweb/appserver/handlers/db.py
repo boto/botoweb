@@ -234,6 +234,7 @@ class DBHandler(RequestHandler):
 		:param user: The user doing the creation
 		:type user: User
 		"""
+		now = datetime.utcnow()
 		if obj.__model_class__:
 			newobj = obj.__model_class__()
 		else:
@@ -252,6 +253,8 @@ class DBHandler(RequestHandler):
 				# Set an index, if it exists
 				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
 					setattr(newobj, "_indexed_%s" % prop, prop_value.upper())
+		newobj.created_at = now
+		newobj.modified_at = now
 		newobj.created_by = user
 		newobj.modified_by = user
 		newobj.put()
@@ -305,6 +308,7 @@ class DBHandler(RequestHandler):
 				boto.log.debug("Indexed: %s" % prop_name)
 		boto.log.debug("===========================")
 		obj.modified_by = user
+		obj.modified_at = datetime.utcnow()
 		obj.put()
 		return obj
 
@@ -374,6 +378,7 @@ class DBHandler(RequestHandler):
 			boto.log.debug("Indexed: %s" % property)
 
 		obj.modified_by = request.user
+		obj.modified_at = datetime.utcnow()
 		obj.put()
 		log.info("Updated %s<%s>.%s" % (obj.__class__.__name__, obj.id, property))
 		# 204 is the proper status code but it does not allow the onload event
