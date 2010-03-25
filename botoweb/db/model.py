@@ -19,4 +19,4 @@ class Model(BotoModel):
 	deleted_by = ReferenceProperty(User, verbose_name="Deleted By")
 
 	# This is set every time the object is touched, even if it's by the system
-	sys_modstamp = DateTimeProperty(auto_now=True, verbose_name="System ModStamp")
+	sys_modstamp = DateTimeProperty(auto_now=True)
