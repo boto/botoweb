@@ -3,6 +3,8 @@
  xmlns:bw='python://botoweb/xslt_functions'
  xmlns:boto='http://code.google.com/p/boto-web/wiki/FilterSchema'>
 	<xsl:include href="base.xsl"/>
+
+	<!-- By default we pull all the authentications out of the DB -->
 	<xsl:template match="Index/api">
 		<xsl:if test="bw:hasAuth('GET', @name)">
 			<xsl:copy>
@@ -25,11 +27,22 @@
 			</xsl:copy>
 		</xsl:if>
 	</xsl:template>
-	<xsl:template match="Index/api/properties/property[@name='created_by']|Index/api/properties/property[@name='modified_by']|Index/api/properties/property[@name='created_at']|Index/api/properties/property[@name='modified_at']|Index/api/properties/property[@name='sys_modstamp']" priority="10">
+
+	<!-- Mark all of these "auto" properties as read-only -->
+	<xsl:template match="Index/api/properties/property[@name='created_by']|Index/api/properties/property[@name='modified_by']|Index/api/properties/property[@name='created_at']|Index/api/properties/property[@name='modified_at']|Index/api/properties/property[@name='sys_modstamp']" priority="5">
 		<xsl:copy>
 			<xsl:attribute name="perm">read</xsl:attribute>
 			<xsl:apply-templates select="@*|node()"/>
 		</xsl:copy>
 	</xsl:template>
+
+	<!-- Any properties of type query or calculated are read-only -->
+	<xsl:template match="Index/api/properties/property[@type='query']|Index/api/properties/property[@type='calculated']" priority="5">
+		<xsl:copy>
+			<xsl:attribute name="perm">read</xsl:attribute>
+			<xsl:apply-templates select="@*|node()"/>
+		</xsl:copy>
+	</xsl:template>
+
 
 </xsl:stylesheet>

@@ -135,12 +135,12 @@ class XMLSerializer(object):
 			return
 		self.file.write("""<%s type="reference" item_type="%s" id="%s" href="%s"/>""" % (prop_name, prop_type, prop_value, prop_name))
 
-	def encode_query(self, prop_name, prop_value):
+	def encode_query(self, prop_name, prop_value=None):
 		"""Encode a query, this is sent as a reference"""
 		#TODO: Fix this by somehow getting the ID into the href
 		self.file.write("""<%s type="reference" href="%s"/>""" % (prop_name, prop_name))
 
-	def encode_blob(self, prop_name, prop_value):
+	def encode_blob(self, prop_name, prop_value=None):
 		"""Encode a query, this is sent as a reference"""
 		self.file.write("""<%s type="blob" href="%s"/>""" % (prop_name, prop_name))
 
@@ -182,6 +182,7 @@ class XMLSerializer(object):
 	def dump(self, obj, objname = None):
 		"""Dump this object to our serialization"""
 		from boto.sdb.db.model import Model
+		from boto.sdb.db.property import CalculatedProperty
 		if not isinstance(obj, object):
 			if not objname:
 				objname = obj.__name__
@@ -200,7 +201,14 @@ class XMLSerializer(object):
 			if isinstance(obj, Model):
 				for prop in obj.properties():
 					if not prop.name.startswith("_"):
-						self.encode(prop.name, getattr(obj, prop.name))
+						if prop.__class__ == CalculatedProperty:
+							# We encode calculated properties similar to queries because we don't
+							# want them to be cached, or automatically sent
+							# since they're really something external and usually 
+							# require an additional method call
+							self.file.write("""<%s type="calculated" href="%s"/>""" % (prop.name, prop.name))
+						else:
+							self.encode(prop.name, getattr(obj, prop.name))
 			else:
 				for prop_name in obj.__dict__:
 					if not prop_name.startswith("_") and not prop_name == "id":
