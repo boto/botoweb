@@ -26,7 +26,7 @@ class Request(webob.Request):
 
 	def __init__(self, environ):
 		self._user = None
-		charset = webob.NoDefault
+		charset = 'ascii'
 		if environ.get('CONTENT_TYPE', '').find('charset') == -1:
 			charset = 'utf-8'
 
