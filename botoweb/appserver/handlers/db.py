@@ -105,7 +105,7 @@ class DBHandler(RequestHandler):
 		new_obj.__id__ = id
 		obj = self.create(new_obj, request.user, request)
 		response.set_status(201)
-		response.headers['Location'] = obj.id
+		response.write(xmlize.dumps(obj))
 		return response
 
 

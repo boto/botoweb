@@ -104,10 +104,11 @@ if __name__ == "__main__":
 	# http://nichol.as/benchmark-of-python-web-servers
 	try:
 		# First up, Twisted
+		import twisted
 		from twisted.web.server import Site
 		from twisted.web.wsgi import WSGIResource
 		from twisted.internet import reactor
-		print "Using Twisted"
+		print "Using Twisted version: %s" % twisted.__version__
 		print "running on http://localhost:%s" % (options.port)
 		resource = WSGIResource(reactor, reactor.getThreadPool(), mapper)
 		reactor.listenTCP(int(options.port),Site(resource))
