@@ -106,9 +106,7 @@ class DBHandler(RequestHandler):
 		obj = self.create(new_obj, request.user, request)
 		response.set_status(201)
 		response.content_type = "text/xml"
-		response.write("<%sList>" % obj.__class__.__name__)
 		response.write(xmlize.dumps(obj))
-		response.write("</%sList>" % obj.__class__.__name__)
 		return response
 
 
