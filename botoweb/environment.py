@@ -39,16 +39,16 @@ class Environment(object):
 		# Set up the DB shortcuts
 		if not self.config.has_key("DB"):
 			self.config['DB'] = {
-									"db_type": self.config.get("db_type", "SimpleDB"),
+									"db_type": self.config.get("DB", "db_type", "SimpleDB"),
 									"db_user": self.config.get("Credentials", "aws_access_key_id"),
 									"db_passwd": self.config.get("Credentials", "aws_secret_access_key")
 								}
 		if self.config.has_key("auth_db"):
 			self.config['DB']['User'] = {"db_name": self.config['auth_db']}
 		if self.config.has_key("default_db"):
-			self.config['DB']['db_name'] = self.config.get("default_db")
+			self.config['DB']['db_name'] = self.config["default_db"]
 		if self.config.has_key("session_db"):
-			self.config['DB']['Session'] = {'db_name': self.config.get("session_db")}
+			self.config['DB']['Session'] = {'db_name': self.config["session_db"]}
 
 	def get_config(self, path):
 		"""Get configuration file at path
