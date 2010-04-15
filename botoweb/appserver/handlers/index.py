@@ -51,13 +51,11 @@ class IndexHandler(RequestHandler):
 			doc.set("version", self.env.config.get("app", "version"))
 		if request.user:
 			user_node = etree.SubElement(doc, "User", id=request.user.id)
-			etree.SubElement(user_node, "href").text = str("users/%s" % request.user.id)
-			etree.SubElement(user_node, "name").text = request.user.name
-			etree.SubElement(user_node, "username").text = request.user.username
-			etree.SubElement(user_node, "email").text = request.user.email
-			auth_node = etree.SubElement(user_node, "groups")
+			etree.SubElement(user_node, "name", type='string').text = request.user.name
+			etree.SubElement(user_node, "username", type='string').text = request.user.username
+			etree.SubElement(user_node, "email", type='string').text = request.user.email
 			for auth_group in request.user.auth_groups:
-				etree.SubElement(auth_node, "group", name=auth_group)
+				etree.SubElement(user_node, "auth_groups", type='string').text = auth_group
 
 		for route in self.env.config.get("botoweb", "handlers"):
 			if route.get("name"):
