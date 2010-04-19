@@ -44,9 +44,10 @@ class User(Model):
 
 	# These fields are easy to add in
 	created_at = property.DateTimeProperty(auto_now_add=True, verbose_name="Created Date")
-	modified_at = property.DateTimeProperty(auto_now=True, verbose_name="Last Modified Date")
+	modified_at = property.DateTimeProperty(verbose_name="Last Modified Date")
 	deleted = property.BooleanProperty(verbose_name="Deleted")
-	deleted_at = property.DateTimeProperty(auto_now=True, verbose_name="Deleted Date")
+	deleted_at = property.DateTimeProperty(verbose_name="Deleted Date")
+	sys_modstamp = property.DateTimeProperty(auto_now=True)
 
 	def __str__(self):
 		return self.name
