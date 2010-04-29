@@ -140,7 +140,7 @@ class DBHandler(RequestHandler):
 		obj = self.read(id=id, user=request.user);
 		content = self.delete(obj,user=request.user)
 		response.content_type = "text/xml"
-		content.to_xml().writexml(response)
+		response.write(xmlize.dumps(content))
 		return response
 
 	def decode(self, type, value):

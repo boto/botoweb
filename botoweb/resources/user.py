@@ -52,7 +52,7 @@ class User(Model):
 	def __str__(self):
 		return self.name
 
-	def notify(self, subject, body=''):
+	def notify(self, subject, body='',**params):
 		"""Send notification to this user
 
 		@param subject: Subject for this notification
@@ -62,7 +62,7 @@ class User(Model):
 		@type body: str
 		"""
 		import boto.utils
-		boto.utils.notify(subject=subject, html_body=body, to_string=self.email, append_instance_id=False)
+		boto.utils.notify(subject=subject, html_body=body, to_string=self.email, append_instance_id=False,**params)
 
 	def generate_password(self, length=10):
 		"""Generate and return a random password
