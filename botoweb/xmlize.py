@@ -23,6 +23,7 @@ BAD_CHARS = ['<', '>', '&'] # Illegal characters in XML that must be wrapped in 
 REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects into
 
 from botoweb.fixed_datetime import datetime
+from botoweb.exceptions import BadRequest
 from datetime import datetime as datetime_type
 from boto.utils import Password
 from boto.sdb.db.key import Key
@@ -297,7 +298,10 @@ class XMLSerializer(object):
 		date_str = self.decode_string(node)
 		if not date_str or len(date_str) == 0:
 			return None
-		return datetime.parseisoformat(date_str)
+		try:
+			return datetime.parseisoformat(date_str)
+		except:
+			raise BadRequest("Invalid Value for datetime: %s" % date_str)
 
 	def decode_dict(self, node):
 		"""Decode a dictionary (complexType)"""
