@@ -1,5 +1,5 @@
 # Author: Chris Moyer
-from botoweb.exceptions import NotFound, Unauthorized, BadRequest, Conflict
+from botoweb.exceptions import NotFound, Unauthorized, BadRequest, Conflict, Gone
 from botoweb.appserver.handlers import RequestHandler
 
 import boto
@@ -278,6 +278,15 @@ class DBHandler(RequestHandler):
 		# what they're allowed to request from this handler
 		if not isinstance(obj, self.db_class):
 			raise NotFound()
+		# If the object was marked as "deleted", then
+		# we need to raise a "Gone" exception, which is defined as:
+		# "The 410 response is primarily intended to assist the 
+		# task of web maintenance by notifying the recipient that 
+		# the resource is intentionally unavailable and that the 
+		# server owners desire that remote links to that resource 
+		# be removed."
+		if hasattr(obj, "deleted") and obj.deleted:
+			raise Gone("Object has been deleted", "The object %s no longer exists" % obj.id)
 		return obj
 
 	def update(self, obj, props, user, request):
