@@ -207,7 +207,7 @@ class XMLSerializer(object):
 							# want them to be cached, or automatically sent
 							# since they're really something external and usually 
 							# require an additional method call
-							self.file.write("""<%s type="calculated" href="%s"/>""" % (prop.name, prop.name))
+							self.file.write("""<%s calculated="true" type="%s" href="%s"/>""" % (prop.name, prop.calculated_type.__name__.lower(), prop.name))
 						else:
 							self.encode(prop.name, getattr(obj, prop.name))
 			else:

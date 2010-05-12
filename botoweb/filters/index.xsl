@@ -37,7 +37,7 @@
 	</xsl:template>
 
 	<!-- Any properties of type query or calculated are read-only -->
-	<xsl:template match="Index/api/properties/property[@type='query']|Index/api/properties/property[@type='calculated']" priority="5">
+	<xsl:template match="Index/api/properties/property[@type='query']|Index/api/properties/property[@calculated='true']" priority="5">
 		<xsl:copy>
 			<xsl:attribute name="perm">read</xsl:attribute>
 			<xsl:apply-templates select="@*|node()"/>
