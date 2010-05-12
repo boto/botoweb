@@ -104,7 +104,7 @@ class IndexHandler(RequestHandler):
 									else:
 										prop_type_name = "str"
 									prop_node.set("type", TYPE_CONVERSIONS.get(prop_type_name, prop_type_name))
-									prop_node.set("no_store", "true")
+									prop_node.set("calculated", "true")
 								else:
 									prop_node.set("type", TYPE_NAMES.get(prop.data_type, "string"))
 							if prop.data_type in [str, unicode]:
