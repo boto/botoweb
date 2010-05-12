@@ -29,6 +29,10 @@ log = logging.getLogger("botoweb.handlers.db")
 from botoweb.xmlize import TYPE_NAMES
 TYPE_CONVERSIONS = {
 	"map": "complexType",
+	"dict": "complexType",
+	"str": "string",
+	"int": "integer",
+	"bool": "boolean",
 	"datetime": "dateTime",
 }
 
@@ -95,7 +99,12 @@ class IndexHandler(RequestHandler):
 								if prop_type_name:
 									prop_node.set("type", TYPE_CONVERSIONS.get(prop_type_name, prop_type_name))
 								elif hasattr(prop, "calculated_type"):
-									prop_node.set("type", "calculated")
+									if prop.calculated_type:
+										prop_type_name = prop.calculated_type.__name__.lower()
+									else:
+										prop_type_name = "str"
+									prop_node.set("type", TYPE_CONVERSIONS.get(prop_type_name, prop_type_name))
+									prop_node.set("no_store", "true")
 								else:
 									prop_node.set("type", TYPE_NAMES.get(prop.data_type, "string"))
 							if prop.data_type in [str, unicode]:
