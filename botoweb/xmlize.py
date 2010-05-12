@@ -112,7 +112,9 @@ class XMLSerializer(object):
 		"""Encode a dict by encoding each element individually with a name="" param"""
 		#TODO: make this support more then just strings
 		self.file.write("""<%s type="complexType">""" % prop_name)
-		for k in prop_value.keys():
+		keys = prop_value.keys()
+		keys.sort()
+		for k in keys:
 			v = prop_value[k]
 			self.encode_default(prop_name, v, "string", name=str(k))
 		self.file.write("""</%s>""" % prop_name)
