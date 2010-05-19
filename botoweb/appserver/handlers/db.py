@@ -311,7 +311,11 @@ class DBHandler(RequestHandler):
 		for prop_name in props:
 			prop_val = props[prop_name]
 			boto.log.debug("%s = %s" % (prop_name, prop_val))
-			setattr(obj, prop_name, prop_val)
+			try:
+				setattr(obj, prop_name, prop_val)
+			except Exception, e:
+				if prop_val != "": # If it was a nothing request, we ignore it
+					raise BadRequest("Bad value for %s: %s" % (prop_name, e))
 
 			if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
 				setattr(obj, "_indexed_%s" % prop_name, prop_val.upper())
