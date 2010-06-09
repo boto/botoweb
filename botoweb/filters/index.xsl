@@ -20,12 +20,41 @@
 		</xsl:if>
 	</xsl:template>
 	<xsl:template match ="Index/api/properties/property">
-		<xsl:if test="bw:hasAuth('', ../../@name, @name)">
-			<xsl:copy>
-				<xsl:attribute name="perm"><xsl:if test="bw:hasAuth('GET', ../../@name, @name)">read</xsl:if> <xsl:if test="bw:hasAuth('PUT', ../../@name, @name)"> write</xsl:if></xsl:attribute>
-				<xsl:apply-templates select="@*|node()"/>
-			</xsl:copy>
-		</xsl:if>
+		<xsl:choose>
+			<xsl:when test="bw:hasAuth('', ../../@name, @name)">
+				<xsl:copy>
+					<xsl:attribute name="perm"><xsl:if test="bw:hasAuth('GET', ../../@name, @name)">read</xsl:if> <xsl:if test="bw:hasAuth('PUT', ../../@name, @name)"> write</xsl:if></xsl:attribute>
+					<xsl:apply-templates select="@*|node()"/>
+				</xsl:copy>
+			</xsl:when>
+
+			<!-- Some fields just simply must be readable -->
+			<xsl:when test="@name='sys_modstamp'">
+				<xsl:copy>
+					<xsl:attribute name="perm">read</xsl:attribute>
+					<xsl:apply-templates select="@*|node()"/>
+				</xsl:copy>
+			</xsl:when>
+			<xsl:when test="@name='name'">
+				<xsl:copy>
+					<xsl:attribute name="perm">read</xsl:attribute>
+					<xsl:apply-templates select="@*|node()"/>
+				</xsl:copy>
+			</xsl:when>
+			<xsl:when test="@name='index'">
+				<xsl:copy>
+					<xsl:attribute name="perm">read</xsl:attribute>
+					<xsl:apply-templates select="@*|node()"/>
+				</xsl:copy>
+			</xsl:when>
+			<xsl:when test="@name='deleted'">
+				<xsl:copy>
+					<xsl:attribute name="perm">read</xsl:attribute>
+					<xsl:apply-templates select="@*|node()"/>
+				</xsl:copy>
+			</xsl:when>
+
+		</xsl:choose>
 	</xsl:template>
 
 	<!-- Mark all of these "auto" properties as read-only -->
@@ -43,6 +72,5 @@
 			<xsl:apply-templates select="@*|node()"/>
 		</xsl:copy>
 	</xsl:template>
-
 
 </xsl:stylesheet>
