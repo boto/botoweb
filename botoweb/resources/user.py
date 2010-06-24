@@ -105,8 +105,7 @@ class User(Model):
 			"*": {"*": {"*": False} },
 			"": {"": {"": False} }
 		}
-		query = Authorization.all()
-		query.filter("auth_group =", self.auth_groups)
+		query = Authorization.find(auth_group=self.auth_groups)
 		for auth in query:
 			if not self.authorizations.has_key(auth.method):
 				self.authorizations[auth.method] = {}
@@ -155,6 +154,8 @@ class User(Model):
 			obj_name = obj_name[0]
 		if isinstance(prop_name, list):
 			prop_name = prop_name[0]
+		if isinstance(obj_name, object) and obj_name.__class__.__name__ == "_Element":
+			obj_name = obj_name.tag
 		method = method.upper()
 		if method == "HEAD":
 			method = "GET"

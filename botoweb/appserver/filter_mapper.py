@@ -136,13 +136,16 @@ class FilterMapper(WSGILayer):
 		return (input_filter, output_filter)
 
 	def _build_proc(self, uri, user):
+		from botoweb import xslt_functions
 		proc = None
 		if uri:
 			extensions = {}
 			if user:
 				extensions = {
 					("python://botoweb/xslt_functions", "hasGroup"):  user.has_auth_group_ctx,
-					("python://botoweb/xslt_functions", "hasAuth"):  user.has_auth_ctx
+					("python://botoweb/xslt_functions", "hasAuth"):  user.has_auth_ctx,
+					("http://www.w3.org/2005/xpath-functions", "ends-with"):  xslt_functions.ends_with,
+					("http://www.w3.org/2005/xpath-functions", "starts-with"):  xslt_functions.starts_with
 				}
 			proc = etree.XSLT(etree.parse(uri, self.parser), extensions=extensions)
 		return proc

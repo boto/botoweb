@@ -23,3 +23,9 @@ uri = "python://botoweb/xslt_functions"
 functions = {
 	"getObj": getObj
 }
+
+def ends_with(ctx, string1, string2):
+	return string1.endswith(string2)
+
+def starts_with(ctx, string1, string2):
+	return string1.startswith(string2)
