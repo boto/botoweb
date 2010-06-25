@@ -1,5 +1,5 @@
 # Author: Chris Moyer
-from botoweb.exceptions import NotFound, Unauthorized, BadRequest, Conflict, Gone
+from botoweb.exceptions import NotFound, Forbidden, BadRequest, Conflict, Gone
 from botoweb.appserver.handlers import RequestHandler
 
 import boto
@@ -349,6 +349,12 @@ class DBHandler(RequestHandler):
 		from boto.sdb.db.query import Query
 		if not hasattr(obj, property):
 			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
+
+		# Some leakage here of authorizations, but 
+		# I'm not quite sure how to handle this elsewhere
+		if request.user and not request.user.has_auth('GET', obj.__class__.__name__, property):
+			raise Forbidden()
+
 		val = getattr(obj, property)
 		if type(val) in (str, unicode) or isinstance(val, Blob):
 			response.content_type = "text/plain"
