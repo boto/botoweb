@@ -144,6 +144,7 @@ class FilterMapper(WSGILayer):
 				extensions = {
 					("python://botoweb/xslt_functions", "hasGroup"):  user.has_auth_group_ctx,
 					("python://botoweb/xslt_functions", "hasAuth"):  user.has_auth_ctx,
+					("python://botoweb/xslt_functions", "matches"):  user.matches_ctx,
 					("http://www.w3.org/2005/xpath-functions", "ends-with"):  xslt_functions.ends_with,
 					("http://www.w3.org/2005/xpath-functions", "starts-with"):  xslt_functions.starts_with
 				}
