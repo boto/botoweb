@@ -169,7 +169,7 @@ class User(Model):
 	def matches_ctx(self, ctx, val):
 		if isinstance(val, list):
 			for v in val:
-				if v:
+				if self.matches_ctx(ctx, v):
 					return True
 			return False
 		if isinstance(val, object) and val.__class__.__name__ == "_Element":
