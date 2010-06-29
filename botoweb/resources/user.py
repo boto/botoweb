@@ -168,9 +168,10 @@ class User(Model):
 
 	def matches_ctx(self, ctx, val):
 		if isinstance(val, list):
-			if len(val) == 0:
-				return False
-			val = val[0]
+			for v in val:
+				if v:
+					return True
+			return False
 		if isinstance(val, object) and val.__class__.__name__ == "_Element":
 			val = val.get("id")
 		return self.matches(val)
