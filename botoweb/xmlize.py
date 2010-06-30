@@ -25,6 +25,7 @@ REGISTERED_CLASSES = {} # A mapping of name=> class for what to decode objects i
 from botoweb.fixed_datetime import datetime
 from botoweb.exceptions import BadRequest
 from datetime import datetime as datetime_type
+from datetime import date
 from boto.utils import Password
 from boto.sdb.db.key import Key
 
@@ -36,6 +37,7 @@ TYPE_NAMES = {
 	dict: "complexType",
 	datetime: "dateTime",
 	datetime_type: "dateTime",
+	date: "date",
 	object: "object",
 	Password: "password",
 	Key: "object",
@@ -116,7 +118,8 @@ class XMLSerializer(object):
 		keys.sort()
 		for k in keys:
 			v = prop_value[k]
-			self.encode_default(prop_name, v, "string", name=str(k))
+			k = unicode(k).encode("ascii", "replace")
+			self.encode_default(prop_name, v, "string", name=k)
 		self.file.write("""</%s>""" % prop_name)
 
 	def encode_datetime(self, prop_name, prop_value):
@@ -177,6 +180,7 @@ class XMLSerializer(object):
 		dict: encode_dict,
 		datetime: encode_datetime,
 		datetime_type: encode_datetime,
+		date: encode_datetime,
 		object: encode_object,
 		bool: encode_bool,
 	}
@@ -266,6 +270,8 @@ class XMLSerializer(object):
 		elif prop_type in ('date', 'datetime', 'time'):
 			# Date Time
 			value = self.decode_datetime(prop)
+			if prop_type == "date":
+				value = value.date()
 		elif prop_type in ('bool', 'boolean'):
 			# Boolean
 			value = (self.decode_string(prop).upper() == "TRUE")
