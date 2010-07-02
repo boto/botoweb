@@ -2,7 +2,7 @@ import webob
 import cgi
 from botoweb.resources.user import User
 import logging
-log = logging.getLogger("vermouth.request")
+log = logging.getLogger("botoweb.request")
 from botoweb.response import Response
 import time
 
