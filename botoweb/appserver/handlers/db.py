@@ -64,12 +64,15 @@ class DBHandler(RequestHandler):
 			# Add the count to the header
 			response = self._head(request, response)
 			objs = self.search(params=request.GET.mixed(), user=request.user)
-			objs.limit = self.page_size
+			page = False
+			if(objs.limit == None):
+				objs.limit = self.page_size
+				page = True
 			response.write("<%sList>" % self.db_class.__name__)
 			for obj in objs:
 				response.write(xmlize.dumps(obj))
 			params = request.GET.mixed()
-			if objs.next_token:
+			if page and objs.next_token:
 				if params.has_key("next_token"):
 					del(params['next_token'])
 				self_link = '%s%s%s?%s' % (request.real_host_url, request.base_url, request.script_name, urllib.urlencode(params).replace("&", "&amp;"))
@@ -186,6 +189,12 @@ class DBHandler(RequestHandler):
 					if filter[2] == "desc":
 						param_name = "-%s" % param_name
 					query.sort_by = param_name
+				# Allows a ['', 'limit', '1']
+				elif filter[1] == "limit":
+					query.limit = int(filter[2])
+				# Allows a ['', 'offset', '25']
+				elif filter[1] == "offset":
+					query.offset = int(filter[2])
 				else:
 					query.filter("%s %s" % (param_name, filter[1]), prop_value)
 		else:
@@ -364,11 +373,14 @@ class DBHandler(RequestHandler):
 			response.headers['X-Result-Count'] = str(objs.count())
 			response.write("<%s>" % property)
 
-			objs.limit = self.page_size
+			page = False
+			if(objs.limit == None):
+				objs.limit = self.page_size
+				page = True
 			for o in objs:
 				response.write(xmlize.dumps(o))
 			params = request.GET.mixed()
-			if objs.next_token:
+			if page and objs.next_token:
 				if params.has_key("next_token"):
 					del(params['next_token'])
 				self_link = '%s%s%s/%s/%s?%s' % (request.real_host_url, request.base_url, request.script_name, obj.id, property, urllib.urlencode(params).replace("&", "&amp;"))
