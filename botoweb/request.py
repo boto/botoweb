@@ -36,6 +36,7 @@ class Request(webob.Request):
 			self.real_host_url = "%s://%s" % (self.headers.get("X-Forwarded-Proto", "http"), self.headers.get("X-Forwarded-Host"))
 		else:
 			self.real_host_url = self.host_url
+		self.real_path_url = self.real_host_url + self.path
 
 	def get(self, argument_name, default_value='', allow_multiple=False):
 		param_value = self.get_all(argument_name, default_value)
