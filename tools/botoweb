@@ -107,7 +107,16 @@ if __name__ == "__main__":
 		import twisted
 		from twisted.web.server import Site
 		from twisted.web.wsgi import WSGIResource
+		from twisted.python.threadpool import ThreadPool
 		from twisted.internet import reactor
+
+		# Create and start a thread pool,
+		wsgiThreadPool = ThreadPool()
+		wsgiThreadPool.start()
+
+		# ensuring that it will be stopped when the reactor shuts down
+		reactor.addSystemEventTrigger('after', 'shutdown', wsgiThreadPool.stop)
+
 		print "Using Twisted version: %s" % twisted.__version__
 		print "running on http://localhost:%s" % (options.port)
 		resource = WSGIResource(reactor, reactor.getThreadPool(), mapper)
