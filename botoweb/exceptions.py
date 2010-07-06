@@ -62,6 +62,10 @@ class TemporaryRedirect(HTTPRedirect):
 	def __init__(self, url, message=status.message[status.HTTP_TEMPORARY_REDIRECT], description=status.description[status.HTTP_TEMPORARY_REDIRECT]):
 		HTTPRedirect.__init__(self, url, status.HTTP_TEMPORARY_REDIRECT, message, description)
 
+class SeeOther(HTTPRedirect):
+	def __init__(self, url, message=status.message[status.HTTP_SEE_OTHER], description=status.description[status.HTTP_SEE_OTHER]):
+		HTTPRedirect.__init__(self, url, status.HTTP_SEE_OTHER, message, description)
+
 # 4xx Client Errors
 class BadRequest(HTTPException):
 	def __init__(self, message=status.message[status.HTTP_BAD_REQUEST], description=status.description[status.HTTP_BAD_REQUEST]):

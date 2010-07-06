@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from botoweb.appserver.handlers import RequestHandler
-from botoweb.exceptions import TemporaryRedirect
+from botoweb.exceptions import SeeOther
 
 import logging
 log = logging.getLogger("botoweb.handlers.login")
@@ -37,7 +37,7 @@ class LoginHandler(RequestHandler):
 		path = request.real_host_url
 		if id:
 			path += "/%s" % id
-		raise TemporaryRedirect(path)
+		raise SeeOther(path)
 
 	def _get(self, request, response, id=None):
 		return self._post(request, response, id)
