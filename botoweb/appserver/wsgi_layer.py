@@ -87,6 +87,7 @@ class WSGILayer(object):
 		except HTTPException, e:
 			resp.set_status(e.code)
 			resp = self.format_exception(e, resp)
+			log.warn(traceback.format_exc())
 			self.report_exception(e, req, priority=5)
 		except Exception, e:
 			content = InternalServerError(message=e.message)

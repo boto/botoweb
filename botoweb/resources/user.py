@@ -39,6 +39,7 @@ class User(Model):
 	auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
 	password = property.PasswordProperty(verbose_name="Password")
 	auth_token = property.StringProperty(verbose_name="Authentication Token")
+	oid = property.StringProperty(verbose_name="OpenID")
 	authorizations = None
 
 

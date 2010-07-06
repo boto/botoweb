@@ -101,7 +101,7 @@ class Request(webob.Request):
 			# Cookie based Authentication Token
 			auth_token_header = self.cookies.get("BW_AUTH_TOKEN")
 			if auth_token_header:
-				unencoded_info = auth_token_header.decode('base64')
+				unencoded_info = auth_token_header
 				username, auth_token = unencoded_info.split(':', 1)
 				if username and auth_token:
 					user = getCachedUser(username)
@@ -111,9 +111,45 @@ class Request(webob.Request):
 							addCachedUser(user)
 						except:
 							user = None
-					if user and user.auth_token == auth_token:
+					if user and user.auth_token == unencoded_info:
 						self._user = user
 						return self._user
+			# JanRain Authentication token
+			jr_auth_token = self.POST.get("token")
+			if jr_auth_token:
+				import urllib, urllib2, json, boto
+				api_params = {
+					"token": jr_auth_token,
+					"apiKey": boto.config.get("JanRain", "api_key"),
+					"format": "json"
+				}
+				http_response = urllib2.urlopen(boto.config.get("JanRain", "url"), urllib.urlencode(api_params))
+				auth_info = json.loads(http_response.read())
+				if auth_info['stat'] == "ok":
+					profile = auth_info['profile']
+					identifier = profile['identifier']
+					email = profile.get("verifiedEmail")
+					if email:
+						try:
+							user = User.find(oid=identifier).next()
+						except:
+							try:
+								user = User.find(email=email).next()
+							except:
+								user = None
+
+						if user:
+							self._user = user
+
+							# Set up an Auth Token
+							bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
+							self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
+							user.auth_token = bw_auth_token
+							user.put()
+							addCachedUser(user)
+				else:
+					boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
+
 		return self._user
 
 	user = property(getUser, None, None)
