@@ -105,7 +105,7 @@ class Request(webob.Request):
 				username, auth_token = unencoded_info.split(':', 1)
 				if username and auth_token:
 					user = getCachedUser(username)
-					if not user:
+					if not user or not user.auth_token == unencoded_info:
 						try:
 							user = User.find(username=username).next()
 							addCachedUser(user)
