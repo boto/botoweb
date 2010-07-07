@@ -129,24 +129,24 @@ class Request(webob.Request):
 					profile = auth_info['profile']
 					identifier = profile['identifier']
 					email = profile.get("verifiedEmail")
-					if email:
+					try:
+						user = User.find(oid=identifier).next()
+					except:
 						try:
-							user = User.find(oid=identifier).next()
-						except:
-							try:
+							if email:
 								user = User.find(email=email).next()
-							except:
-								user = None
+						except:
+							user = None
 
-						if user:
-							self._user = user
+					if user:
+						self._user = user
 
-							# Set up an Auth Token
-							bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
-							self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
-							user.auth_token = bw_auth_token
-							user.put()
-							addCachedUser(user)
+						# Set up an Auth Token
+						bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
+						self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
+						user.auth_token = bw_auth_token
+						user.put()
+						addCachedUser(user)
 				else:
 					boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
 
