@@ -20,6 +20,8 @@
 # IN THE SOFTWARE.
 __version__ = "0.7"
 env = None
+import logging
+log = logging.getLogger("botoweb")
 
 def set_env(name, conf=None):
 	from botoweb.environment import Environment
@@ -29,3 +31,55 @@ def set_env(name, conf=None):
 	import botoweb
 	botoweb.env = env
 	return env
+
+#
+# Arecibo Error Reporting
+# 
+def report_exception(e, req=None, priority=None):
+	"""Report an exception, using arecibo if available"""
+	import traceback
+	log.info("Report Exception: %s" % e)
+	report(msg=e.message, status=e.code, name=e.__class__.__name__, tb=traceback.format_exc(), req=req, priority=priority)
+
+def report(msg, status=400, name=None, tb=None, req=None, priority=None):
+	"""Generic Error notification"""
+	log.info("Arecibo Log: %s" % msg)
+	import boto
+	from datetime import datetime
+	try:
+		from arecibo import post
+		arecibo = post()
+		arecibo.server(url=boto.config.get("arecibo", "url"))
+		arecibo.set("account", boto.config.get("arecibo", "public_key"))
+	except:
+		arecibo = None
+
+	if arecibo:
+		try:
+			arecibo.set("status", status)
+			arecibo.set("msg", msg)
+			arecibo.set("server", boto.config.get("Instance", "public-ipv4"))
+			arecibo.set("timestamp", datetime.utcnow().isoformat());
+
+			if name:
+				arecibo.set("type", name)
+
+			if priority:
+				arecibo.set("priority", str(priority))
+
+			if req:
+				arecibo.set("url", req.real_path_url)
+				arecibo.set("request", req.body)
+				if req.user:
+					arecibo.set("username", req.user.username)
+				if req.environ.has_key("HTTP_USER_AGENT"):
+					arecibo.set("user_agent", req.environ['HTTP_USER_AGENT'])
+			if tb:
+				arecibo.set("traceback", tb)
+
+			arecibo.send()
+		except Exception, e:
+			log.critical("Exception sending to arecibo: %s" % e)
+	else:
+		log.warn("Warning, Arecibo not set up")
+		log.warn(msg)

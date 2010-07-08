@@ -21,6 +21,7 @@
 import httplib
 
 import boto
+import botoweb
 from botoweb.request import Request
 from botoweb.response import Response
 from botoweb.exceptions import *
@@ -55,15 +56,6 @@ class WSGILayer(object):
 		self.app = app
 		self.update(env)
 
-		try:
-			from arecibo import post
-			self.arecibo = post()
-			self.arecibo.server(url=boto.config.get("arecibo", "url"))
-			self.arecibo.set("account", boto.config.get("arecibo", "public_key"))
-		except:
-			self.arecibo = None
-
-
 	def __call__(self, environ, start_response):
 		"""
 		Handles basic one-time-only WSGI setup, and handles
@@ -89,14 +81,13 @@ class WSGILayer(object):
 			resp.set_status(e.code)
 			resp = self.format_exception(e, resp)
 			log.warn(traceback.format_exc())
-			self.report_exception(e, req, priority=5)
+			botoweb.report_exception(e, req, priority=5)
 		except Exception, e:
 			content = InternalServerError(message=e.message)
 			resp.set_status(content.code)
 			log.critical(traceback.format_exc())
 			resp = self.format_exception(content, resp)
-			self.report_exception(content, req, priority=1)
-
+			botoweb.report_exception(content, req, priority=1)
 
 		return resp(environ, start_response)
 
@@ -107,27 +98,6 @@ class WSGILayer(object):
 		e.to_xml().writexml(resp)
 		return resp
 
-	def report_exception(self, e, req, priority=None):
-		"""Report an exception, using arecibo if available"""
-		if self.arecibo:
-			try:
-				self.arecibo.set("status", e.code)
-				if priority:
-					self.arecibo.set("priority", str(priority))
-				self.arecibo.set("url", req.real_path_url)
-				self.arecibo.set("msg", e.message)
-				self.arecibo.set("type", e.__class__.__name__)
-				self.arecibo.set("traceback", traceback.format_exc())
-				self.arecibo.set("server", boto.config.get("Instance", "public-ipv4"))
-				self.arecibo.set("timestamp", datetime.utcnow().isoformat());
-				self.arecibo.set("request", req.body)
-				if req and req.user:
-					self.arecibo.set("username", req.user.username)
-				if req.environ.has_key("HTTP_USER_AGENT"):
-					self.arecibo.set("user_agent", req.environ['HTTP_USER_AGENT'])
-				self.arecibo.send()
-			except Exception, e:
-				log.critical("Exception sending to arecibo: %s" % e)
 
 	def update(self, env):
 		"""

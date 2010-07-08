@@ -1,6 +1,7 @@
 import webob
 import cgi
 from botoweb.resources.user import User
+import botoweb
 import logging
 log = logging.getLogger("botoweb.request")
 from botoweb.response import Response
@@ -79,7 +80,14 @@ class Request(webob.Request):
 		@return: User object, or None
 		@rtype: User or None
 		"""
-		if not self._user:
+		# We only want to TRY to 
+		# authenticate them once, 
+		# so we use "False" if they've
+		# already been attempted to be authed, 
+		# None if they haven't even been through 
+		# this yet
+		if self._user == None:
+			self._user = False
 			# Basic Authentication
 			auth_header =  self.environ.get("HTTP_AUTHORIZATION")
 			if auth_header:
@@ -141,6 +149,7 @@ class Request(webob.Request):
 							user = None
 
 					if user:
+						boto.log.info("Authenticated OID: %s as %s" % (identifier, user))
 						self._user = user
 
 						# Set up an Auth Token
@@ -149,9 +158,18 @@ class Request(webob.Request):
 						user.auth_token = bw_auth_token
 						user.put()
 						addCachedUser(user)
+					else:
+						boto.log.warn("Invalid OpenID: %s" % identifier)
+						botoweb.report("Invalid OpenID: %s" % identifier, status=401, req=self, name="LoginFailure", priority=3)
 				else:
 					boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
+					botoweb.report(auth_info['err']['msg'], status=500, req=self, name="LoginFailure", priority=1)
 
+		# This False means we tried by there was no User
+		# We always return None if there was no user
+		# just for compatibility reasons
+		if self._user == False:
+			return None
 		return self._user
 
 	user = property(getUser, None, None)
