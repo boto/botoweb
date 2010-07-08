@@ -82,7 +82,8 @@ class WSGILayer(object):
 			resp = self.format_exception(e, resp)
 		except Unauthorized, e:
 			resp.set_status(e.code)
-			resp.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
+			if self.env.config.get("app", "basic_auth", True):
+				resp.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
 			resp = self.format_exception(e, resp)
 		except HTTPException, e:
 			resp.set_status(e.code)

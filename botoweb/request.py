@@ -135,6 +135,8 @@ class Request(webob.Request):
 						try:
 							if email:
 								user = User.find(email=email).next()
+							else:
+								user = None
 						except:
 							user = None
 

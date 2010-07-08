@@ -44,7 +44,7 @@ class AuthLayer(WSGILayer):
 
 	def handle(self, req, response):
 		auth = self.get_auth_config(req.path)
-		if auth:
+		if auth and not auth.get("disable", False):
 			log.info("Checking auth: %s" % auth)
 			if not req.user:
 				raise Unauthorized()
