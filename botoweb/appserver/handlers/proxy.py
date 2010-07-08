@@ -19,24 +19,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from botoweb.appserver.handlers import RequestHandler
-from botoweb.exceptions import SeeOther
 
 import logging
-log = logging.getLogger("botoweb.handlers.login")
+log = logging.getLogger("botoweb.handlers.proxy")
 
-class LoginHandler(RequestHandler):
-	"""Login/Redirection handler"""
-
-	def _post(self, request, response, id=None):
-		"""Just simply re-direct the user,
-		all the heavy lifting is done in the 
-		Request object"""
-		path = request.real_host_url
-		if id:
-			path += "/%s" % id
-		# We MUST toss a "SeeOther", or the browser
-		# will force a re-send of the POST
-		raise SeeOther(path)
+class ProxyHandler(RequestHandler):
+	"""A simple Proxy Handler
+	This requires a single configuration option:
+	*uri*
+	Which is the URI we're proxying."""
 
 	def _get(self, request, response, id=None):
-		return self._post(request, response, id)
+		import urllib2
+		uri = self.config.get("uri")
+		body = urllib2.urlopen(uri)
+		headers = body.info()
+		response.content_type = headers.get("Content-Type")
+		response.headers['ETag'] = headers.get("ETag")
+		response.headers['Last-Modified'] = headers.get("Last-Modified")
+		response.headers['X-Original-URI'] = uri
+		response.write(body.read())
+		return response
