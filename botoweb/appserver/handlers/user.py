@@ -31,7 +31,7 @@ class UserHandler(DBHandler):
 		if not user or not user.has_auth_group("admin"):
 			raise Unauthorized()
 		obj = DBHandler.create(self, params, user, request)
-		if obj.password == "":
+		if obj.password == "" and self.env.config.get("app", "basic_auth", True):
 			# Send them a password
 			obj.send_password(request.real_host_url)
 		return obj
@@ -55,7 +55,7 @@ class UserHandler(DBHandler):
 				prop_val = props[prop_name]
 				setattr(obj, prop_name, prop_val)
 		obj.put()
-		if obj.password == "":
+		if obj.password == "" and self.env.config.get("app", "basic_auth", True):
 			# Password reset
 			obj.send_password(request.real_host_url)
 		return obj
