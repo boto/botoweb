@@ -179,16 +179,20 @@ class DBHandler(RequestHandler):
 			except:
 				raise BadRequest("Bad query string")
 			for filter in filters:
-				param_name = filter[0]
+				param_names = filter[0]
 				prop_value = filter[2]
-				if hasattr(self.db_class, "_indexed_%s" % param_name):
-					param_name = "_indexed_%s" % param_name
-					prop_value = prop_value.upper()
+				if not isinstance(param_names, list):
+					param_names = [param_names]
+				for pnum, param_name in enumerate(param_names):
+					if hasattr(self.db_class, "_indexed_%s" % param_name):
+						param_name = "_indexed_%s" % param_name
+						prop_value = prop_value.upper()
+					param_names[pnum] = param_name
 				# Allows a ['prop_name', 'sort', 'desc|asc']
 				if filter[1] == "sort":
 					if filter[2] == "desc":
-						param_name = "-%s" % param_name
-					query.sort_by = param_name
+						param_names[0] = "-%s" % param_names[0]
+					query.sort_by = param_names[0]
 				# Allows a ['', 'limit', '1']
 				elif filter[1] == "limit":
 					query.limit = int(filter[2])
@@ -196,7 +200,10 @@ class DBHandler(RequestHandler):
 				elif filter[1] == "offset":
 					query.offset = int(filter[2])
 				else:
-					query.filter("%s %s" % (param_name, filter[1]), prop_value)
+					param_filters = []
+					for param_name in param_names:
+						param_filters.append("%s %s" % (param_name, filter[1]))
+					query.filter(param_filters, prop_value)
 		else:
 			properties = [p.name for p in query.model_class.properties(hidden=False)]
 			for filter in set(params.keys()):
