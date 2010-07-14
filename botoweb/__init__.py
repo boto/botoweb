@@ -35,13 +35,15 @@ def set_env(name, conf=None):
 #
 # Arecibo Error Reporting
 # 
-def report_exception(e, req=None, priority=None):
+def report_exception(e, req=None, priority=None, msg=None, req_body=None, uri=None):
 	"""Report an exception, using arecibo if available"""
 	import traceback
 	log.info("Report Exception: %s" % e)
-	report(msg=e.message, status=e.code, name=e.__class__.__name__, tb=traceback.format_exc(), req=req, priority=priority)
+	if msg == None:
+		msg = e.message
+	report(msg=msg, status=e.code, name=e.__class__.__name__, tb=traceback.format_exc(), req=req, priority=priority, req_body=req_body, uri=uri)
 
-def report(msg, status=400, name=None, tb=None, req=None, priority=None):
+def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_body=None, uri=None):
 	"""Generic Error notification"""
 	log.info("Arecibo Log: %s" % msg)
 	import boto
@@ -68,12 +70,16 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None):
 				arecibo.set("priority", str(priority))
 
 			if req:
-				arecibo.set("url", req.real_path_url)
-				arecibo.set("request", req.body)
+				uri = req.real_path_url
+				req_body = req.body
 				if req.user:
 					arecibo.set("username", req.user.username)
 				if req.environ.has_key("HTTP_USER_AGENT"):
 					arecibo.set("user_agent", req.environ['HTTP_USER_AGENT'])
+			if uri:
+				arecibo.set("url", uri)
+			if req_body:
+				arecibo.set("request", req_body)
 			if tb:
 				arecibo.set("traceback", tb)
 
