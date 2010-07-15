@@ -137,14 +137,42 @@ class Request(webob.Request):
 					profile = auth_info['profile']
 					identifier = profile['identifier']
 					email = profile.get("verifiedEmail")
-					try:
-						user = User.find(oid=identifier).next()
-					except:
-						try:
-							if email:
-								user = User.find(email=email).next()
-							else:
+					user = None
+
+					# First we see if they have a Primary Key,
+					# if so we use that to get the user
+					primary_key = profile.get("primaryKey")
+					if primary_key:
+						user = User.get_by_id(primary_key)
+						if user:
+							boto.log.info("User '%s' logged in using PrimaryKey: %s" % (user, primary_key))
+
+					# If that didn't work, check to see if they had an auth_token
+					if not user:
+						auth_token = self.GET.get("auth_token")
+						if auth_token:
+							try:
+								user = User.find(auth_token=auth_token).next()
+								print "Got User: %s" % user
+							except:
 								user = None
+							if user:
+								# If we matched a user, set the OpenID
+								# for that user to our identifier
+								user.oid = identifier
+
+					#  Try to get a user by OpenID identifier
+					if not user:
+						try:
+							user = User.find(oid=identifier).next()
+						except:
+							user = None
+
+					# If no OID match, try to match
+					# via Email, but ONLY for ones with no OpenID
+					if not user and email:
+						try:
+							user = User.find(email=email, oid=[None,""]).next()
 						except:
 							user = None
 

@@ -27,6 +27,18 @@ PASSWORD_TEMPLATE = """<html>
 	</body>
 </html>
 """
+CREATED_TEMPLATE = """<html>
+	<body>
+		<h3>%(name)s, your %(appname)s account has been created!</h3>
+		<p>
+			To set up your login, please go to: <a href="%(link)s">%(link)s</a><br/>
+			From there you can tie an existing account to your new %(appname)s account
+			so you don't have to remember multiple passwords.
+		</p>
+	</body>
+</html>
+"""
+
 from boto.sdb.db.model import Model
 from boto.sdb.db import property
 
@@ -92,6 +104,21 @@ class User(Model):
 			"username": self.username
 		}
 		self.notify("[%s] Password Reset" % boto.config.get("app", "name", "botoweb"), PASSWORD_TEMPLATE % args)
+
+	def send_auth_token(self, app_link):
+		"""Send the user an auth-token link, allowing them to 
+		set up their own login using JanRain Authentication"""
+		import boto
+		self.auth_token = self.generate_password(length=20)
+		self.put()
+		args = {
+			"appname": boto.config.get("app", "name", "botoweb"),
+			"link": "%s?auth_token=%s" % (app_link, self.auth_token),
+			"name": self.name,
+			"username": self.username
+		}
+		return self.notify("[%s] Account Created" % boto.config.get("app", "name", "botoweb"), CREATED_TEMPLATE % args)
+
 
 	def has_auth_group(self, group):
 		return (group in self.auth_groups)
