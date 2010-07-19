@@ -76,6 +76,8 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 					arecibo.set("username", req.user.username)
 				if req.environ.has_key("HTTP_USER_AGENT"):
 					arecibo.set("user_agent", req.environ['HTTP_USER_AGENT'])
+				if req.remote_addr:
+					arecibo.set("ip", req.remote_addr)
 			if uri:
 				arecibo.set("url", uri)
 			if req_body:
