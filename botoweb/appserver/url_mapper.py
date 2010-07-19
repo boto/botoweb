@@ -8,8 +8,11 @@ import urllib
 import botoweb
 import mimetypes
 from boto.utils import find_class
+
 from botoweb.appserver.handlers import RequestHandler
 from botoweb.appserver.handlers.index import IndexHandler
+from botoweb.appserver.handlers.robots import RobotsHandler
+
 from botoweb.request import Request
 from botoweb.response import Response
 from botoweb import status
@@ -24,6 +27,7 @@ class URLMapper(WSGILayer):
 	"""
 	handlers = {}
 	index_handler = None
+	robot_handler = None
 
 	def update(self, env):
 		"""
@@ -32,6 +36,7 @@ class URLMapper(WSGILayer):
 		"""
 		self.env = env
 		self.index_handler = IndexHandler(self.env, {})
+		self.robot_handler = RobotsHandler(self.env, {})
 		self.handlers = {}
 		# Load up and verify all the handlers
 		for route in self.env.config.get("botoweb", "handlers"):
@@ -92,5 +97,7 @@ class URLMapper(WSGILayer):
 					return (handler, obj_id)
 		if path == "/":
 			return (self.index_handler, None)
+		elif path == "/robots.txt":
+			return (self.robot_handler, None)
 		else:
 			return (None, None)
