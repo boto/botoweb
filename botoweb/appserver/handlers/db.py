@@ -363,6 +363,7 @@ class DBHandler(RequestHandler):
 	def get_property(self, request, response, obj, property):
 		"""Return just a single property"""
 		from boto.sdb.db.query import Query
+		from boto.s3.key import Key
 		if not hasattr(obj, property):
 			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
 
@@ -375,6 +376,9 @@ class DBHandler(RequestHandler):
 		if type(val) in (str, unicode) or isinstance(val, Blob):
 			response.content_type = "text/plain"
 			response.write(str(val))
+		elif isinstance(val, Key):
+			response.content_type = val.content_type
+			response.write(val.get_contents_as_string())
 		elif isinstance(val, Query):
 			objs = self.build_query(request.GET.mixed(), query=val, user=request.user)
 			response.headers['X-Result-Count'] = str(objs.count())

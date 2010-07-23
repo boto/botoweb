@@ -130,11 +130,14 @@ class XMLSerializer(object):
 		"""Encode a generic object (must have an "id" attribute)"""
 		from boto.sdb.db.query import Query
 		from boto.sdb.db.blob import Blob
+		from boto.s3.key import Key
 		prop_type = prop_value.__class__.__name__
 		if isinstance(prop_value, Query):
 			return self.encode_query(prop_name, prop_value)
 		elif isinstance(prop_value, Blob):
 			return self.encode_blob(prop_name, prop_value)
+		elif isinstance(prop_value, Key):
+			return self.encode_key(prop_name, prop_value)
 		elif hasattr(prop_value, "id"):
 			prop_value = str(prop_value.id)
 		else:
@@ -147,8 +150,12 @@ class XMLSerializer(object):
 		self.file.write("""<%s type="reference" href="%s"/>""" % (prop_name, prop_name))
 
 	def encode_blob(self, prop_name, prop_value=None):
-		"""Encode a query, this is sent as a reference"""
+		"""Encode a blob, this is sent as a reference"""
 		self.file.write("""<%s type="blob" href="%s"/>""" % (prop_name, prop_name))
+
+	def encode_key(self, prop_name, prop_value=None):
+		"""Encode an S3Key, this is sent as a reference"""
+		self.file.write("""<%s type="s3key" href="%s"/>""" % (prop_name, prop_name))
 
 	def encode_cdata(self, string):
 		"""Return what might be a CDATA encoded string"""
