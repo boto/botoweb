@@ -47,7 +47,7 @@ class User(Model):
 	username = property.StringProperty(verbose_name="Username", unique=True)
 	name = property.StringProperty(verbose_name="Name")
 	_indexed_name = property.StringProperty()
-	email = property.StringProperty(verbose_name="Email Adress")
+	email = property.StringProperty(verbose_name="Email Address")
 	auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
 	password = property.PasswordProperty(verbose_name="Password")
 	auth_token = property.StringProperty(verbose_name="Authentication Token")
