@@ -105,7 +105,7 @@ class User(Model):
 		}
 		self.notify("[%s] Password Reset" % boto.config.get("app", "name", "botoweb"), PASSWORD_TEMPLATE % args)
 
-	def send_auth_token(self, app_link, app_name=None, args={}):
+	def send_auth_token(self, app_link, app_name=None, subject="Account Created", args={}):
 		"""Send the user an auth-token link, allowing them to 
 		set up their own login using JanRain Authentication"""
 		import boto
@@ -117,7 +117,7 @@ class User(Model):
 		args["link"] = "%s?auth_token=%s" % (app_link, self.auth_token)
 		args["name"] = self.name
 		args["username"] = self.username
-		return self.notify("[%s] Account Created" % app_name, CREATED_TEMPLATE % args)
+		return self.notify(subject, CREATED_TEMPLATE % args)
 
 
 	def has_auth_group(self, group):
