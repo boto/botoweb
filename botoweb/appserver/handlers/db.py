@@ -184,9 +184,22 @@ class DBHandler(RequestHandler):
 				if not isinstance(param_names, list):
 					param_names = [param_names]
 				for pnum, param_name in enumerate(param_names):
+					# Handle the "auto indexing"
+					# to make SDB searching case-insensitive
 					if hasattr(self.db_class, "_indexed_%s" % param_name):
 						param_name = "_indexed_%s" % param_name
-						prop_value = prop_value.upper()
+						# Make sure the uppercased version is
+						# also in the prop_value array
+						# we have to add this to the accepted values,
+						# not just replace, since they may have
+						# multiple param_names in the list, and
+						# not all of them may be indexed
+						if isinstance(prop_value, list):
+							for pv in prop_value:
+								if not pv.upper() in prop_value:
+									prop_value.append(pv.upper())
+						else:
+							prop_value = [prop_value, prop_value.upper()]
 					param_names[pnum] = param_name
 				# Allows a ['prop_name', 'sort', 'desc|asc']
 				if filter[1] == "sort":
