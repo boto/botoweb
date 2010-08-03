@@ -114,14 +114,36 @@ if __name__ == "__main__":
 		wsgiThreadPool = ThreadPool()
 		wsgiThreadPool.start()
 
+		def getInfo(signum, stack):
+			print "================ INFO ==================="
+			print "queue: %s"   % len(wsgiThreadPool.q.queue)
+			print "waiters: %s" % len(wsgiThreadPool.waiters)
+			print "working: %s" % len(wsgiThreadPool.working)
+			print "threads: %s" % len(wsgiThreadPool.threads)
+			print "========================================="
+
+		def stop(signum, stack):
+			print "Gracefully Stopping botoweb server"
+			reactor.stop()
+
+		import signal
+		try:
+			# Bind SIGKILL
+			signal.signal(signal.SIGINT, stop)
+			# Bind SIGINFO
+			signal.signal(29, getInfo)
+		except:
+			pass
+
 		# ensuring that it will be stopped when the reactor shuts down
 		reactor.addSystemEventTrigger('after', 'shutdown', wsgiThreadPool.stop)
 
 		print "Using Twisted version: %s" % twisted.__version__
 		print "running on http://localhost:%s" % (options.port)
-		resource = WSGIResource(reactor, reactor.getThreadPool(), mapper)
+		resource = WSGIResource(reactor, wsgiThreadPool, mapper)
 		reactor.listenTCP(int(options.port),Site(resource))
 		reactor.run()
+
 	except ImportError:
 		try:
 			# Next, try CherryPy
