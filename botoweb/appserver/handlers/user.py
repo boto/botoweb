@@ -34,6 +34,8 @@ class UserHandler(DBHandler):
 		if obj.password == "" and self.env.config.get("app", "basic_auth", True):
 			# Send them a password
 			obj.send_password(request.real_host_url)
+		elif not self.env.config.get("app", "basic_auth", True):
+			obj.send_auth_token(self.config.get("login_url", request.real_host_url), self.env.config.get("app", "name"), self.config.get("new_subject", self.config.get("subject", "Account Created")))
 		return obj
 
 	def update(self, obj, props, user, request):
@@ -58,5 +60,10 @@ class UserHandler(DBHandler):
 		if obj.password == "" and self.env.config.get("app", "basic_auth", True):
 			# Password reset
 			obj.send_password(request.real_host_url)
+		elif obj.oid == "RESET" and not self.env.config.get("app", "basic_auth", True):
+			# Send a new auth-token email to the user
+			obj.oid = ""
+			obj.put()
+			obj.send_auth_token(self.config.get("login_url", request.real_host_url), self.env.config.get("app", "name"), self.config.get("subject", "Password Reset"))
 		return obj
 
