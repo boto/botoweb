@@ -99,7 +99,7 @@ class Request(webob.Request):
 					user = getCachedUser(username)
 					if not user:
 						try:
-							user = User.find(username=username).next()
+							user = User.find(username=username,deleted=False).next()
 							addCachedUser(user)
 						except:
 							user = None
@@ -115,7 +115,7 @@ class Request(webob.Request):
 					user = getCachedUser(username)
 					if not user or not user.auth_token == unencoded_info:
 						try:
-							user = User.find(username=username).next()
+							user = User.find(username=username,deleted=False).next()
 							addCachedUser(user)
 						except:
 							user = None
@@ -152,7 +152,7 @@ class Request(webob.Request):
 						auth_token = self.GET.get("auth_token")
 						if auth_token:
 							try:
-								user = User.find(auth_token=auth_token).next()
+								user = User.find(auth_token=auth_token,deleted=False).next()
 								print "Got User: %s" % user
 							except:
 								user = None
@@ -164,7 +164,7 @@ class Request(webob.Request):
 					#  Try to get a user by OpenID identifier
 					if not user:
 						try:
-							user = User.find(oid=identifier).next()
+							user = User.find(oid=identifier,deleted=False).next()
 						except:
 							user = None
 
@@ -172,7 +172,7 @@ class Request(webob.Request):
 					# via Email, but ONLY for ones with no OpenID
 					if not user and email:
 						try:
-							user = User.find(email=email, oid=[None,""]).next()
+							user = User.find(email=email, oid=[None,""],deleted=False).next()
 						except:
 							user = None
 
