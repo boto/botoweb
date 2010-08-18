@@ -94,7 +94,10 @@ class FilterMapper(WSGILayer):
 			response = self.app.handle(req, response)
 
 		if filter[1] and response.content_type == "text/xml" and response.body:
-			response.body = str(filter[1](etree.parse(StringIO(response.body), self.parser), **variables))
+			try:
+				response.body = str(filter[1](etree.parse(StringIO(response.body), self.parser), **variables))
+			except:
+				pass
 
 		return response
 

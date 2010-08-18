@@ -71,11 +71,14 @@ class URLMapper(WSGILayer):
 		handler = None
 		obj_id = None
 		for handler_config in self.env.config.get("botoweb", "handlers"):
-			match = re.match("^(%s)(\/(.*))?$" % handler_config['url'], path)
+			match = re.match("^(%s)(\.xml|\.json|\.csv)?(\/(.*))?$" % handler_config['url'], path)
 
 			if match:
+				# Allow for setting a custom content-type by URL
+				if match.group(2):
+					req.content_type = match.group(2)[1:]
 				log.debug("URL Mapping: %s" % handler_config)
-				obj_id = match.group(3)
+				obj_id = match.group(4)
 				if obj_id == "":
 					obj_id = None
 
