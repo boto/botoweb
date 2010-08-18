@@ -10,6 +10,7 @@ from boto.sdb.db.model import Model
 import urllib
 
 from datetime import datetime
+from time import time
 
 import logging
 log = logging.getLogger("botoweb.handlers.db")
@@ -461,6 +462,7 @@ class JSONWrapper(object):
 
 	def next(self):
 		"""Get the next item in this JSON array"""
+		start = time()
 		obj = self.objs.next()
 		cls_name = obj.__class__.__name__
 		ret = {
@@ -469,9 +471,11 @@ class JSONWrapper(object):
 		}
 		for prop in obj.properties():
 			# Check for user authorizations before saving it to the array
-			if prop.name and not prop.name.startswith("_") and self.user.has_auth("GET", cls_name, prop.name):
+			if prop.name and not prop.name.startswith("_")  and not prop.__class__.__name__ == "CalculatedProperty" and self.user.has_auth("GET", cls_name, prop.name):
 				ret[prop.name] = self.encode(getattr(obj, prop.name), prop)
-		return json.dumps(ret) + "\n"
+		ret = json.dumps(ret) + "\n"
+		boto.log.info("Rendered in: %.05f seconds" % (time() - start))
+		return ret
 
 	def encode(self, val, prop):
 		"""Encode a property to a JSON serializable type"""
