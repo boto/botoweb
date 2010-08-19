@@ -64,11 +64,15 @@ class DBHandler(RequestHandler):
 		else:
 			# Add the count to the header
 			response = self._head(request, response)
-			objs = self.search(params=request.GET.mixed(), user=request.user)
+			params = request.GET.mixed()
+			objs = self.search(params=params, user=request.user)
+			if params.has_key("next_token"):
+				del(params['next_token'])
+			base_url = '%s%s%s' % (request.real_host_url, request.base_url, request.script_name)
 			#objs.limit = self.page_size
 			if request.content_type == "json":
 				response.content_type = "application/json"
-				response.app_iter = JSONWrapper(objs, request.user)
+				response.app_iter = JSONWrapper(objs, request.user, "%s.json" % base_url, params)
 			else:
 				page = False
 				if(objs.limit == None):
@@ -77,13 +81,12 @@ class DBHandler(RequestHandler):
 				response.write("<%sList>" % self.db_class.__name__)
 				for obj in objs:
 					response.write(xmlize.dumps(obj))
-				params = request.GET.mixed()
 				if page and objs.next_token:
 					if params.has_key("next_token"):
 						del(params['next_token'])
-					self_link = '%s%s%s?%s' % (request.real_host_url, request.base_url, request.script_name, urllib.urlencode(params).replace("&", "&amp;"))
+					self_link = '%s?%s' % (base_url, urllib.urlencode(params).replace("&", "&amp;"))
 					params['next_token'] = objs.next_token
-					next_link = '%s%s%s?%s' % (request.real_host_url, request.base_url, request.script_name, urllib.urlencode(params).replace("&", "&amp;"))
+					next_link = '%s?%s' % (base_url, urllib.urlencode(params).replace("&", "&amp;"))
 					response.write('<link type="text/xml" rel="next" href="%s"/>' % (next_link))
 					response.write('<link type="text/xml" rel="self" href="%s"/>' % (self_link))
 				response.write("</%sList>" % self.db_class.__name__)
@@ -453,29 +456,36 @@ NO_SEND_PROPS = [ "CalculatedProperty", "BlobProperty"]
 class JSONWrapper(object):
 	"""JSON Wrapper"""
 
-	def __init__(self, objs, user):
+	def __init__(self, objs, user, base_url, params):
 		"""Create this JSON wrapper"""
-		self.objs = iter(objs)
+		self.objs = objs
 		self.user = user
 		self.start_time = time()
+		self.next_token = None
+		self.base_url = base_url
+		self.params = params
 
 	def __iter__(self):
 		return self
 
 	def next(self):
 		"""Get the next item in this JSON array"""
+		ret = ""
+		if self.objs.next_token and self.objs.next_token != self.next_token:
+			self.next_token = self.objs.next_token
+			ret += json.dumps({"__type__": "__meta__", "next_token": self.next_token, "next_url": self.generate_url(self.next_token)}) + "\n"
 		try:
 			obj = self.objs.next()
 			cls_name = obj.__class__.__name__
-			ret = {
+			s = {
 				"__type__": cls_name,
 				"__id__": obj.id
 			}
 			for prop in obj.properties():
 				# Check for user authorizations before saving it to the array
 				if prop.name and not prop.name.startswith("_")  and not prop.__class__.__name__ in NO_SEND_PROPS and self.user.has_auth("GET", cls_name, prop.name):
-					ret[prop.name] = self.encode(getattr(obj, prop.name), prop)
-			ret = json.dumps(ret) + "\n"
+					s[prop.name] = self.encode(getattr(obj, prop.name), prop)
+			ret += json.dumps(s) + "\n"
 			return ret
 		except StopIteration:
 			boto.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
@@ -484,3 +494,10 @@ class JSONWrapper(object):
 	def encode(self, val, prop):
 		"""Encode a property to a JSON serializable type"""
 		return str(val)
+
+	def generate_url(self, next_token=None):
+		"""Generate a URL for more results"""
+		params = self.params
+		if next_token != None:
+			self.params['next_token'] = next_token
+		return "%s?%s" % (self.base_url, urllib.urlencode(params))
