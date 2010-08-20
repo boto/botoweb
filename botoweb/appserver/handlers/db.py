@@ -95,9 +95,17 @@ class DBHandler(RequestHandler):
 	def _head(self, request, response, id=None):
 		"""Get the headers for this response, realisticaly this
 		just means they want to know the count of how many results would be
-		returned if they'd run this query"""
+		returned if they'd run this query
+
+		NOTE: This is an ESTIMATE, it's not the full count, since
+		that may take way too long to generate. This only returns the
+		total records that could be counted in 5 seconds
+		"""
 		objs = self.search(params=request.GET.mixed(), user=request.user)
-		response.headers['X-Result-Count'] = str(objs.count())
+		try:
+			response.headers['X-Result-Count'] = str(objs.count())
+		except:
+			raise BadRequest("Invalid Query")
 		return response
 
 
