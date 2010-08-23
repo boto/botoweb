@@ -73,6 +73,9 @@ class DBHandler(RequestHandler):
 			if request.content_type == "json":
 				response.content_type = "application/json"
 				response.app_iter = JSONWrapper(objs, request.user, "%s.json" % base_url, params)
+			elif request.content_type == "csv":
+				response.content_type = "application/csv"
+				response.app_iter = CSVWrapper(objs, request.user, self.db_class)
 			else:
 				page = False
 				if(objs.limit == None):
@@ -512,3 +515,52 @@ class JSONWrapper(object):
 		if next_token != None:
 			self.params['next_token'] = next_token
 		return "%s?%s" % (self.base_url, urllib.urlencode(params))
+
+class CSVWrapper(object):
+	"""CSV Wrapper"""
+
+	def __init__(self, objs, user, db_class):
+		"""Create this JSON wrapper"""
+		self.objs = objs
+		self.user = user
+		self.db_class = db_class
+		self.start_time = time()
+		self.headers = None
+		self.props = {}
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		"""Get the next item in this CSV"""
+		from StringIO import StringIO
+		import csv
+		ret = StringIO()
+		output = csv.writer(ret)
+		# If we haven't yet set the headers, lets initialize them
+		try:
+			obj = self.objs.next()
+			cls_name = obj.__class__.__name__
+			if self.headers == None:
+				self.headers = {"__class__": "Model", "id": "ID"}
+				for prop in self.db_class.properties():
+					# Check for user authorizations before saving it to the array
+					if prop.name and not prop.name.startswith("_")  and not prop.__class__.__name__ in NO_SEND_PROPS and self.user.has_auth("GET", cls_name, prop.name):
+						self.headers[prop.name] = prop.verbose_name
+						self.props[prop.name] = prop
+				output.writerow(self.headers.values())
+			s = [self.encode(getattr(obj, h), h) for h in self.headers.keys()]
+			output.writerow(s)
+			return ret.getvalue()
+		except StopIteration:
+			boto.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
+			raise
+
+	def encode(self, val, prop_name):
+		"""Encode a property to a CSV serializable type"""
+		if prop_name == "__class__":
+			return val.__name__
+		try:
+			return str(val)
+		except:
+			return unicode(val).encode("ascii", "ignore")
