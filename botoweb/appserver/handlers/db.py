@@ -501,7 +501,10 @@ class JSONWrapper(object):
 
 	def encode(self, val, prop):
 		"""Encode a property to a JSON serializable type"""
-		return str(val)
+		try:
+			return str(val)
+		except:
+			return unicode(val).encode("ascii", "ignore")
 
 	def generate_url(self, next_token=None):
 		"""Generate a URL for more results"""
