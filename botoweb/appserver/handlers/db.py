@@ -469,7 +469,7 @@ class DBHandler(RequestHandler):
 		#response.set_status(204)
 		return response
 
-NO_SEND_PROPS = [ "CalculatedProperty", "BlobProperty"]
+NO_SEND_PROPS = [ "CalculatedProperty" ]
 class JSONWrapper(object):
 	"""JSON Wrapper"""
 

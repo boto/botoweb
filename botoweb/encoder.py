@@ -156,14 +156,18 @@ def encode_query(value):
 	return ret
 
 def encode_blob(value):
-	"""Encode a blob, this is sent as a reference"""
-	# TODO: Encode this as some sort of reference
-	return None
+	"""Encode a blob, this is actually a link which
+	may point to an S3 location"""
+	ret = {"__type__": "__blob__"}
+	ret['__href__'] = value.file.generate_url(3600)
+	return ret
 
 def encode_key(value):
-	"""Encode an S3Key, this is the same as a blob for our
-	purposes"""
-	return encode_blob(value)
+	"""Encode an S3Key, this is just a link to
+	the S3 URL, with a special __s3key__ type"""
+	ret = {"__type__": "__s3key__"}
+	ret["__href__"] = value.generate_url(3600)
+	return ret
 
 
 # Map out all of our encoders to their types
