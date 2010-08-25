@@ -139,8 +139,12 @@ class DBHandler(RequestHandler):
 			new_obj.__id__ = id
 		obj = self.create(new_obj, request.user, request)
 		response.set_status(201)
-		response.content_type = "text/xml"
-		response.write(xmlize.dumps(obj))
+		if(request.content_type == "json"):
+			response.content_type = "application/json"
+			response.app_iter = JSONWrapper(iter([obj]), request.user)
+		else:
+			response.content_type = "text/xml"
+			response.write(xmlize.dumps(obj))
 		return response
 
 
@@ -154,16 +158,23 @@ class DBHandler(RequestHandler):
 		if not obj:
 			raise NotFound()
 
-		new_obj = xmlize.loads(request.body)
 		props = {}
-		for prop in new_obj.__dict__:
-			prop_value = getattr(new_obj, prop)
-			if not prop.startswith("_"):
-				props[prop] = prop_value
-		content =  self.update(obj, props, request.user, request)
+		if request.content_type == "json":
+			props = json.loads(request.body)
+		else:
+			new_obj = xmlize.loads(request.body)
+			for prop in new_obj.__dict__:
+				prop_value = getattr(new_obj, prop)
+				if not prop.startswith("_"):
+					props[prop] = prop_value
+		obj =  self.update(obj, props, request.user, request)
 
-		response.content_type = "text/xml"
-		response.write(xmlize.dumps(content))
+		if request.content_type == "json":
+			response.content_type = "application/json"
+			response.app_iter = JSONWrapper(iter([obj]), request.user)
+		else:
+			response.content_type = "text/xml"
+			response.write(xmlize.dumps(obj))
 		return response
 
 
@@ -380,20 +391,26 @@ class DBHandler(RequestHandler):
 		:type request: botoweb.request.Request
 
 		"""
+		# Be sure they can acutally update this object
+		if not request.user or not request.user.has_auth('PUT', obj.__class__.__name__):
+			raise Forbidden("You may not update %ss!" % obj.__class__.__name__)
 		boto.log.debug("===========================")
 		boto.log.info("Update %s" % obj.__class__.__name__)
 		for prop_name in props:
-			prop_val = props[prop_name]
-			boto.log.debug("%s = %s" % (prop_name, prop_val))
-			try:
-				setattr(obj, prop_name, prop_val)
-			except Exception, e:
-				if prop_val != "": # If it was a nothing request, we ignore it
-					raise BadRequest("Bad value for %s: %s" % (prop_name, e))
+			# Make sure it's not a hidden prop and that
+			# this user is allowed to write to it
+			if not prop_name.startswith("_") and user.has_auth('PUT', obj.__class__.__name__, prop_name):
+				prop_val = props[prop_name]
+				boto.log.debug("%s = %s" % (prop_name, prop_val))
+				try:
+					setattr(obj, prop_name, prop_val)
+				except Exception, e:
+					if prop_val != "": # If it was a nothing request, we ignore it
+						raise BadRequest("Bad value for %s: %s" % (prop_name, e))
 
-			if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
-				setattr(obj, "_indexed_%s" % prop_name, prop_val.upper())
-				boto.log.debug("Indexed: %s" % prop_name)
+				if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
+					setattr(obj, "_indexed_%s" % prop_name, prop_val.upper())
+					boto.log.debug("Indexed: %s" % prop_name)
 		boto.log.debug("===========================")
 		obj.modified_by = user
 		obj.modified_at = datetime.utcnow()
