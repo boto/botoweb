@@ -60,7 +60,12 @@ class DBHandler(RequestHandler):
 			if property:
 				return self.get_property(request, response, obj, property)
 			else:
-				response.write(xmlize.dumps(obj))
+				if request.content_type == "json":
+					response.content_type = "application/json"
+					response.app_iter = JSONWrapper(iter([obj]), request.user)
+				else:
+					response.write(xmlize.dumps(obj))
+					
 		else:
 			# Add the count to the header
 			response = self._head(request, response)
@@ -468,7 +473,7 @@ NO_SEND_PROPS = [ "CalculatedProperty", "BlobProperty"]
 class JSONWrapper(object):
 	"""JSON Wrapper"""
 
-	def __init__(self, objs, user, base_url, params):
+	def __init__(self, objs, user, base_url=None, params=None):
 		"""Create this JSON wrapper"""
 		self.objs = objs
 		self.user = user
@@ -483,7 +488,7 @@ class JSONWrapper(object):
 	def next(self):
 		"""Get the next item in this JSON array"""
 		ret = ""
-		if self.objs.next_token and self.objs.next_token != self.next_token:
+		if hasattr(self.objs, "next_token") and self.objs.next_token and self.objs.next_token != self.next_token:
 			self.next_token = self.objs.next_token
 			ret += json.dumps({"__type__": "__meta__", "next_token": self.next_token, "next_url": self.generate_url(self.next_token)}) + "\r\n"
 		try:
@@ -505,10 +510,8 @@ class JSONWrapper(object):
 
 	def encode(self, val, prop):
 		"""Encode a property to a JSON serializable type"""
-		try:
-			return str(val)
-		except:
-			return unicode(val).encode("ascii", "ignore")
+		from botoweb.encoder import encode
+		return encode(val)
 
 	def generate_url(self, next_token=None):
 		"""Generate a URL for more results"""

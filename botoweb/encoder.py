@@ -30,11 +30,29 @@
 from botoweb.fixed_datetime import datetime
 from datetime import datetime as datetime_type
 from datetime import date
+from boto.sdb.db.model import Model
+
+
+url_map = None
+def get_url(obj_cls):
+	"""Get the URL for a given class"""
+	from botoweb.encoder import url_map
+	if url_map == None:
+		import botoweb
+		from boto.utils import find_class
+		handlers = botoweb.env.config.get("botoweb", "handlers")
+		url_map = {}
+		for handler in handlers:
+			if handler.has_key("db_class"):
+				db_class = handler['db_class']
+				cls = find_class(db_class)
+				url_map[cls.__name__] = handler['url']
+	return url_map.get(obj_cls.__name__)
 
 type_map = {}
-
 def encode(value):
 	"""Normalize this value to a standard python data type"""
+	from botoweb.encoder import type_map
 	if value == None:
 		return None
 	prop_type = type(value)
@@ -104,8 +122,35 @@ def encode_object(value):
 
 def encode_query(value):
 	"""Encode a query"""
-	# TODO: Encode this as some sort of reference
-	return None
+	import json
+	ret = {"__type__": "__query__"}
+	base_href = get_url(value.model_class)
+
+	# Split out the filters into something more usable
+	filters = []
+	for f in value.filters:
+		filter = []
+		if isinstance(f[0], list):
+			filter = [ [],"="]
+			for p in f[0]:
+				p = p.split(" ")
+				filter[0].append(p[0])
+				# TODO: This doesn't really replicate what we could have,
+				# we could actually have multiple comparitors
+				# but in practice we don't
+				filter[1] = p[1]
+		else:
+			filter = f[0].split(" ")
+
+		val = f[1]
+		if isinstance(val, Model):
+			val = str(val.id)
+		else:
+			val = encode(val)
+		filter.append(val)
+		filters.append(filter)
+	ret['__href__'] = "/api%s.json?query=%s" % (base_href, json.dumps(filters))
+	return ret
 
 def encode_blob(value):
 	"""Encode a blob, this is sent as a reference"""
