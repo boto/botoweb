@@ -71,31 +71,35 @@ class WSGILayer(object):
 		except HTTPRedirect, e:
 			resp.set_status(e.code)
 			resp.headers['Location'] = str(e.url)
-			resp = self.format_exception(e, resp)
+			resp = self.format_exception(e, resp, req)
 		except Unauthorized, e:
 			resp.set_status(e.code)
 			if self.env.config.get("app", "basic_auth", True):
 				resp.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
-			resp = self.format_exception(e, resp)
+			resp = self.format_exception(e, resp, req)
 		except HTTPException, e:
 			resp.set_status(e.code)
-			resp = self.format_exception(e, resp)
+			resp = self.format_exception(e, resp, req)
 			log.warn(traceback.format_exc())
 			botoweb.report_exception(e, req, priority=5)
 		except Exception, e:
 			content = InternalServerError(message=e.message)
 			resp.set_status(content.code)
 			log.critical(traceback.format_exc())
-			resp = self.format_exception(content, resp)
+			resp = self.format_exception(content, resp, req)
 			botoweb.report_exception(content, req, priority=1)
 
 		return resp(environ, start_response)
 
-	def format_exception(self, e, resp):
+	def format_exception(self, e, resp, req):
 		resp.clear()
 		resp.set_status(e.code)
-		resp.content_type = "text/xml"
-		e.to_xml().writexml(resp)
+		if(req.content_type == "json"):
+			resp.content_type = "application/json"
+			resp.write(e.to_json())
+		else:
+			resp.content_type = "text/xml"
+			e.to_xml().writexml(resp)
 		return resp
 
 

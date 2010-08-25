@@ -1,5 +1,6 @@
 # Author: Chris Moyer
 from botoweb.exceptions import NotFound, Forbidden, BadRequest, Conflict, Gone
+from boto.exception import SDBPersistenceError
 from botoweb.appserver.handlers import RequestHandler
 
 import boto
@@ -130,8 +131,12 @@ class DBHandler(RequestHandler):
 				if obj:
 					raise Conflict("Object %s already exists" % id)
 
-		new_obj = xmlize.loads(request.body)
-		new_obj.__id__ = id
+		if request.content_type == "json":
+			new_obj = json.loads(request.body)
+			new_obj['__id__'] = id
+		else:
+			new_obj = xmlize.loads(request.body)
+			new_obj.__id__ = id
 		obj = self.create(new_obj, request.user, request)
 		response.set_status(201)
 		response.content_type = "text/xml"
@@ -286,25 +291,36 @@ class DBHandler(RequestHandler):
 	def create(self, obj, user, request):
 		"""Create an object in the DB
 		:param obj: an object with all the properties to create
-		:type obj: botoweb.xmlize.ProxyObject
+		:type obj: botoweb.xmlize.ProxyObject OR dict
 		:param user: The user doing the creation
 		:type user: User
 		"""
 		now = datetime.utcnow()
-		if obj.__model_class__:
-			newobj = obj.__model_class__()
+		if isinstance(obj, dict):
+			model_class = obj.get('__type__')
+			prop_dict = obj
+		else:
+			model_class = obj.__model_class__
+			prop_dict = obj.__dict__
+		if model_class:
+			newobj = model_class()
 		else:
 			newobj = self.db_class()
+		# Make sure the user is auth'd to "POST" (aka. create) this type of object
+		if not request.user or not request.user.has_auth('POST', newobj.__class__.__name__):
+			raise Forbidden("You may not create new %ss!" % newobj.__class__.__name__)
 		if not isinstance(newobj, self.db_class):
 			raise BadRequest("Object you passed in isn't of a type this handler understands!")
-		for prop in obj.__dict__:
-			if not prop.startswith("_"):
-				prop_value = getattr(obj, prop)
+		for prop in prop_dict:
+			# Only allow them to set public properties,
+			# and verify that they're allowed to set each one
+			# Anything else they try to send is ignored
+			if not prop.startswith("_") and (user.has_auth('PUT', newobj.__class__.__name__, prop) or user.has_auth('POST', newobj.__class__.__name__, prop)):
+				prop_value = prop_dict[prop]
 				try:
 					setattr(newobj, prop, prop_value)
 				except Exception, e:
 					raise BadRequest("Invalid value for %s" % prop)
-
 
 				# Set an index, if it exists
 				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
@@ -313,7 +329,10 @@ class DBHandler(RequestHandler):
 		newobj.modified_at = now
 		newobj.created_by = user
 		newobj.modified_by = user
-		newobj.put()
+		try:
+			newobj.put()
+		except SDBPersistenceError, e:
+			raise BadRequest(e.message)
 		boto.log.info("%s Created %s %s" % (user, newobj.__class__.__name__, newobj.id))
 		return newobj
 

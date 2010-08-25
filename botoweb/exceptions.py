@@ -48,6 +48,17 @@ class HTTPException(Exception):
 		rootNode.appendChild(type_node)
 
 		return doc
+	
+	def to_json(self):
+		"""Turn this into a JSON representation"""
+		import json
+		r = {}
+		r['__type__'] = "Exception"
+		r['type'] = self.__class__.__name__
+		r['code'] = self.code
+		r['message'] = self.message
+		r['description'] = self.description
+		return json.dumps(r)
 
 # 3xx Redirection
 class HTTPRedirect(HTTPException):
