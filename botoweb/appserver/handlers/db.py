@@ -74,7 +74,8 @@ class DBHandler(RequestHandler):
 				response.content_type = "application/json"
 				response.app_iter = JSONWrapper(objs, request.user, "%s.json" % base_url, params)
 			elif request.content_type == "csv":
-				response.content_type = "application/csv"
+				response.content_type = "text/csv"
+				response.headers['Content-Disposition'] = 'attachment;filename=%s.csv' % self.db_class.__name__
 				response.app_iter = CSVWrapper(objs, request.user, self.db_class)
 			else:
 				page = False
