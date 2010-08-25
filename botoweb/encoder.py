@@ -125,6 +125,9 @@ def encode_query(value):
 	import json
 	ret = {"__type__": "__query__"}
 	base_href = get_url(value.model_class)
+	# If we don't have  URL for this query, we can't encode it
+	if not base_href:
+		return None
 
 	# Split out the filters into something more usable
 	filters = []
