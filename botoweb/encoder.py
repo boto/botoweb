@@ -152,7 +152,7 @@ def encode_query(value):
 			val = encode(val)
 		filter.append(val)
 		filters.append(filter)
-	ret['__href__'] = "/api%s.json?query=%s" % (base_href, json.dumps(filters))
+	ret['__href__'] = "%s.json?query=%s" % (base_href, json.dumps(filters))
 	return ret
 
 def encode_blob(value):
