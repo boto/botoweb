@@ -485,7 +485,7 @@ class JSONWrapper(object):
 		ret = ""
 		if self.objs.next_token and self.objs.next_token != self.next_token:
 			self.next_token = self.objs.next_token
-			ret += json.dumps({"__type__": "__meta__", "next_token": self.next_token, "next_url": self.generate_url(self.next_token)}) + "\n"
+			ret += json.dumps({"__type__": "__meta__", "next_token": self.next_token, "next_url": self.generate_url(self.next_token)}) + "\r\n"
 		try:
 			obj = self.objs.next()
 			cls_name = obj.__class__.__name__
@@ -497,7 +497,7 @@ class JSONWrapper(object):
 				# Check for user authorizations before saving it to the array
 				if prop.name and not prop.name.startswith("_")  and not prop.__class__.__name__ in NO_SEND_PROPS and self.user.has_auth("GET", cls_name, prop.name):
 					s[prop.name] = self.encode(getattr(obj, prop.name), prop)
-			ret += json.dumps(s) + "\n"
+			ret += json.dumps(s) + "\r\n"
 			return ret
 		except StopIteration:
 			boto.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
