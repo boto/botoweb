@@ -517,12 +517,15 @@ class JSONWrapper(object):
 		self.next_token = None
 		self.base_url = base_url
 		self.params = params
+		self.closed = False
 
 	def __iter__(self):
 		return self
 
 	def next(self):
 		"""Get the next item in this JSON array"""
+		if self.closed:
+			raise StopIteration()
 		ret = ""
 		if hasattr(self.objs, "next_token") and self.objs.next_token and self.objs.next_token != self.next_token:
 			self.next_token = self.objs.next_token
@@ -541,8 +544,9 @@ class JSONWrapper(object):
 			ret += json.dumps(s) + "\r\n"
 			return ret
 		except StopIteration:
+			self.closed = True
 			boto.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
-			raise
+			return json.dumps({"__type__": "__meta__", "next_token": "", "next_url": ""}) + "\r\n\r\n"
 
 	def encode(self, val, prop):
 		"""Encode a property to a JSON serializable type"""
