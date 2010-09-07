@@ -53,7 +53,7 @@ type_map = {}
 def encode(value):
 	"""Normalize this value to a standard python data type"""
 	from botoweb.encoder import type_map
-	if value == None:
+	if value in (None, "None"):
 		return None
 	prop_type = type(value)
 	if prop_type in type_map:
@@ -64,6 +64,8 @@ def encode(value):
 
 def encode_default(value):
 	"""Default encoding, just turn it into a string"""
+	if value in (None, "None"):
+		return None
 	try:
 		return str(value).replace("\r", "")
 	except:
