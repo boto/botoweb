@@ -539,7 +539,7 @@ class JSONWrapper(object):
 			}
 			for prop in obj.properties():
 				# Check for user authorizations before saving it to the array
-				if prop.name and not prop.name.startswith("_")  and not prop.__class__.__name__ in NO_SEND_PROPS and self.user.has_auth("GET", cls_name, prop.name):
+				if prop.name and not prop.name.startswith("_")  and not prop.__class__.__name__ in NO_SEND_PROPS and (not self.user or self.user.has_auth("GET", cls_name, prop.name)):
 					s[prop.name] = self.encode(getattr(obj, prop.name), prop)
 			ret += json.dumps(s) + "\r\n"
 			return ret
