@@ -445,6 +445,7 @@ class DBHandler(RequestHandler):
 		# Some leakage here of authorizations, but 
 		# I'm not quite sure how to handle this elsewhere
 		if request.user and not request.user.has_auth('GET', obj.__class__.__name__, property):
+			log.warn("User: %s does not have read access to %s.%s" %  (request.user.username, obj.__class__.__name__, property))
 			raise Forbidden()
 
 		val = getattr(obj, property)
