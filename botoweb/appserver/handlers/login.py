@@ -34,6 +34,8 @@ class LoginHandler(RequestHandler):
 		path = request.real_host_url
 		if id:
 			path += "/%s" % id
+		if request.query_string and not "auth_token" in request.GET.mixed():
+			path += "?%s" % request.query_string
 		# We MUST toss a "SeeOther", or the browser
 		# will force a re-send of the POST
 		raise SeeOther(path)
