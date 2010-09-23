@@ -31,6 +31,9 @@ import traceback
 import logging
 log = logging.getLogger("botoweb.filter_mapper")
 
+XSL_TEMPLATE = '<?xml-stylesheet href="%s" type="text/xsl" ?>'
+
+
 from lxml import etree
 from botoweb.appserver.filter_resolver import S3FilterResolver, PythonFilterResolver
 
@@ -93,12 +96,14 @@ class FilterMapper(WSGILayer):
 		if self.app:
 			response = self.app.handle(req, response)
 
-		if filter[1] and response.content_type == "text/xml" and response.body:
-			try:
-				response.body = str(filter[1](etree.parse(StringIO(response.body), self.parser), **variables))
-			except:
-				pass
-
+		if response.content_type == "text/xml" and response.body:
+			if filter[1]:
+				try:
+					response.body = str(filter[1](etree.parse(StringIO(response.body), self.parser), **variables))
+				except:
+					pass
+			if filter[2]:
+				response.body = "%s\r\n%s" % ("\r\n".join([XSL_TEMPLATE % f for f in filter[2]]), response.body)
 		return response
 
 	def get_filter(self, path, method, user):
@@ -130,13 +135,17 @@ class FilterMapper(WSGILayer):
 
 		input_filter = None
 		output_filter = None
-		if match and rule.has_key('filters'):
-			if rule['filters'].has_key("input"):
-				input_filter = self._build_proc(rule['filters']['input'], user)
-			if rule['filters'].has_key("output"):
-				output_filter = self._build_proc(rule['filters']['output'], user)
+		client_filters = []
+		if match:
+			if rule.has_key('filters'):
+				if rule['filters'].has_key("input"):
+					input_filter = self._build_proc(rule['filters']['input'], user)
+				if rule['filters'].has_key("output"):
+					output_filter = self._build_proc(rule['filters']['output'], user)
+			if rule.has_key("client_filters"):
+				client_filters = rule['client_filters']
 
-		return (input_filter, output_filter)
+		return (input_filter, output_filter, client_filters)
 
 	def _build_proc(self, uri, user):
 		from botoweb import xslt_functions
