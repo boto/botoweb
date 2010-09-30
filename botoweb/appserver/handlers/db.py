@@ -1,6 +1,6 @@
 # Author: Chris Moyer
 from botoweb.exceptions import NotFound, Forbidden, BadRequest, Conflict, Gone
-from boto.exception import SDBPersistenceError
+from boto.exception import SDBPersistenceError, SDBResponseError
 from botoweb.appserver.handlers import RequestHandler
 
 import boto
@@ -48,6 +48,14 @@ class DBHandler(RequestHandler):
 		if db_class_name:
 			self.db_class = find_class(db_class_name)
 		xmlize.register(self.db_class)
+
+	def __call__(self, *params, **keywords):
+		"""Override to replace the SDBResponseError 
+		with a BadRequest error"""
+		try:
+			return RequestHandler.__call__(self, *params, **keywords)
+		except SDBResponseError, e:
+			raise BadRequest("Invalid Query", description=str(e))
 
 	def _get(self, request, response, id=None ):
 		"""Get an object, or search for a list of objects"""

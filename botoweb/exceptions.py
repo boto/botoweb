@@ -15,7 +15,7 @@ class HTTPException(Exception):
 		Exception.__init__(self)
 
 	def __str__(self):
-		return "%s %s" % (self.message, self.code)
+		return "%s %s\n%s" % (self.message, self.code, self.description)
 
 	def to_xml(self):
 		"""

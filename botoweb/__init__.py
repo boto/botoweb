@@ -40,7 +40,7 @@ def report_exception(e, req=None, priority=None, msg=None, req_body=None, uri=No
 	import traceback
 	log.info("Report Exception: %s" % e)
 	if msg == None:
-		msg = e.message
+		msg = str(e)
 	report(msg=msg, status=e.code, name=e.__class__.__name__, tb=traceback.format_exc(), req=req, priority=priority, req_body=req_body, uri=uri)
 
 def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_body=None, uri=None):
