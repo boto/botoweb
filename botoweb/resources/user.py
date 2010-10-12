@@ -82,12 +82,17 @@ class User(Model):
 		:param length: the optional length of the password (default 10
 		:type length: int
 		"""
-		import boto, urllib2
-		url = "https://www.random.org/cgi-bin/randstring?num=1&len=%s&digits=on&upperalpha=on&loweralpha=on&unique=on&format=text&rnd=new" % (length)
-		headers = {"User-Agent": "%s %s (%s)" % (boto.config.get("app", "name", "botoweb"), boto.config.get("app", "version", "0.1"), boto.config.get("app", "admin_email", ""))}
-		req = urllib2.Request(url, None, headers)
-		hand = urllib2.urlopen(req)
-		return hand.read().strip()
+		try:
+			import boto, urllib2
+			url = "https://www.random.org/cgi-bin/randstring?num=1&len=%s&digits=on&upperalpha=on&loweralpha=on&unique=on&format=text&rnd=new" % (length)
+			headers = {"User-Agent": "%s %s (%s)" % (boto.config.get("app", "name", "botoweb"), boto.config.get("app", "version", "0.1"), boto.config.get("app", "admin_email", ""))}
+			req = urllib2.Request(url, None, headers)
+			hand = urllib2.urlopen(req)
+			return hand.read().strip()
+		except:
+			import boto, uuid
+			boto.log.exception("Exception generating random entropy for Auth Token from Random.org")
+			return str(uuid.uuid4()).replace("-","")
 
 
 	def send_password(self, app_link):
