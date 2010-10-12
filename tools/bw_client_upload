@@ -2,6 +2,8 @@
 import os.path
 import sys
 
+UPDATED_FILES = []
+
 def upload_dir(dir_name, bucket, prefix="", ignore_prefix=False):
 	"""Upload all files in this directory to a bucket/prefix/
 	@param dir_name: Name of the directory to upload from
@@ -40,7 +42,9 @@ def update_file(fp, bucket, key_name):
 		k = bucket.get_key(key_name)
 	except:
 		k = None
+	update = True
 	if not k:
+		update = False
 		k = bucket.new_key(key_name)
 	if not k.etag or not k.etag.strip('"') == k.compute_md5(fp)[0]:
 		print "Updating: %s => %s/%s" % (fp.name, bucket.name, key_name)
@@ -48,6 +52,12 @@ def update_file(fp, bucket, key_name):
 		k.make_public()
 	else:
 		print "Ignoring %s, files match" % fp.name
+		update = False
+	
+	# If we updated this file, add it to the "UPDATED_FILES"
+	# array
+	if update:
+		UPDATED_FILES.append(key_name)
 
 
 if __name__ == "__main__":
@@ -58,3 +68,7 @@ if __name__ == "__main__":
 	s3 = boto.connect_s3()
 	b = s3.get_bucket(sys.argv[3])
 	upload_dir(sys.argv[1],b, sys.argv[2], True)
+
+	# Run the CFadmin script?
+	cmd = "cfadmin invalidate %s.s3.amazonaws.com %s" % (b.name, " ".join(UPDATED_FILES))
+	print cmd
