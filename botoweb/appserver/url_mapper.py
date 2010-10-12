@@ -77,6 +77,8 @@ class URLMapper(WSGILayer):
 				# Allow for setting a custom content-type by URL
 				if match.group(2):
 					req.content_type = match.group(2)[1:]
+				else:
+					req.content_type = self.env.config.get("app", "format")
 				log.debug("URL Mapping: %s" % handler_config)
 				obj_id = match.group(4)
 				if obj_id == "":
