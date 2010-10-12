@@ -321,10 +321,11 @@ class DBHandler(RequestHandler):
 		else:
 			model_class = obj.__model_class__
 			prop_dict = obj.__dict__
+		id = prop_dict.get("__id__")
 		if model_class:
-			newobj = model_class()
+			newobj = model_class(id)
 		else:
-			newobj = self.db_class()
+			newobj = self.db_class(id)
 		# Make sure the user is auth'd to "POST" (aka. create) this type of object
 		if not request.user or not request.user.has_auth('POST', newobj.__class__.__name__):
 			raise Forbidden("You may not create new %ss!" % newobj.__class__.__name__)
