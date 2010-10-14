@@ -19,8 +19,6 @@ import time
 import mimetypes
 
 import logging
-log = logging.getLogger("botoweb.appserver.handlers")
-
 
 class RequestHandler(object):
 	"""
@@ -34,6 +32,7 @@ class RequestHandler(object):
 		"""Set up the environment and local config"""
 		self.env = env
 		self.config = config
+		self.log = logging.getLogger(self.__module__)
 
 	def __call__(self, request, response, obj_id):
 		"""Execute this handler based on the request passed in"""

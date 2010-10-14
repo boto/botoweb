@@ -3,7 +3,6 @@ from botoweb.exceptions import NotFound, Forbidden, BadRequest, Conflict, Gone
 from boto.exception import SDBPersistenceError, SDBResponseError
 from botoweb.appserver.handlers import RequestHandler
 
-import boto
 from boto.utils import find_class, Password
 from boto.sdb.db.blob import Blob
 from boto.sdb.db.model import Model
@@ -12,9 +11,6 @@ import urllib
 
 from datetime import datetime
 from time import time
-
-import logging
-log = logging.getLogger("botoweb.handlers.db")
 
 from botoweb import xmlize
 
@@ -353,7 +349,7 @@ class DBHandler(RequestHandler):
 			newobj.put()
 		except SDBPersistenceError, e:
 			raise BadRequest(e.message)
-		boto.log.info("%s Created %s %s" % (user, newobj.__class__.__name__, newobj.id))
+		self.log.info("%s Created %s %s" % (user, newobj.__class__.__name__, newobj.id))
 		return newobj
 
 	def read(self, id, user):
@@ -403,14 +399,14 @@ class DBHandler(RequestHandler):
 		# Be sure they can acutally update this object
 		if not request.user or not request.user.has_auth('PUT', obj.__class__.__name__):
 			raise Forbidden("You may not update %ss!" % obj.__class__.__name__)
-		boto.log.debug("===========================")
-		boto.log.info("Update %s" % obj.__class__.__name__)
+		self.log.debug("===========================")
+		self.log.info("Update %s" % obj.__class__.__name__)
 		for prop_name in props:
 			# Make sure it's not a hidden prop and that
 			# this user is allowed to write to it
 			if not prop_name.startswith("_") and user.has_auth('PUT', obj.__class__.__name__, prop_name):
 				prop_val = props[prop_name]
-				boto.log.debug("%s = %s" % (prop_name, prop_val))
+				self.log.debug("%s = %s" % (prop_name, prop_val))
 				try:
 					setattr(obj, prop_name, prop_val)
 				except Exception, e:
@@ -419,8 +415,8 @@ class DBHandler(RequestHandler):
 
 				if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
 					setattr(obj, "_indexed_%s" % prop_name, prop_val.upper())
-					boto.log.debug("Indexed: %s" % prop_name)
-		boto.log.debug("===========================")
+					self.log.debug("Indexed: %s" % prop_name)
+		self.log.debug("===========================")
 		obj.modified_by = user
 		obj.modified_at = datetime.utcnow()
 		obj.put()
@@ -430,7 +426,7 @@ class DBHandler(RequestHandler):
 		"""
 		Delete the object
 		"""
-		log.info("Deleted object %s" % (obj.id))
+		self.log.info("Deleted object %s" % (obj.id))
 
 		if hasattr(obj, "deleted"):
 			# Don't actually remove it from the DB, just set it
@@ -454,7 +450,7 @@ class DBHandler(RequestHandler):
 		# Some leakage here of authorizations, but 
 		# I'm not quite sure how to handle this elsewhere
 		if request.user and not request.user.has_auth('GET', obj.__class__.__name__, property):
-			log.warn("User: %s does not have read access to %s.%s" %  (request.user.username, obj.__class__.__name__, property))
+			self.log.warn("User: %s does not have read access to %s.%s" %  (request.user.username, obj.__class__.__name__, property))
 			raise Forbidden()
 
 		val = getattr(obj, property)
@@ -503,12 +499,12 @@ class DBHandler(RequestHandler):
 
 		if hasattr(obj, "_indexed_%s" % property) and val:
 			setattr(obj, "_indexed_%s" % property, val.upper())
-			boto.log.debug("Indexed: %s" % property)
+			self.log.debug("Indexed: %s" % property)
 
 		obj.modified_by = request.user
 		obj.modified_at = datetime.utcnow()
 		obj.put()
-		log.info("Updated %s<%s>.%s" % (obj.__class__.__name__, obj.id, property))
+		self.log.info("Updated %s<%s>.%s" % (obj.__class__.__name__, obj.id, property))
 		# 204 is the proper status code but it does not allow the onload event
 		# to fire in the browser, which expects a 200. Without the onload event
 		# we cannot determine when an upload is complete.
@@ -555,7 +551,7 @@ class JSONWrapper(object):
 			return ret
 		except StopIteration:
 			self.closed = True
-			boto.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
+			self.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
 			return json.dumps({"__type__": "__meta__", "next_token": "", "next_url": ""}) + "\r\n\r\n"
 
 	def encode(self, val, prop):
@@ -607,7 +603,7 @@ class CSVWrapper(object):
 			output.writerow(s)
 			return ret.getvalue()
 		except StopIteration:
-			boto.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
+			self.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
 			raise
 
 	def encode(self, val, prop_name):
