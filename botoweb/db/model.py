@@ -65,9 +65,6 @@ def query(cls, qs):
 	q = cls.all()
 	q.select = qs
 
-	# A limit placed here to prevent catostrophic failures, 
-	# you can't really make this much higher or bad things happen
-	q.limit = 30
 	return q
 
 def _findSubQueries(cls, qs):
@@ -93,7 +90,12 @@ def _findSubQueries(cls, qs):
 	model = BotoModel.find_subclass(model_name)
 	if not model:
 		raise Exception, "Error, model: %s not found" % model_name
-	ids = ["'%s'" % obj.id for obj in query(model, q2)]
+	subq_results = query(model, q2)
+	# A limit placed here to prevent catostrophic failures, 
+	# you can't really make this much higher or bad things happen
+	subq_results.limit = 30
+
+	ids = ["'%s'" % obj.id for obj in subq_results]
 	retQ += "(%s)" % ",".join(ids)
 	if len(leftovers) > 1:
 		retQ += leftovers[1]
