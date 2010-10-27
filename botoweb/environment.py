@@ -56,6 +56,7 @@ class Environment(object):
 		:type path: str
 		"""
 		config = {}
+		load_modules = False
 		for cf in self.dist.resource_listdir(path):
 			if cf.endswith(".yaml"):
 				section_name = cf[:-5]
@@ -66,9 +67,38 @@ class Environment(object):
 					if not config.has_key("botoweb"):
 						config['botoweb'] = {}
 					config['botoweb'][section_name] = section
+			elif cf == "modules":
+				load_modules = True
+				# We allow a "modules" directory to include
+				# things in the base configuration conditionally, depending
+				# on if those modules exist or not
 			elif not cf.startswith("."):
 				config[cf] = self.get_config(os.path.join(path, cf))
+
+		if load_modules:
+			path = os.path.join(path, "modules")
+			for mod_name in self.dist.resource_listdir(path):
+				try:
+					__import__(mod_name)
+				except ImportError:
+					continue
+				log.info("Loading Module config: %s" % mod_name)
+				conf = self.get_config(os.path.join(path, mod_name))
+				config = self._merge(config, conf)
 		return config
+
+	def _merge(self, d1, d2):
+		"""Merge d2 into d1, where both d1 and d2 are 
+		either lists or dictionaries"""
+		if isinstance(d1, dict):
+			for k,v in d2.iteritems():
+				if d1.has_key(k):
+					d1[k] = self._merge(d1[k], v)
+				else:
+					d1[k] = v
+		else:
+			d1 = d1+d2
+		return d1
 
 	def connect_client(self, host=None, port=None, enable_ssl=None):
 		"""Client Connection caching"""
