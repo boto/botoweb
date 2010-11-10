@@ -41,3 +41,11 @@ class Response(webob.Response):
 		self.headers = state['headers']
 		self.status = state['status']
 		return True
+
+	def close(self):
+		webob.Response.close(self)
+		self.app_iter.close()
+
+	def __del__(self):
+		if hasattr(self.app_iter, "close"):
+			self.app_iter.close()
