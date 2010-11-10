@@ -35,6 +35,8 @@ if __name__ == "__main__":
 	sys.path.append(".")
 	from optparse import OptionParser
 	import botoweb
+	import logging
+	log = logging.getLogger("botoweb")
 
 	parser = OptionParser(usage="usage: %prog [options] application")
 	parser.add_option("-e", "--environment", dest="env", default=None, help="Environment file to use")
@@ -53,7 +55,7 @@ if __name__ == "__main__":
 	boto.config = e.config
 
 	if (options.init == True):
-		print "Initializing Databases"
+		log.info("Initializing Databases")
 		sdb = boto.connect_sdb(
 			e.config['DB']['db_user'], 
 			e.config['DB']['db_passwd'], 
@@ -61,13 +63,13 @@ if __name__ == "__main__":
 			host=e.config['DB'].get("db_host", "sdb.amazonaws.com"),
 			is_secure=e.config['DB'].get("enable_ssl", True)
 			)
-		print "Creating domain: %s" % e.config['DB']['db_name']
+		log.info("Creating domain: %s" % e.config['DB']['db_name'])
 		sdb.create_domain(e.config['DB'].get("db_name"))
 		for db in e.config['DB'].values():
 			if isinstance(db, dict) and db.get("db_name", None) != None:
-				print "Creating domain: %s" % db.get("db_name")
+				log.info("Creating domain: %s" % db.get("db_name"))
 				sdb.create_domain(db['db_name'])
-		print "Done"
+		log.info("Done")
 		exit(0)
 
 	if (options.add_user == True):
@@ -76,7 +78,7 @@ if __name__ == "__main__":
 		u.username = raw_input("Username: ")
 		u.password = raw_input("Password: ")
 		u.put()
-		print "Done"
+		log.info("Done")
 		exit(0)
 
 	if (options.shell == True):
@@ -114,20 +116,22 @@ if __name__ == "__main__":
 		from twisted.python.threadpool import ThreadPool
 		from twisted.internet import reactor
 
-		# Create and start a thread pool,
-		wsgiThreadPool = ThreadPool(maxthreads=options.max_threads)
+		log.info("Max Threads: %s" % options.max_threads)
+		wsgiThreadPool = ThreadPool(maxthreads=options.max_threads, minthreads=min(options.max_threads, 5))
 		wsgiThreadPool.start()
 
+
+
 		def getInfo(signum, stack):
-			print "================ INFO ==================="
-			print "queue: %s"   % len(wsgiThreadPool.q.queue)
-			print "waiters: %s" % len(wsgiThreadPool.waiters)
-			print "working: %s" % len(wsgiThreadPool.working)
-			print "threads: %s" % len(wsgiThreadPool.threads)
-			print "========================================="
+			log.info("================ INFO ===================")
+			log.info("queue: %s"   % len(wsgiThreadPool.q.queue))
+			log.info("waiters: %s" % len(wsgiThreadPool.waiters))
+			log.info("working: %s" % len(wsgiThreadPool.working))
+			log.info("threads: %s" % len(wsgiThreadPool.threads))
+			log.info("=========================================")
 
 		def stop(signum, stack):
-			print "Gracefully Stopping botoweb server"
+			log.info("Gracefully Stopping botoweb server")
 			reactor.stop()
 
 		import signal
@@ -142,8 +146,8 @@ if __name__ == "__main__":
 		# ensuring that it will be stopped when the reactor shuts down
 		reactor.addSystemEventTrigger('after', 'shutdown', wsgiThreadPool.stop)
 
-		print "Using Twisted version: %s" % twisted.__version__
-		print "running on http://localhost:%s" % (options.port)
+		log.info("Using Twisted version: %s" % twisted.__version__)
+		log.info("running on http://localhost:%s" % (options.port))
 		resource = WSGIResource(reactor, wsgiThreadPool, mapper)
 		reactor.listenTCP(int(options.port),Site(resource))
 		reactor.run()
@@ -152,8 +156,8 @@ if __name__ == "__main__":
 		try:
 			# Next, try CherryPy
 			from cherrypy import wsgiserver
-			print "Using CherryPyWSGIServer"
-			print "running on http://%s:%s" % (options.hostname, options.port)
+			log.info("Using CherryPyWSGIServer")
+			log.info("running on http://%s:%s" % (options.hostname, options.port))
 			s = wsgiserver.CherryPyWSGIServer((options.hostname, int(options.port)),mapper)
 			try:
 				s.start()
@@ -163,8 +167,8 @@ if __name__ == "__main__":
 			try:
 				# Next, try Paste
 				from paste import httpserver
-				print "Using python paste server"
-				print "running on http://%s:%s" % (options.hostname, options.port)
+				log.info("Using python paste server")
+				log.info("running on http://%s:%s" % (options.hostname, options.port))
 				httpserver.serve(mapper,
 					host=options.hostname,
 					port=int(options.port),
@@ -175,8 +179,8 @@ if __name__ == "__main__":
 			except ImportError:
 				# As a last resort, fall back to WsgiRef which has been included since Python2.5
 				from wsgiref import simple_server
-				print "No other servers available, using wsgiref instead"
-				print "running on http://%s:%s" % (options.hostname, options.port)
+				log.info("No other servers available, using wsgiref instead")
+				log.info("running on http://%s:%s" % (options.hostname, options.port))
 				httpd = simple_server.WSGIServer((options.hostname,int(options.port)),
 										simple_server.WSGIRequestHandler)
 				httpd.set_app(mapper)
