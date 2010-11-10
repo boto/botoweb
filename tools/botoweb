@@ -43,6 +43,8 @@ if __name__ == "__main__":
 	parser.add_option("--init", dest="init", action="store_true", default=False, help="Initialize the Databases (Currently only works with SDB)")
 	parser.add_option("--add-user", dest="add_user", action="store_true", default=False, help="Add a user")
 	parser.add_option("--shell", dest="shell", action="store_true", default=False, help="Run the interactive command-line shell")
+	parser.add_option("--core", dest="core", action="store_true", default=False, help="Run only the core (URL Maper), no auth, filter, or cache layers")
+	parser.add_option("--max-threads", dest="max_threads", default=20, help="Maximum number of threads to run (default 20)")
 	parser.add_option("-v", action="count", dest="verbose", default=0)
 	(options, args) = parser.parse_args()
 
@@ -92,12 +94,14 @@ if __name__ == "__main__":
 	from botoweb.appserver.filter_mapper import FilterMapper
 	from botoweb.appserver.cache_layer import CacheLayer
 	from botoweb.appserver.auth_layer import AuthLayer
-	mapper = AuthLayer(
-					app=FilterMapper(
-						app=CacheLayer(
-							app=URLMapper(e), env=e), 
-						env=e), 
-					env=e)
+	mapper = URLMapper(e)
+	if not options.core:
+		mapper = AuthLayer(
+						app=FilterMapper(
+							app=CacheLayer(
+								app=mapper, env=e), 
+							env=e), 
+						env=e)
 
 	# Figure out which HTTP server to use,
 	# we based this off of:
@@ -111,7 +115,7 @@ if __name__ == "__main__":
 		from twisted.internet import reactor
 
 		# Create and start a thread pool,
-		wsgiThreadPool = ThreadPool()
+		wsgiThreadPool = ThreadPool(maxthreads=options.max_threads)
 		wsgiThreadPool.start()
 
 		def getInfo(signum, stack):
