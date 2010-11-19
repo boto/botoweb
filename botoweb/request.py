@@ -169,10 +169,10 @@ class Request(webob.Request):
 							user = None
 
 					# If no OID match, try to match
-					# via Email, but ONLY for ones with no OpenID
+					# via Email
 					if not user and email:
 						try:
-							user = User.find(email=email, oid=[None,""],deleted=False).next()
+							user = User.find(email=email,deleted=False).next()
 						except:
 							user = None
 
