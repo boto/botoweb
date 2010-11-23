@@ -23,6 +23,8 @@ env = None
 import logging
 log = logging.getLogger("botoweb")
 
+HTTP_DATE_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
+
 def set_env(name, conf=None):
 	from botoweb.environment import Environment
 	env = Environment(name, conf)
