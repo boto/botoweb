@@ -444,7 +444,7 @@ class DBHandler(RequestHandler):
 		"""Return just a single property"""
 		from boto.sdb.db.query import Query
 		from boto.s3.key import Key
-		if not hasattr(obj, property):
+		if not property in obj._prop_names:
 			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
 
 		# Some leakage here of authorizations, but 
