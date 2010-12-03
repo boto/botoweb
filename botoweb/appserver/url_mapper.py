@@ -109,6 +109,7 @@ class URLMapper(WSGILayer):
 
 	def reload(self, *args, **params):
 		"""Reload all the handlers"""
+		log.info("Reloading handlers")
 		for handler in self.handlers.values():
 			try:
 				handler.reload()
