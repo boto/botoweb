@@ -118,3 +118,8 @@ class WSGILayer(object):
 		into it so they are not re-created.
 		"""
 		return self.app.handle(req, response)
+
+	def reload(self, *args, **params):
+		"""Reload this application"""
+		if self.app:
+			return self.app.reload()

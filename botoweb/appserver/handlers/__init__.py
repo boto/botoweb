@@ -64,3 +64,7 @@ class RequestHandler(object):
 
 	def _delete(self, request, response, id=None):
 		raise NotImplemented()
+
+	def reload(self):
+		"""Reload any caches in this handler"""
+		pass

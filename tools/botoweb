@@ -36,6 +36,7 @@ if __name__ == "__main__":
 	from optparse import OptionParser
 	import botoweb
 	import logging
+	import signal
 	log = logging.getLogger("botoweb")
 
 	parser = OptionParser(usage="usage: %prog [options] application")
@@ -134,7 +135,6 @@ if __name__ == "__main__":
 			log.info("Gracefully Stopping botoweb server")
 			reactor.stop()
 
-		import signal
 		try:
 			# Bind SIGKILL
 			signal.signal(signal.SIGINT, stop)
@@ -185,3 +185,6 @@ if __name__ == "__main__":
 										simple_server.WSGIRequestHandler)
 				httpd.set_app(mapper)
 				httpd.serve_forever()
+
+	# Add in a reload handler for SIGHUP
+	signal.signal(signal.SIGHUP, mapper.reload)

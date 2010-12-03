@@ -106,3 +106,11 @@ class URLMapper(WSGILayer):
 			return (self.robot_handler, None)
 		else:
 			return (None, None)
+
+	def reload(self, *args, **params):
+		"""Reload all the handlers"""
+		for handler in self.handlers.values():
+			try:
+				handler.reload()
+			except Exception, e:
+				log.exception("Exception reloading handler: %s" % handler)
