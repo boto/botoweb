@@ -212,4 +212,4 @@ class User(Model):
 	def put(self):
 		"""Auto-index"""
 		self._indexed_name = self.name.upper().strip()
-		super(self.__class__, self).put()
+		return Model.put(self)
