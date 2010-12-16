@@ -41,6 +41,8 @@ class WSGILayer(object):
 	but also allows us to chain them together without having to re-build
 	the request/response objects
 	"""
+	threadpool = None
+	maxthreads = None
 
 	def __init__(self, env, app=None):
 		"""
@@ -67,6 +69,12 @@ class WSGILayer(object):
 		except:
 			req = None
 		try:
+			# If there's too many threads already, just toss a
+			# ServiceUnavailable to let the user know they should re-connect
+			# later
+			if self.maxthreads and self.threadpool:
+				if len(self.threadpool.working) > self.maxthreads:
+					raise ServiceUnavailable("Service Temporarily Overloaded")
 			resp = self.handle(req, resp)
 		except HTTPRedirect, e:
 			resp.set_status(e.code)

@@ -153,6 +153,8 @@ if __name__ == "__main__":
 
 		log.info("Using Twisted version: %s" % twisted.__version__)
 		log.info("running on http://localhost:%s" % (options.port))
+		mapper.threadpool = wsgiThreadPool
+		mapper.maxthreads = int(options.max_threads)
 		resource = WSGIResource(reactor, wsgiThreadPool, mapper)
 		reactor.listenTCP(int(options.port),Site(resource))
 		reactor.run()
