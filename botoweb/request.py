@@ -28,7 +28,8 @@ class Request(webob.Request):
 	def __init__(self, environ):
 		self._user = None
 		charset = 'ascii'
-		if environ.get('CONTENT_TYPE', '').find('charset') == -1:
+		content_type = environ.get("CONTENT_TYPE", environ.get("HTTP_CONTENT_TYPE", ""))
+		if content_type.find('charset') == -1:
 			charset = 'utf-8'
 
 		webob.Request.__init__(self, environ, charset=charset,
@@ -38,6 +39,8 @@ class Request(webob.Request):
 		else:
 			self.real_host_url = self.host_url
 		self.real_path_url = self.real_host_url + self.path
+		if not self.content_type:
+			self.content_type = content_type
 
 	def get(self, argument_name, default_value='', allow_multiple=False):
 		param_value = self.get_all(argument_name, default_value)
