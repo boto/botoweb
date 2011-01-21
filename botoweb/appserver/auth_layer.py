@@ -45,7 +45,7 @@ class AuthLayer(WSGILayer):
 	def handle(self, req, response):
 		auth = self.get_auth_config(req.path)
 		if auth and not auth.get("disable", False):
-			log.info("Checking auth: %s" % auth)
+			log.debug("Checking auth: %s" % auth)
 			if not req.user:
 				raise Unauthorized()
 			elif auth.has_key("group"):
@@ -68,7 +68,7 @@ class AuthLayer(WSGILayer):
 		"""
 		Get the auth config for this path
 		"""
-		log.info("Get Auth Config: %s" % (path))
+		log.debug("Get Auth Config: %s" % (path))
 		match = None
 		if not self.env.config.has_key('botoweb'):
 			return None

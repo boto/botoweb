@@ -114,7 +114,7 @@ class FilterMapper(WSGILayer):
 		@return: (input_filter, output_filter), either filter may also be None
 		@rtype: 2-tuple
 		"""
-		log.info("Get Stylesheet: %s %s" % (path, user))
+		log.debug("Get Stylesheet: %s %s" % (path, user))
 		styledoc = None
 		match = None
 		for rule in self.env.config.get("botoweb", "filters", []):

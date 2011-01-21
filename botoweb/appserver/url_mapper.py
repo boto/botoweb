@@ -52,7 +52,10 @@ class URLMapper(WSGILayer):
 		"""
 		Basic URL mapper
 		"""
-		log.info("%s: %s" % (req.method, req.path_info))
+		if req.user:
+			log.info("[%s] %s: %s" % (req.user.username, req.method, req.path_info))
+		else:
+			log.info("%s: %s" % (req.method, req.path_info))
 		(handler, obj_id) = self.parse_path(req)
 		if not handler:
 			raise NotFound(url=req.path)

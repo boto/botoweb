@@ -156,7 +156,6 @@ class Request(webob.Request):
 						if auth_token:
 							try:
 								user = User.find(auth_token=auth_token,deleted=False).next()
-								print "Got User: %s" % user
 							except:
 								user = None
 							if user:
