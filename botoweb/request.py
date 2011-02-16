@@ -182,11 +182,17 @@ class Request(webob.Request):
 						boto.log.info("Authenticated OID: %s as %s" % (identifier, user))
 						self._user = user
 
-						# Set up an Auth Token
-						bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
+						# Re-use an old auth-token if it's available
+						from datetime import datetime, timedelta
+						now = datetime.utcnow()
+						if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6):
+							bw_auth_token = user.auth_token
+						else:
+							# Set up an Auth Token
+							bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
+							user.auth_token = bw_auth_token
+							user.put()
 						self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
-						user.auth_token = bw_auth_token
-						user.put()
 						addCachedUser(user)
 					else:
 						boto.log.warn("Invalid OpenID: %s" % identifier)
