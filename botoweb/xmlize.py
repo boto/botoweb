@@ -224,11 +224,14 @@ class XMLSerializer(object):
 						else:
 							self.encode(prop.name, getattr(obj, prop.name))
 			else:
-				for prop_name in obj.__dict__:
-					if not prop_name.startswith("_") and not prop_name == "id":
-						prop_value = getattr(obj, prop_name)
-						if not type(prop_value) == type(self.dump):
-							self.encode(prop_name, prop_value)
+				if hasattr(obj, "__dict__"):
+					for prop_name in obj.__dict__:
+						if not prop_name.startswith("_") and not prop_name == "id":
+							prop_value = getattr(obj, prop_name)
+							if not type(prop_value) == type(self.dump):
+								self.encode(prop_name, prop_value)
+				else:
+					self.encode(prop_name, obj)
 			self.file.write("</%s>" % objname)
 
 	def load(self):

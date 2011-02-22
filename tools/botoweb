@@ -55,6 +55,17 @@ if __name__ == "__main__":
 	import boto
 	boto.config = e.config
 
+	if options.verbose:
+		import logging
+		if options.verbose > 2:
+			level = logging.DEBUG
+		else:
+			level = logging.INFO
+		boto.set_stream_logger("", level=logging.INFO)
+		boto.set_stream_logger("root", level=logging.INFO)
+		boto.set_stream_logger("botoweb", level=logging.INFO)
+		boto.set_stream_logger("botoweb.wsgi_layer", level=logging.INFO)
+
 	if (options.init == True):
 		log.info("Initializing Databases")
 		sdb = boto.connect_sdb(

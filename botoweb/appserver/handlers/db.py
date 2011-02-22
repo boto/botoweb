@@ -220,49 +220,52 @@ class DBHandler(RequestHandler):
 		sort_by = params.get("sort_by", None)
 		next_token = params.get("next_token", None)
 		if query_str:
-			try:
-				filters = json.loads(query_str)
-			except:
-				raise BadRequest("Bad query string")
-			for filter in filters:
-				param_names = filter[0]
-				prop_value = filter[2]
-				if not isinstance(param_names, list):
-					param_names = [param_names]
-				for pnum, param_name in enumerate(param_names):
-					# Handle the "auto indexing"
-					# to make SDB searching case-insensitive
-					if hasattr(self.db_class, "_indexed_%s" % param_name):
-						param_name = "_indexed_%s" % param_name
-						# Make sure the uppercased version is
-						# also in the prop_value array
-						# we have to add this to the accepted values,
-						# not just replace, since they may have
-						# multiple param_names in the list, and
-						# not all of them may be indexed
-						if isinstance(prop_value, list):
-							for pv in prop_value:
-								if not pv.upper() in prop_value:
-									prop_value.append(pv.upper())
-						else:
-							prop_value = [prop_value, prop_value.upper()]
-					param_names[pnum] = param_name
-				# Allows a ['prop_name', 'sort', 'desc|asc']
-				if filter[1] == "sort":
-					if filter[2] == "desc":
-						param_names[0] = "-%s" % param_names[0]
-					query.sort_by = param_names[0]
-				# Allows a ['', 'limit', '1']
-				elif filter[1] == "limit":
-					query.limit = int(filter[2])
-				# Allows a ['', 'offset', '25']
-				elif filter[1] == "offset":
-					query.offset = int(filter[2])
-				else:
-					param_filters = []
-					for param_name in param_names:
-						param_filters.append("%s %s" % (param_name, filter[1]))
-					query.filter(param_filters, prop_value)
+			if query_str.startswith("["):
+				try:
+					filters = json.loads(query_str)
+				except:
+					raise BadRequest("Bad query string")
+				for filter in filters:
+					param_names = filter[0]
+					prop_value = filter[2]
+					if not isinstance(param_names, list):
+						param_names = [param_names]
+					for pnum, param_name in enumerate(param_names):
+						# Handle the "auto indexing"
+						# to make SDB searching case-insensitive
+						if hasattr(self.db_class, "_indexed_%s" % param_name):
+							param_name = "_indexed_%s" % param_name
+							# Make sure the uppercased version is
+							# also in the prop_value array
+							# we have to add this to the accepted values,
+							# not just replace, since they may have
+							# multiple param_names in the list, and
+							# not all of them may be indexed
+							if isinstance(prop_value, list):
+								for pv in prop_value:
+									if not pv.upper() in prop_value:
+										prop_value.append(pv.upper())
+							else:
+								prop_value = [prop_value, prop_value.upper()]
+						param_names[pnum] = param_name
+					# Allows a ['prop_name', 'sort', 'desc|asc']
+					if filter[1] == "sort":
+						if filter[2] == "desc":
+							param_names[0] = "-%s" % param_names[0]
+						query.sort_by = param_names[0]
+					# Allows a ['', 'limit', '1']
+					elif filter[1] == "limit":
+						query.limit = int(filter[2])
+					# Allows a ['', 'offset', '25']
+					elif filter[1] == "offset":
+						query.offset = int(filter[2])
+					else:
+						param_filters = []
+						for param_name in param_names:
+							param_filters.append("%s %s" % (param_name, filter[1]))
+						query.filter(param_filters, prop_value)
+			else:
+				pass
 		else:
 			properties = [p.name for p in query.model_class.properties(hidden=False)]
 			for filter in set(params.keys()):

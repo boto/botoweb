@@ -29,7 +29,7 @@ from datetime import datetime
 
 import traceback
 import logging
-log = logging.getLogger("botoweb.wsgi_layer")
+log = logging.getLogger("botoweb")
 
 import re
 
