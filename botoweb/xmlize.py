@@ -231,7 +231,7 @@ class XMLSerializer(object):
 							if not type(prop_value) == type(self.dump):
 								self.encode(prop_name, prop_value)
 				else:
-					self.encode(prop_name, obj)
+					self.encode(objname, obj)
 			self.file.write("</%s>" % objname)
 
 	def load(self):
