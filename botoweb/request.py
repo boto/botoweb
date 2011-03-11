@@ -185,7 +185,7 @@ class Request(webob.Request):
 						# Re-use an old auth-token if it's available
 						from datetime import datetime, timedelta
 						now = datetime.utcnow()
-						if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6):
+						if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6) and user.auth_token.startswith(user.username):
 							bw_auth_token = user.auth_token
 						else:
 							# Set up an Auth Token
