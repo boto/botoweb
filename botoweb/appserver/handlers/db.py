@@ -65,7 +65,7 @@ class DBHandler(RequestHandler):
 			if property:
 				return self.get_property(request, response, obj, property)
 			else:
-				if request.accept_content_type == "json":
+				if request.file_extension == "json":
 					response.content_type = "application/json"
 					response.app_iter = JSONWrapper(iter([obj]), request.user)
 				else:
