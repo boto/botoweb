@@ -87,7 +87,7 @@ class FilterMapper(WSGILayer):
 		stylesheet = None
 		if filter[0] and req.body:
 			try:
-				parsed_body = etree.parse(StringIO(req.body, self.parser))
+				parsed_body = etree.parse(StringIO(req.body), self.parser)
 			except:
 				pass # Ignore if it's not XML
 			else:
