@@ -91,9 +91,9 @@ class WSGILayer(object):
 			log.warn(traceback.format_exc())
 			botoweb.report_exception(e, req, priority=5)
 		except Exception, e:
+			log.critical(traceback.format_exc())
 			content = InternalServerError(message=e.message)
 			resp.set_status(content.code)
-			log.critical(traceback.format_exc())
 			resp = self.format_exception(content, resp, req)
 			botoweb.report_exception(content, req, priority=1)
 
