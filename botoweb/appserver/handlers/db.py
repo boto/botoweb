@@ -447,6 +447,12 @@ class DBHandler(RequestHandler):
 		"""Return just a single property"""
 		from boto.sdb.db.query import Query
 		from boto.s3.key import Key
+
+		# Figure out what format to send
+		format = "xml"
+		if "." in property:
+			property,format = property.split(".")
+
 		if not property in obj._prop_names and not hasattr(obj, property):
 			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
 
@@ -485,7 +491,20 @@ class DBHandler(RequestHandler):
 				response.write('<link type="text/xml" rel="self" href="%s"/>' % (self_link))
 			response.write("</%s>" % property)
 		elif val:
-			response.write("<response>%s</response>" % xmlize.dumps(val, property))
+			if format == "xml":
+				response.content_type = "text/xml"
+				if hasattr(val, "to_xml"):
+					response.write(val.to_xml())
+				else:
+					response.write("<response>%s</response>" % xmlize.dumps(val, property))
+			elif format == "json":
+				response.content_type = "application/json"
+				if hasattr(val, "to_json"):
+					response.write(val.to_json())
+				elif hasattr(val, "to_dict"):
+					response.write(json.dumps(val.to_dict()))
+				else:
+					response.write(json.dumps(val))
 		else:
 			response.set_status(204)
 		return response
