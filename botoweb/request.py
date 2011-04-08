@@ -113,18 +113,19 @@ class Request(webob.Request):
 			auth_token_header = self.cookies.get("BW_AUTH_TOKEN")
 			if auth_token_header:
 				unencoded_info = auth_token_header
-				username, auth_token = unencoded_info.split(':', 1)
-				if username and auth_token:
-					user = getCachedUser(username)
-					if not user or not user.auth_token == unencoded_info:
-						try:
-							user = User.find(username=username,deleted=False).next()
-							addCachedUser(user)
-						except:
-							user = None
-					if user and user.auth_token == unencoded_info:
-						self._user = user
-						return self._user
+				if ':' in unencoded_info:
+					username, auth_token = unencoded_info.split(':', 1)
+					if username and auth_token:
+						user = getCachedUser(username)
+						if not user or not user.auth_token == unencoded_info:
+							try:
+								user = User.find(username=username,deleted=False).next()
+								addCachedUser(user)
+							except:
+								user = None
+						if user and user.auth_token == unencoded_info:
+							self._user = user
+							return self._user
 			# JanRain Authentication token
 			jr_auth_token = self.POST.get("token")
 			if jr_auth_token:
