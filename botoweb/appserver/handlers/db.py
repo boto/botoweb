@@ -163,9 +163,13 @@ class DBHandler(RequestHandler):
 			raise NotFound()
 
 		props = {}
-		if request.file_extension == "json":
+		if "json" in request.content_type:
 			props = json.loads(request.body)
+		elif request.content_type == "application/x-www-form-urlencoded" and not request.body.startswith("<?xml"):
+			props = request.POST.mixed()
 		else:
+			request.content_type = "text/xml"
+			# By default we assume it's XML
 			new_obj = xmlize.loads(request.body)
 			for prop in new_obj.__dict__:
 				prop_value = getattr(new_obj, prop)
