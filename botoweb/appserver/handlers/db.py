@@ -165,7 +165,7 @@ class DBHandler(RequestHandler):
 		props = {}
 		if "json" in request.content_type:
 			props = json.loads(request.body)
-		elif request.content_type == "application/x-www-form-urlencoded" and not request.body.startswith("<?xml"):
+		elif request.content_type == "application/x-www-form-urlencoded" and not request.body.startswith("<"):
 			props = request.POST.mixed()
 		else:
 			request.content_type = "text/xml"
