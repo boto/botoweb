@@ -10,27 +10,7 @@ botoweb
 .. automodule::  botoweb
    :members:
    :undoc-members:
-
-config
-------
-
-.. automodule::  botoweb.config
-   :members:
-   :undoc-members:
-
-environment
------------
-
-.. automodule::  botoweb.environment
-   :members:
-   :undoc-members:
-
-exceptions
-----------
-
-.. automodule::  botoweb.exceptions
-   :members:
-   :undoc-members:
+   :show-inheritance:
 
 fixed_datetime
 --------------
@@ -38,6 +18,7 @@ fixed_datetime
 .. automodule::  botoweb.fixed_datetime
    :members:
    :undoc-members:
+   :show-inheritance:
 
 request
 -------
@@ -45,13 +26,7 @@ request
 .. automodule::  botoweb.request
    :members:
    :undoc-members:
-
-response
---------
-
-.. automodule::  botoweb.response
-   :members:
-   :undoc-members:
+   :show-inheritance:
 
 status
 ------
@@ -59,13 +34,23 @@ status
 .. automodule::  botoweb.status
    :members:
    :undoc-members:
+   :show-inheritance:
 
-testbase
---------
+encoder
+-------
 
-.. automodule::  botoweb.testbase
+.. automodule::  botoweb.encoder
    :members:
    :undoc-members:
+   :show-inheritance:
+
+environment
+-----------
+
+.. automodule::  botoweb.environment
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 xmlize
 ------
@@ -73,6 +58,7 @@ xmlize
 .. automodule::  botoweb.xmlize
    :members:
    :undoc-members:
+   :show-inheritance:
 
 xslt_functions
 --------------
@@ -80,4 +66,37 @@ xslt_functions
 .. automodule::  botoweb.xslt_functions
    :members:
    :undoc-members:
+   :show-inheritance:
+
+exceptions
+----------
+
+.. automodule::  botoweb.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+config
+------
+
+.. automodule::  botoweb.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+response
+--------
+
+.. automodule::  botoweb.response
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+testbase
+--------
+
+.. automodule::  botoweb.testbase
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
