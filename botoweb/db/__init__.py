@@ -9,4 +9,6 @@ import unicodedata
 def index_string(s):
 	"""Generates an index of this string,
 	stripping off all accents and making everything upper case"""
-	return unicodedata.normalize('NFKD', unicode(s)).encode('ASCII', 'ignore').upper()
+	if not isinstance(s, unicode):
+		s = unicode(s, 'utf-8')
+	return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore').upper()
