@@ -9,4 +9,4 @@ import unicodedata
 def index_string(s):
 	"""Generates an index of this string,
 	stripping off all accents and making everything upper case"""
-	return ''.join((c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')).upper()
+	return unicodedata.normalize('NFKD', unicode(s)).encode('ASCII', 'ignore').upper()
