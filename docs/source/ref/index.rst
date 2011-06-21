@@ -1,14 +1,15 @@
+.. _ref-index:
 
-.. _ref-index
 =============
 API Reference
 =============
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
 
-     botoweb
-     appserver
-     handlers
-     client
-     resources
+   botoweb
+   resources
+   appserver
+   handlers
+   db
+   client

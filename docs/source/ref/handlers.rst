@@ -7,28 +7,64 @@ handlers
 handlers
 --------
 
-.. automodule::  appserver.handlers
+.. automodule::  botoweb.appserver.handlers
    :members:
    :undoc-members:
+   :show-inheritance:
 
 db
 --
 
-.. automodule::  appserver.handlers.db
+.. automodule::  botoweb.appserver.handlers.db
    :members:
    :undoc-members:
+   :show-inheritance:
 
-index
+trash
 -----
 
-.. automodule::  appserver.handlers.index
+.. automodule::  botoweb.appserver.handlers.trash
    :members:
    :undoc-members:
+   :show-inheritance:
+
+proxy
+-----
+
+.. automodule::  botoweb.appserver.handlers.proxy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+robots
+------
+
+.. automodule::  botoweb.appserver.handlers.robots
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 user
 ----
 
-.. automodule::  appserver.handlers.user
+.. automodule::  botoweb.appserver.handlers.user
    :members:
    :undoc-members:
+   :show-inheritance:
+
+index
+-----
+
+.. automodule::  botoweb.appserver.handlers.index
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+login
+-----
+
+.. automodule::  botoweb.appserver.handlers.login
+   :members:
+   :undoc-members:
+   :show-inheritance:
 

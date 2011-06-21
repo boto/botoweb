@@ -10,6 +10,15 @@ resources
 .. automodule::  botoweb.resources
    :members:
    :undoc-members:
+   :show-inheritance:
+
+authorization
+-------------
+
+.. automodule::  botoweb.resources.authorization
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 filter_rule
 -----------
@@ -17,6 +26,7 @@ filter_rule
 .. automodule::  botoweb.resources.filter_rule
    :members:
    :undoc-members:
+   :show-inheritance:
 
 user
 ----
@@ -24,4 +34,5 @@ user
 .. automodule::  botoweb.resources.user
    :members:
    :undoc-members:
+   :show-inheritance:
 
