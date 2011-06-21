@@ -13,6 +13,7 @@ from datetime import datetime
 from time import time
 
 from botoweb import xmlize
+from botoweb.db import index_string
 
 
 try:
@@ -247,10 +248,11 @@ class DBHandler(RequestHandler):
 							# not all of them may be indexed
 							if isinstance(prop_value, list):
 								for pv in prop_value:
-									if not pv.upper() in prop_value:
-										prop_value.append(pv.upper())
+									pv = index_string(pv)
+									if not pv in prop_value:
+										prop_value.append(pv)
 							else:
-								prop_value = [prop_value, prop_value.upper()]
+								prop_value = [prop_value, index_string(prop_value)]
 						param_names[pnum] = param_name
 					# Allows a ['prop_name', 'sort', 'desc|asc']
 					if filter[1] == "sort":
@@ -347,7 +349,7 @@ class DBHandler(RequestHandler):
 
 				# Set an index, if it exists
 				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
-					setattr(newobj, "_indexed_%s" % prop, prop_value.upper())
+					setattr(newobj, "_indexed_%s" % prop, index_string(prop_value))
 		newobj.created_at = now
 		newobj.modified_at = now
 		newobj.created_by = user
@@ -421,7 +423,7 @@ class DBHandler(RequestHandler):
 						raise BadRequest("Bad value for %s: %s" % (prop_name, e))
 
 				if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
-					setattr(obj, "_indexed_%s" % prop_name, prop_val.upper())
+					setattr(obj, "_indexed_%s" % prop_name, index_string(prop_val.upper))
 					self.log.debug("Indexed: %s" % prop_name)
 		self.log.debug("===========================")
 		obj.modified_by = user
@@ -524,7 +526,7 @@ class DBHandler(RequestHandler):
 		setattr(obj, property, val)
 
 		if hasattr(obj, "_indexed_%s" % property) and val:
-			setattr(obj, "_indexed_%s" % property, val.upper())
+			setattr(obj, "_indexed_%s" % property, index_string(val.upper))
 			self.log.debug("Indexed: %s" % property)
 
 		obj.modified_by = request.user
