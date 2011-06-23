@@ -469,9 +469,15 @@ class DBHandler(RequestHandler):
 			raise Forbidden()
 
 		val = getattr(obj, property)
-		if type(val) in (str, unicode) or isinstance(val, Blob):
+		if type(val) in (str, unicode):
 			response.content_type = "text/plain"
 			response.write(str(val))
+		elif isinstance(val, Blob):
+			response.content_type = "text/plain"
+			try:
+				response.write(str(val))
+			except:
+				response.write(val.read())
 		elif isinstance(val, Key):
 			response.content_type = val.content_type
 			response.write(val.get_contents_as_string())
