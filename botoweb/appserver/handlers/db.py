@@ -423,7 +423,7 @@ class DBHandler(RequestHandler):
 						raise BadRequest("Bad value for %s: %s" % (prop_name, e))
 
 				if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
-					setattr(obj, "_indexed_%s" % prop_name, index_string(prop_val.upper))
+					setattr(obj, "_indexed_%s" % prop_name, index_string(prop_val))
 					self.log.debug("Indexed: %s" % prop_name)
 		self.log.debug("===========================")
 		obj.modified_by = user
