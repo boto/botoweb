@@ -39,6 +39,8 @@ CREATED_TEMPLATE = """<html>
 </html>
 """
 
+SMS_URL = "https://api.twilio.com/2008-08-01/Accounts/%s/SMS/Messages.json"
+
 from boto.sdb.db.model import Model
 from boto.sdb.db import property
 
@@ -48,11 +50,13 @@ class User(Model):
 	name = property.StringProperty(verbose_name="Name")
 	_indexed_name = property.StringProperty()
 	email = property.StringProperty(verbose_name="Email Address")
+	phone = property.StringProperty(verbose_name="Phone Number") # Used for SMS notify
 	auth_groups = property.ListProperty(str, verbose_name="Authorization Groups")
 	password = property.PasswordProperty(verbose_name="Password")
 	auth_token = property.StringProperty(verbose_name="Authentication Token")
 	oid = property.StringProperty(verbose_name="OpenID")
 	authorizations = None
+
 
 
 	# These fields are easy to add in
@@ -76,6 +80,35 @@ class User(Model):
 		"""
 		import boto.utils
 		boto.utils.notify(subject=subject, html_body=body, to_string=self.email, append_instance_id=False,**params)
+
+	def sms(self, msg):
+		"""Sends an SMS message via Twilio
+		This requires the following boto configuration:
+		[Twilio]
+		from = <from phone>
+		account_id = <account id>
+		auth_token = <authentication token>"""
+		from botoweb.exceptions import BadRequest
+		import urllib2, urllib
+		import boto
+		account_id = boto.config.get("Twilio", "account_id")
+		auth_token = boto.config.get("Twilio", "auth_token")
+		from_phone = boto.config.get("Twilio", "from")
+		if not account_id or not auth_token or not from_phone:
+			raise BadRequest("Twilio configuration not set up")
+		if not self.phone:
+			raise BadRequest("No phone number set up")
+		url = SMS_URL % account_id
+		pwmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+		pwmgr.add_password(None, "https://api.twilio.com/", account_id, auth_token)
+		handler = urllib2.HTTPBasicAuthHandler(pwmgr)
+		opener = urllib2.build_opener(handler)
+		values = {"From": from_phone, "To": self.phone, "Body": msg}
+		data = urllib.urlencode(values)
+		request = urllib2.Request(url, data)
+		response = opener.open(request)
+		return response.read()
+
 
 	def generate_password(self, length=10):
 		"""Generate and return a random password
