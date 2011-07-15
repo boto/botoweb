@@ -37,6 +37,12 @@ class RequestHandler(object):
 	def __call__(self, request, response, obj_id):
 		"""Execute this handler based on the request passed in"""
 		method = request.method.lower()
+		# CORS support if configured
+		if self.env.config.get("app", "allow_origin"):
+			response.headers['Access-Control-Allow-Origin'] = str(self.env.config.get('app', 'allow_origin'))
+		if self.config.has_key("allow_origin"):
+			response.headers['Access-Control-Allow-Origin'] = str(self.config.get('allow_origin'))
+
 		if method in self.allowed_methods:
 			method = getattr(self, "_%s" % method)
 			return method(request, response, obj_id)

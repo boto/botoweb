@@ -100,11 +100,10 @@ class WSGILayer(object):
 		return resp(environ, start_response)
 
 	def format_exception(self, e, resp, req):
-		resp.clear()
 		resp.set_status(e.code)
 		if(req.file_extension == "json" or self.env.config.get("app", "format") == 'json'):
 			resp.content_type = "application/json"
-			resp.write(e.to_json())
+			resp.body = e.to_json()
 		else:
 			resp.content_type = "text/xml"
 			e.to_xml().writexml(resp)

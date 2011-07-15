@@ -50,13 +50,15 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 	log.info("Arecibo Log: %s" % msg)
 	import boto
 	from datetime import datetime
-	try:
-		from arecibo import post
-		arecibo = post()
-		arecibo.server(url=boto.config.get("arecibo", "url"))
-		arecibo.set("account", boto.config.get("arecibo", "public_key"))
-	except:
-		arecibo = None
+	arecibo = None
+	if boto.config.get("arecibo", "public_key"):
+		try:
+			from arecibo import post
+			arecibo = post()
+			arecibo.server(url=boto.config.get("arecibo", "url"))
+			arecibo.set("account", boto.config.get("arecibo", "public_key"))
+		except:
+			arecibo = None
 
 	if arecibo:
 		try:
