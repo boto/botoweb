@@ -58,7 +58,7 @@ class IndexHandler(RequestHandler):
 		response.content_type = 'text/xml'
 		doc = etree.Element("Index", name=self.env.config.get("app", "name", "botoweb application"))
 		if self.env.config.get("app", "version"):
-			doc.set("version", self.env.config.get("app", "version"))
+			doc.set("version", str(self.env.config.get("app", "version")))
 		if request.user:
 			user_node = etree.SubElement(doc, "User", id=request.user.id)
 			etree.SubElement(user_node, "name", type='string').text = request.user.name
