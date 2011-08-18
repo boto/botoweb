@@ -76,6 +76,10 @@ class WSGILayer(object):
 				if len(self.threadpool.working) > self.maxthreads:
 					raise ServiceUnavailable("Service Temporarily Overloaded")
 			resp = self.handle(req, resp)
+		except AssertionError, e:
+			resp.set_status(400)
+			resp.content_type = "text/plain"
+			resp.body = str(e)
 		except HTTPRedirect, e:
 			resp.set_status(e.code)
 			resp.headers['Location'] = str(e.url)
