@@ -147,7 +147,7 @@ class User(Model):
 		"""Send the user an auth-token link, allowing them to 
 		set up their own login using JanRain Authentication"""
 		import boto
-		self.auth_token = self.username + ':' + self.generate_password(length=20)
+		self.auth_token = self.generate_password(length=20)
 		self.put()
 		if not app_name:
 			app_name=boto.config.get("app", "name", "botoweb")
