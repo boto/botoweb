@@ -119,7 +119,10 @@ class XMLSerializer(object):
 		for k in keys:
 			v = prop_value[k]
 			k = unicode(k).encode("ascii", "replace")
-			self.encode_default(prop_name, v, "string", name=k)
+			if isinstance(v, basestring):
+				self.encode_default(prop_name, v, "string", name=k)
+			else:
+				self.encode(k, v)
 		self.file.write("""</%s>""" % prop_name)
 
 	def encode_datetime(self, prop_name, prop_value):
