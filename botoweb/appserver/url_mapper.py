@@ -112,9 +112,11 @@ class URLMapper(WSGILayer):
 
 	def reload(self, *args, **params):
 		"""Reload all the handlers"""
+		from threading import Thread
 		log.info("Reloading handlers")
 		for handler in self.handlers.values():
 			try:
-				handler.reload()
+				t = Thread(target=handler.reload)
+				t.start()
 			except Exception, e:
 				log.exception("Exception reloading handler: %s" % handler)
