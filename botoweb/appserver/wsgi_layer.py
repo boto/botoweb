@@ -92,7 +92,7 @@ class WSGILayer(object):
 		except HTTPException, e:
 			resp.set_status(e.code)
 			resp = self.format_exception(e, resp, req)
-			log.warn(traceback.format_exc())
+			log.debug(traceback.format_exc())
 			botoweb.report_exception(e, req, priority=5)
 		except Exception, e:
 			log.exception(e)

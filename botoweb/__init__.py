@@ -40,14 +40,12 @@ def set_env(name, conf=None):
 def report_exception(e, req=None, priority=None, msg=None, req_body=None, uri=None):
 	"""Report an exception, using arecibo if available"""
 	import traceback
-	log.info("Report Exception: %s" % e)
 	if msg == None:
 		msg = str(e)
 	report(msg=msg, status=e.code, name=e.__class__.__name__, tb=traceback.format_exc(), req=req, priority=priority, req_body=req_body, uri=uri)
 
 def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_body=None, uri=None):
 	"""Generic Error notification"""
-	log.info("Arecibo Log: %s" % msg)
 	import boto
 	from datetime import datetime
 	arecibo = None
@@ -60,7 +58,18 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 		except:
 			arecibo = None
 
+	method = ""
+	remote_ip = ""
+	path = uri
+	if req:
+		uri = req.real_path_url
+		path = req.path_info
+		req_body = req.body
+		remote_ip = req.headers.get("X-Forwarded-For", req.remote_addr)
+		method = req.method
+
 	if arecibo:
+		log.info("Arecibo Log: %s" % msg)
 		try:
 			arecibo.set("status", status)
 			arecibo.set("msg", msg)
@@ -73,16 +82,6 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 			if priority:
 				arecibo.set("priority", str(priority))
 
-			if req:
-				uri = req.real_path_url
-				req_body = req.body
-				if req.user:
-					arecibo.set("username", req.user.username)
-				if req.environ.has_key("HTTP_USER_AGENT"):
-					arecibo.set("user_agent", req.environ['HTTP_USER_AGENT'])
-				remote_ip = req.headers.get("X-Forwarded-For", req.remote_addr)
-				if remote_ip:
-					arecibo.set("ip", remote_ip)
 			if uri:
 				arecibo.set("url", uri)
 			if req_body:
@@ -90,9 +89,20 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 			if tb:
 				arecibo.set("traceback", tb)
 
+			if req:
+				if req.user:
+					arecibo.set("username", req.user.username)
+				if req.environ.has_key("HTTP_USER_AGENT"):
+					arecibo.set("user_agent", req.environ['HTTP_USER_AGENT'])
+				if remote_ip:
+					arecibo.set("ip", remote_ip)
 			arecibo.send()
 		except Exception, e:
 			log.critical("Exception sending to arecibo: %s" % e)
 	else:
-		log.warn("Warning, Arecibo not set up")
-		log.warn(msg)
+		# Only log Server errors as ERROR, everything
+		# else is just an informative exception
+		if status < 500:
+			log.info("%s %s: %s" % (method, path, msg))
+		else:
+			log.error("%s %s: %s" % (method, path, msg))
