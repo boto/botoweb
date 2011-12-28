@@ -42,6 +42,11 @@ class RequestHandler(object):
 			response.headers['Access-Control-Allow-Origin'] = str(self.env.config.get('app', 'allow_origin'))
 		if self.config.has_key("allow_origin"):
 			response.headers['Access-Control-Allow-Origin'] = str(self.config.get('allow_origin'))
+		if self.env.config.get("app", "allow_headers"):
+			response.headers['Access-Control-Expose-Headers'] = str(self.env.config.get('app', 'allow_headers'))
+		if self.config.has_key("allow_headers"):
+			response.headers['Access-Control-Expose-Headers'] = str(self.config.get('allow_headers'))
+
 
 		if method in self.allowed_methods:
 			method = getattr(self, "_%s" % method)
