@@ -95,15 +95,15 @@ class XMLSerializer(object):
 			args['params'] += '%s="%s" ' % (str(k), str(params[k]))
 		self.file.write("""<%(prop_name)s %(params)s>%(prop_value)s</%(prop_name)s>""" % args)
 
-	def encode_str(self, prop_name, prop_value):
+	def encode_str(self, prop_name, prop_value, **params):
 		if isinstance(prop_value, unicode):
 			prop_value = prop_value.encode('ascii', 'xmlcharrefreplace')
 		else:
 			prop_value = str(prop_value)
-		return self.encode_default(prop_name, prop_value, "string")
+		return self.encode_default(prop_name, prop_value, "string", **params)
 
-	def encode_int(self, prop_name, prop_value):
-		return self.encode_default(prop_name, str(prop_value), "integer")
+	def encode_int(self, prop_name, prop_value, **params):
+		return self.encode_default(prop_name, str(prop_value), "integer", **params)
 
 	def encode_list(self, prop_name, prop_value):
 		"""Encode a list by encoding each property individually"""
@@ -122,12 +122,16 @@ class XMLSerializer(object):
 			if isinstance(v, basestring):
 				self.encode_default(prop_name, v, "string", name=k)
 			else:
-				self.encode(k, v)
+				prop_type = type(v)
+				if prop_type in self.type_map:
+					self.type_map[prop_type](self, prop_name, v, name=k)
+				else:
+					self.encode_object(prop_name, v, name=k)
 		self.file.write("""</%s>""" % prop_name)
 
-	def encode_datetime(self, prop_name, prop_value):
+	def encode_datetime(self, prop_name, prop_value, **params):
 		"""Encode a DATETIME into standard ISO 8601 Internet Format"""
-		self.encode_default(prop_name, prop_value.isoformat(), "dateTime")
+		self.encode_default(prop_name, prop_value.isoformat(), "dateTime", **params)
 
 	def encode_object(self, prop_name, prop_value):
 		"""Encode a generic object (must have an "id" attribute)"""
@@ -178,8 +182,8 @@ class XMLSerializer(object):
 				return "<![CDATA[ %s ]]>" % string
 		return string
 
-	def encode_bool(self, prop_name, prop_value):
-		self.encode_default(prop_name, str(prop_value), "boolean")
+	def encode_bool(self, prop_name, prop_value, **params):
+		self.encode_default(prop_name, str(prop_value), "boolean", **params)
 
 
 	type_map = {
