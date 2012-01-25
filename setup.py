@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (c) 2008 Chris Moyer http://coredumped.org
+# Copyright (c) 2008-2012 Chris Moyer http://coredumped.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
