@@ -136,3 +136,10 @@ class DynamoModel(Item):
 			limit=limit,
 			consistent_read=consistent_read,
 			scan_index_forward=scan_index_forward,item_class=cls)
+
+	find = query
+
+	@classmethod
+	def all(cls):
+		"""Uses Scan to return all of this type of object"""
+		return cls.get_table().scan(item_class=cls)
