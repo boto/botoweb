@@ -28,6 +28,9 @@ from boto.dynamodb.item import Item
 from boto.dynamodb.table import Table
 from boto.dynamodb import exceptions
 
+import logging
+log = logging.getLogger("botoweb.db.dynamo")
+
 class DynamoModel(Item):
 	"""DynamoDB Model.
 	This is just a wrapper around
@@ -131,15 +134,29 @@ class DynamoModel(Item):
 		if not range_key_condition:
 			range_key_condition = {"GE": None}
 
-		return cls.get_table().query(hash_key=hash_key,
-			range_key_condition=range_key_condition,
-			limit=limit,
-			consistent_read=consistent_read,
-			scan_index_forward=scan_index_forward,item_class=cls)
+		attempt = 0
+		while attempt < 5:
+			try:
+				return cls.get_table().query(hash_key=hash_key,
+					range_key_condition=range_key_condition,
+					limit=limit,
+					consistent_read=consistent_read,
+					scan_index_forward=scan_index_forward,item_class=cls)
+			except:
+				log.exception("could not run query")
+				cls._table = None
+				attempt += 1
 
 	find = query
 
 	@classmethod
 	def all(cls):
 		"""Uses Scan to return all of this type of object"""
-		return cls.get_table().scan(item_class=cls)
+		attempt = 0
+		while attempt < 5:
+			try:
+				return cls.get_table().scan(item_class=cls)
+			except:
+				log.exception("could not execute scan")
+				cls._table = None
+				attempt += 1
