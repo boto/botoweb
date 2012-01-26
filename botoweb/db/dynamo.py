@@ -87,16 +87,22 @@ class DynamoModel(Item):
 	@classmethod
 	def get_by_id(cls, hash_key, range_key=None, consistent_read=False):
 		"""Get this type of item by a given ID"""
-		table = cls.get_table()
-		try:
-			return table.lookup(
-				hash_key=hash_key,
-				range_key=range_key,
-				consistent_read=consistent_read,
-				item_class=cls
-			)
-		except exceptions.DynamoDBKeyNotFoundError:
-			return None
+		attempts = 0
+		while attempts < 5:
+			table = cls.get_table()
+			try:
+				return table.lookup(
+					hash_key=hash_key,
+					range_key=range_key,
+					consistent_read=consistent_read,
+					item_class=cls
+				)
+			except exceptions.DynamoDBKeyNotFoundError:
+				return None
+			except exceptions.DynamoDBResponseError:
+				log.exception("Could not retrieve item")
+				cls._table = None
+				attempts += 1
 
 	lookup = get_by_id
 
@@ -137,12 +143,13 @@ class DynamoModel(Item):
 		attempt = 0
 		while attempt < 5:
 			try:
-				return cls.get_table().query(hash_key=hash_key,
+				for item in  cls.get_table().query(hash_key=hash_key,
 					range_key_condition=range_key_condition,
 					limit=limit,
 					consistent_read=consistent_read,
-					scan_index_forward=scan_index_forward,item_class=cls)
-			except:
+					scan_index_forward=scan_index_forward,item_class=cls):
+					yield item
+			except exceptions.DynamoDBResponseError:
 				log.exception("could not run query")
 				cls._table = None
 				attempt += 1
@@ -155,8 +162,9 @@ class DynamoModel(Item):
 		attempt = 0
 		while attempt < 5:
 			try:
-				return cls.get_table().scan(item_class=cls)
-			except:
+				for item in cls.get_table().scan(item_class=cls):
+					yield item
+			except exceptions.DynamoDBResponseError:
 				log.exception("could not execute scan")
 				cls._table = None
 				attempt += 1
