@@ -27,6 +27,7 @@ import boto
 from boto.dynamodb.item import Item
 from boto.dynamodb.table import Table
 from boto.dynamodb import exceptions
+from boto.exception import DynamoDBResponseError
 
 import logging
 log = logging.getLogger("botoweb.db.dynamo")
@@ -99,7 +100,7 @@ class DynamoModel(Item):
 				)
 			except exceptions.DynamoDBKeyNotFoundError:
 				return None
-			except exceptions.DynamoDBResponseError:
+			except DynamoDBResponseError:
 				log.exception("Could not retrieve item")
 				cls._table = None
 				attempts += 1
@@ -149,7 +150,7 @@ class DynamoModel(Item):
 					consistent_read=consistent_read,
 					scan_index_forward=scan_index_forward,item_class=cls):
 					yield item
-			except exceptions.DynamoDBResponseError:
+			except DynamoDBResponseError:
 				log.exception("could not run query")
 				cls._table = None
 				attempt += 1
@@ -164,7 +165,7 @@ class DynamoModel(Item):
 			try:
 				for item in cls.get_table().scan(item_class=cls):
 					yield item
-			except exceptions.DynamoDBResponseError:
+			except DynamoDBResponseError:
 				log.exception("could not execute scan")
 				cls._table = None
 				attempt += 1

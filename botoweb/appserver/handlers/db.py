@@ -420,6 +420,7 @@ class DBHandler(RequestHandler):
 					setattr(obj, prop_name, prop_val)
 				except Exception, e:
 					if prop_val != "": # If it was a nothing request, we ignore it
+						self.log.exception(e)
 						raise BadRequest("Bad value for %s: %s" % (prop_name, e))
 
 				if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
