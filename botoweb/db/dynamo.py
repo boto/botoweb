@@ -150,6 +150,7 @@ class DynamoModel(Item):
 					consistent_read=consistent_read,
 					scan_index_forward=scan_index_forward,item_class=cls):
 					yield item
+				return
 			except DynamoDBResponseError:
 				log.exception("could not run query")
 				cls._table = None
@@ -165,6 +166,7 @@ class DynamoModel(Item):
 			try:
 				for item in cls.get_table().scan(item_class=cls):
 					yield item
+				return
 			except DynamoDBResponseError:
 				log.exception("could not execute scan")
 				cls._table = None
