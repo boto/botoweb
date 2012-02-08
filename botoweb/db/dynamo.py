@@ -109,7 +109,7 @@ class DynamoModel(Item):
 
 	@classmethod
 	def query(cls, hash_key, range_key_condition=None,
-				limit=None, consistent_read=False,
+				request_limit=None, consistent_read=False,
 				scan_index_forward=True):
 		"""Query under a given hash_key
 
@@ -126,8 +126,10 @@ class DynamoModel(Item):
 			of values is 'BETWEEN', otherwise a scalar value should
 			be used as the key in the dict.
 
-		:type limit: int
-		:param limit: The maximum number of items to return.
+		:type request_limit: int
+		:param request_limit: The maximum number of items to request from DynamoDB
+			in one request. This limit helps with preventing over usage of your
+			read quota.
 
 		:type consistent_read: bool
 		:param consistent_read: If True, a consistent read
@@ -146,7 +148,7 @@ class DynamoModel(Item):
 			try:
 				for item in  cls.get_table().query(hash_key=hash_key,
 					range_key_condition=range_key_condition,
-					limit=limit,
+					request_limit=request_limit,
 					consistent_read=consistent_read,
 					scan_index_forward=scan_index_forward,item_class=cls):
 					yield item
