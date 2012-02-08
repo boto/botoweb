@@ -140,8 +140,6 @@ class DynamoModel(Item):
 		:param scan_index_forward: Specified forward or backward
 			traversal of the index.  Default is forward (True).
 		"""
-		if not range_key_condition:
-			range_key_condition = {"GE": None}
 
 		attempt = 0
 		while attempt < 5:
