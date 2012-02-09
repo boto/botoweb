@@ -460,16 +460,18 @@ class DBHandler(RequestHandler):
 		if "." in property:
 			property,format = property.split(".")
 
-		if not property in obj._prop_names and not hasattr(obj, property):
-			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
-
 		# Some leakage here of authorizations, but 
 		# I'm not quite sure how to handle this elsewhere
 		if request.user and not request.user.has_auth('GET', obj.__class__.__name__, property):
 			self.log.warn("User: %s does not have read access to %s.%s" %  (request.user.username, obj.__class__.__name__, property))
 			raise Forbidden()
 
-		val = getattr(obj, property)
+		try:
+			val = getattr(obj, property)
+		except AttributeError, e:
+			raise BadRequest("%s has no attribute %s" % (obj.__class__.__name__, property))
+		except Exception, e:
+			raise BadRequest(str(e))
 		if type(val) in (str, unicode):
 			response.content_type = "text/plain"
 			response.write(str(val))
