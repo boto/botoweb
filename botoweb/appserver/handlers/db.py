@@ -588,7 +588,6 @@ class JSONWrapper(object):
 			return ret
 		except StopIteration:
 			self.closed = True
-			self.log.info("Rendered in: %.02f seconds" % (time() - self.start_time))
 			return json.dumps({"__type__": "__meta__", "next_token": "", "next_url": ""}) + "\r\n\r\n"
 
 	def encode(self, val, prop):
