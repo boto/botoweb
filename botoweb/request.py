@@ -90,117 +90,120 @@ class Request(webob.Request):
 		# None if they haven't even been through 
 		# this yet
 		if self._user == None:
-			self._user = False
-			# Basic Authentication
-			auth_header =  self.environ.get("HTTP_AUTHORIZATION")
-			if auth_header:
-				auth_type, encoded_info = auth_header.split(None, 1)
-				if auth_type.lower() == "basic":
-					unencoded_info = encoded_info.decode('base64')
-					username, password = unencoded_info.split(':', 1)
-					log.info("Looking up user: %s" % username)
-					user = getCachedUser(username)
-					if not user:
-						try:
-							user = User.find(username=username,deleted=False).next()
-							addCachedUser(user)
-						except:
-							user = None
-					if user and user.password == password:
-						self._user = user
-						return self._user
-			# Cookie based Authentication Token
-			auth_token_header = self.cookies.get("BW_AUTH_TOKEN")
-			if auth_token_header:
-				unencoded_info = auth_token_header
-				if ':' in unencoded_info:
-					username, auth_token = unencoded_info.split(':', 1)
-					if username and auth_token:
+			try:
+				self._user = False
+				# Basic Authentication
+				auth_header =  self.environ.get("HTTP_AUTHORIZATION")
+				if auth_header:
+					auth_type, encoded_info = auth_header.split(None, 1)
+					if auth_type.lower() == "basic":
+						unencoded_info = encoded_info.decode('base64')
+						username, password = unencoded_info.split(':', 1)
+						log.info("Looking up user: %s" % username)
 						user = getCachedUser(username)
-						if not user or not user.auth_token == unencoded_info:
+						if not user:
 							try:
 								user = User.find(username=username,deleted=False).next()
 								addCachedUser(user)
 							except:
 								user = None
-						if user and user.auth_token == unencoded_info:
+						if user and user.password == password:
 							self._user = user
 							return self._user
-			# JanRain Authentication token
-			jr_auth_token = self.POST.get("token")
-			if jr_auth_token:
-				import urllib, urllib2, json, boto
-				api_params = {
-					"token": jr_auth_token,
-					"apiKey": boto.config.get("JanRain", "api_key"),
-					"format": "json"
-				}
-				http_response = urllib2.urlopen(boto.config.get("JanRain", "url"), urllib.urlencode(api_params))
-				auth_info = json.loads(http_response.read())
-				if auth_info['stat'] == "ok":
-					profile = auth_info['profile']
-					identifier = profile['identifier']
-					email = profile.get("verifiedEmail")
-					user = None
+				# Cookie based Authentication Token
+				auth_token_header = self.cookies.get("BW_AUTH_TOKEN")
+				if auth_token_header:
+					unencoded_info = auth_token_header
+					if ':' in unencoded_info:
+						username, auth_token = unencoded_info.split(':', 1)
+						if username and auth_token:
+							user = getCachedUser(username)
+							if not user or not user.auth_token == unencoded_info:
+								try:
+									user = User.find(username=username,deleted=False).next()
+									addCachedUser(user)
+								except:
+									user = None
+							if user and user.auth_token == unencoded_info:
+								self._user = user
+								return self._user
+				# JanRain Authentication token
+				jr_auth_token = self.POST.get("token")
+				if jr_auth_token:
+					import urllib, urllib2, json, boto
+					api_params = {
+						"token": jr_auth_token,
+						"apiKey": boto.config.get("JanRain", "api_key"),
+						"format": "json"
+					}
+					http_response = urllib2.urlopen(boto.config.get("JanRain", "url"), urllib.urlencode(api_params))
+					auth_info = json.loads(http_response.read())
+					if auth_info['stat'] == "ok":
+						profile = auth_info['profile']
+						identifier = profile['identifier']
+						email = profile.get("verifiedEmail")
+						user = None
 
-					# First we see if they have a Primary Key,
-					# if so we use that to get the user
-					primary_key = profile.get("primaryKey")
-					if primary_key:
-						user = User.get_by_id(primary_key)
-						if user:
-							boto.log.info("User '%s' logged in using PrimaryKey: %s" % (user, primary_key))
+						# First we see if they have a Primary Key,
+						# if so we use that to get the user
+						primary_key = profile.get("primaryKey")
+						if primary_key:
+							user = User.get_by_id(primary_key)
+							if user:
+								boto.log.info("User '%s' logged in using PrimaryKey: %s" % (user, primary_key))
 
-					# If that didn't work, check to see if they had an auth_token
-					if not user:
-						auth_token = self.GET.get("auth_token")
-						if auth_token:
+						# If that didn't work, check to see if they had an auth_token
+						if not user:
+							auth_token = self.GET.get("auth_token")
+							if auth_token:
+								try:
+									user = User.find(auth_token=auth_token,deleted=False).next()
+								except:
+									user = None
+								if user:
+									# If we matched a user, set the OpenID
+									# for that user to our identifier
+									user.oid = identifier
+
+						#  Try to get a user by OpenID identifier
+						if not user:
 							try:
-								user = User.find(auth_token=auth_token,deleted=False).next()
+								user = User.find(oid=identifier,deleted=False).next()
 							except:
 								user = None
-							if user:
-								# If we matched a user, set the OpenID
-								# for that user to our identifier
-								user.oid = identifier
 
-					#  Try to get a user by OpenID identifier
-					if not user:
-						try:
-							user = User.find(oid=identifier,deleted=False).next()
-						except:
-							user = None
+						# If no OID match, try to match
+						# via Email
+						if not user and email:
+							try:
+								user = User.find(email=email,deleted=False).next()
+							except:
+								user = None
 
-					# If no OID match, try to match
-					# via Email
-					if not user and email:
-						try:
-							user = User.find(email=email,deleted=False).next()
-						except:
-							user = None
+						if user:
+							boto.log.info("Authenticated OID: %s as %s" % (identifier, user))
+							self._user = user
 
-					if user:
-						boto.log.info("Authenticated OID: %s as %s" % (identifier, user))
-						self._user = user
-
-						# Re-use an old auth-token if it's available
-						from datetime import datetime, timedelta
-						now = datetime.utcnow()
-						if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6) and user.auth_token.startswith(user.username):
-							bw_auth_token = user.auth_token
+							# Re-use an old auth-token if it's available
+							from datetime import datetime, timedelta
+							now = datetime.utcnow()
+							if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6) and user.auth_token.startswith(user.username):
+								bw_auth_token = user.auth_token
+							else:
+								# Set up an Auth Token
+								bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
+								user.auth_token = bw_auth_token
+								user.put()
+							self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
+							addCachedUser(user)
 						else:
-							# Set up an Auth Token
-							bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
-							user.auth_token = bw_auth_token
-							user.put()
-						self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
-						addCachedUser(user)
+							boto.log.warn("Invalid OpenID: %s" % identifier)
+							botoweb.report("Invalid OpenID: %s" % identifier, status=401, req=self, name="LoginFailure", priority=3)
 					else:
-						boto.log.warn("Invalid OpenID: %s" % identifier)
-						botoweb.report("Invalid OpenID: %s" % identifier, status=401, req=self, name="LoginFailure", priority=3)
-				else:
-					boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
-					botoweb.report(auth_info['err']['msg'], status=500, req=self, name="LoginFailure", priority=1)
+						boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
+						botoweb.report(auth_info['err']['msg'], status=500, req=self, name="LoginFailure", priority=1)
+			except Exception, e:
+				log.exception("Could not fetch user")
 
 		# This False means we tried by there was no User
 		# We always return None if there was no user
