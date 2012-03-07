@@ -38,6 +38,7 @@ class DynamoModel(Item):
 	boto.dynamodb.item.Item
 	"""
 	_table = None
+	_table_name = None
 
 	def __init__(self, *args, **kwargs):
 		"""Create a new DynamoDB model
@@ -81,7 +82,10 @@ class DynamoModel(Item):
 		"""Get the table object for the given class"""
 		if cls._table is None:
 			conn = boto.connect_dynamodb()
-			cls._table = conn.lookup(cls.__name__)
+			tbl_name = cls._table_name
+			if not tbl_name:
+				tbl_name = cls.__name__
+			cls._table = conn.lookup(tbl_name)
 		assert(cls._table), "Table not created for %s" % cls.__name__
 		return cls._table
 
