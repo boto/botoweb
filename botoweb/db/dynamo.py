@@ -27,7 +27,7 @@ import boto
 from boto.dynamodb.item import Item
 from boto.dynamodb.table import Table
 from boto.dynamodb import exceptions
-from boto.exception import DynamoDBResponseError
+from boto.exception import DynamoDBResponseError, BotoServerError
 
 import logging
 log = logging.getLogger("botoweb.db.dynamo")
@@ -155,8 +155,12 @@ class DynamoModel(Item):
 					scan_index_forward=scan_index_forward,item_class=cls):
 					yield item
 				return
-			except DynamoDBResponseError:
-				log.exception("could not run query")
+			except DynamoDBResponseError, e:
+				log.exception("Dynamo Response Error: %s" % e)
+				cls._table = None
+				attempt += 1
+			except BotoServerError, e:
+				log.error("Boto Server Error: %s" % e)
 				cls._table = None
 				attempt += 1
 
