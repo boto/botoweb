@@ -145,6 +145,12 @@ class IndexHandler(RequestHandler):
 		except ImportError:
 			import simplejson as json
 
+		ret = self.to_dict(request)
+
+		response.write(json.dumps(ret))
+		return response
+
+	def to_dict(self, request):
 		ret = {}
 		if self.env.config.get("app", "version"):
 			ret['__version__'] = self.env.config.get("app", "version")
@@ -237,5 +243,4 @@ class IndexHandler(RequestHandler):
 								for choice in prop.choices:
 									route_dict['properties'][prop.name]['choices'].append(choice)
 				ret['resources'][route.get("name")] = route_dict
-		response.write(json.dumps(ret))
-		return response
+		return ret
