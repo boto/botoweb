@@ -130,11 +130,8 @@ class Index(object):
 			item = self.table.new_item(name, value)
 			item['ts'] = time.time()
 			if extra:
-				print extra
 				for k in extra:
 					item[k] = extra[k]
-			print item
-			print item._updates
 			item.save()
 
 	def delete(self):
