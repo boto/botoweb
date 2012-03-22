@@ -27,6 +27,8 @@
 # get out a value. Most commonly this would be used
 # to index an object (by reference)
 import time
+import logging
+log = logging.getLogger("botoweb.index")
 
 class Index(object):
 	"""Index item, which actually more or less represents a
@@ -115,7 +117,7 @@ class Index(object):
 	def add(self, name, value, stem=True, **extra):
 		"""Index a specific name to a given value (with optional extra attributes)
 		:param name: The name to index
-		:type name: str
+		:type name: str or list
 		:param value: The value to return for any matches
 		:type value: str
 		:param stem: Should the name be stemmed? (Default True), if set to False,
@@ -125,9 +127,15 @@ class Index(object):
 		"""
 		names = self.get_tuples(self.clean(name), stem)
 		for name in names:
-			item = self.table.new_item(name, value, attrs=extra)
+			item = self.table.new_item(name, value)
 			item['ts'] = time.time()
-			item.save(return_values="ALL_NEW")
+			if extra:
+				print extra
+				for k in extra:
+					item[k] = extra[k]
+			print item
+			print item._updates
+			item.save()
 
 	def delete(self):
 		"""Delete this index table"""
@@ -162,3 +170,40 @@ class Index(object):
 		name = name.replace(".", " ")
 		name = re.sub("[^a-zA-Z0-9\ \-]", "", name)
 		return name
+
+	def add_object(self, obj):
+		"""Index a model object.
+		The Model object should have a property '_index_prop_names' which is a list of
+		attribute names to be indexed. If not, only the "name" attribute is indexed.
+		:param obj: A Model object to be indexed
+		:type obj: `botoweb.db.model.Model`
+		"""
+		if hasattr(obj, "_index_prop_names"):
+			props = obj._index_prop_names
+		else:
+			props = ['name']
+
+		names = []
+		for prop_name in props:
+			val = getattr(obj, prop_name)
+			if isinstance(val, list):
+				for v in val:
+					if v and not v in names:
+						names.append(v)
+			else:
+				if val and not val in names:
+					names.append(val)
+		for name in names:
+			self.add(name, obj.id, class_name=obj.__class__.__name__, module_name=obj.__module__, db_name=obj._manager.domain.name)
+
+	def search_object(self, name, consistent_read=False):
+		"""Wrapper around the "search" function that returns 
+		Model objects instead of just a DynamoDB Item"""
+		from boto.utils import find_class
+		for item in self.search(name, consistent_read):
+			if item.has_key("class_name") and item.has_key("module_name"):
+				cls = find_class(item['module_name'], item['class_name'])
+				if not cls:
+					log.error("Could not find object class: %s %s" % (item['module_name'], item['class_name']))
+				else:
+					yield cls.get_by_id(item['id'])
