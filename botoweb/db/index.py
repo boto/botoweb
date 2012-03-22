@@ -127,12 +127,13 @@ class Index(object):
 		"""
 		names = self.get_tuples(self.clean(name), stem)
 		for name in names:
-			item = self.table.new_item(name, value)
-			item['ts'] = time.time()
-			if extra:
-				for k in extra:
-					item[k] = extra[k]
-			item.save()
+			if name:
+				item = self.table.new_item(name, value)
+				item['ts'] = time.time()
+				if extra:
+					for k in extra:
+						item[k] = extra[k]
+				item.save()
 
 	def delete(self):
 		"""Delete this index table"""
@@ -165,7 +166,9 @@ class Index(object):
 		if isinstance(name, unicode):
 			name = name.encode("utf-8", "ignore")
 		name = name.replace(".", " ")
-		name = re.sub("[^a-zA-Z0-9\ \-]", "", name)
+		name = name.replace("-", " ")
+		name = re.sub("[^a-zA-Z0-9\ ]", "", name)
+		name = name.strip()
 		return name
 
 	def add_object(self, obj):
