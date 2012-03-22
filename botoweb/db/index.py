@@ -148,7 +148,6 @@ class Index(object):
 
 		results = False
 		for name in search_vals:
-			print "Searching for '%s'" % name
 			for item in self.table.query(name, consistent_read=consistent_read):
 				results = True
 				yield item
