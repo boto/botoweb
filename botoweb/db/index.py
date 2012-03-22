@@ -171,13 +171,8 @@ class Index(object):
 		name = name.strip()
 		return name
 
-	def add_object(self, obj):
-		"""Index a model object.
-		The Model object should have a property '_index_prop_names' which is a list of
-		attribute names to be indexed. If not, only the "name" attribute is indexed.
-		:param obj: A Model object to be indexed
-		:type obj: `botoweb.db.model.Model`
-		"""
+	def get_obj_props(self, obj):
+		"""Get all the properties to index from this object"""
 		if hasattr(obj, "_index_prop_names"):
 			props = obj._index_prop_names
 		else:
@@ -193,7 +188,16 @@ class Index(object):
 			else:
 				if val and not val in names:
 					names.append(val)
-		for name in names:
+		return names
+
+	def add_object(self, obj):
+		"""Index a model object.
+		The Model object should have a property '_index_prop_names' which is a list of
+		attribute names to be indexed. If not, only the "name" attribute is indexed.
+		:param obj: A Model object to be indexed
+		:type obj: `botoweb.db.model.Model`
+		"""
+		for name in self.get_obj_props(obj):
 			self.add(name, obj.id, class_name=obj.__class__.__name__, module_name=obj.__module__, db_name=obj._manager.domain.name)
 
 	def search_object(self, name, consistent_read=False):
@@ -207,3 +211,19 @@ class Index(object):
 					log.error("Could not find object class: %s %s" % (item['module_name'], item['class_name']))
 				else:
 					yield cls.get_by_id(item['id'])
+
+	def remove(self, name, value):
+		"""Remove a specific set of indexes"""
+		names = self.get_tuples(self.clean(name))
+		for name in names:
+			if name:
+				item = self.table.lookup(name, value)
+				if item:
+					print "Removing: %s" % item
+					item.delete()
+
+	def remove_object(self, obj):
+		"""Remove an entire object"""
+		for name in self.get_obj_props(obj):
+			self.remove(name, obj.id)
+
