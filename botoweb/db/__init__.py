@@ -10,6 +10,8 @@ import re
 def index_string(s):
 	"""Generates an index of this string,
 	stripping off all accents and making everything upper case"""
+	if isinstance(s, list):
+		" ".join(s)
 	if not isinstance(s, unicode):
 		s = unicode(s, 'utf-8')
 	s = re.sub(r'&#(x?)([^;]+);', lambda match: unichr(int(match.group(2), 16 if match.group(1) else 10)),s)

@@ -48,7 +48,7 @@ def update_file(fp, bucket, key_name):
 		k = bucket.new_key(key_name)
 	if not k.etag or not k.etag.strip('"') == k.compute_md5(fp)[0]:
 		print "Updating: %s => %s/%s" % (fp.name, bucket.name, key_name)
-		k.set_contents_from_file(fp)
+		k.set_contents_from_file(fp, headers={"Cache-Control": "max-age=86400"})
 		k.make_public()
 	else:
 		print "Ignoring %s, files match" % fp.name
