@@ -179,7 +179,7 @@ class XMLSerializer(object):
 
 		for ch in BAD_CHARS:
 			if ch in string:
-				return "<![CDATA[ %s ]]>" % string
+				return "<![CDATA[%s]]>" % string
 		return string
 
 	def encode_bool(self, prop_name, prop_value, **params):
@@ -315,7 +315,7 @@ class XMLSerializer(object):
 		# Prevent "None" from being sent back as a None, instead of an empty string
 		if not ret:
 			ret = ""
-		return ret
+		return ret.strip()
 
 
 	def decode_datetime(self, node):
