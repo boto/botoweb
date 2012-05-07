@@ -165,8 +165,12 @@ class Index(object):
 		import re
 		if isinstance(name, unicode):
 			name = name.encode("utf-8", "ignore")
+		name = name.replace("://", " ")
+		name = name.replace("/", " ")
+		name = name.replace(":", " ")
 		name = name.replace(".", " ")
 		name = name.replace("-", " ")
+		name = name.replace("  ", " ")
 		name = re.sub("[^a-zA-Z0-9\ ]", "", name)
 		name = name.strip()
 		return name
