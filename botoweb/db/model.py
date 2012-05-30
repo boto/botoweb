@@ -1,372 +1,103 @@
 #
 # Author: Chris Moyer http://coredumped.org/
 #
+
 from botoweb.db.botomodel import Model as BotoModel
-from botoweb.db.property import DateTimeProperty, ReferenceProperty, BooleanProperty, Property
+from botoweb.db.property import DateTimeProperty, ReferenceProperty, BooleanProperty
 from botoweb.resources.user import User
-from botoweb.db.manager import get_manager
-from botoweb.db.key import Key
-from botoweb.db.query import Query
-import boto
-
-class ModelMeta(type):
-	"Metaclass for all Models"
-
-	def __init__(cls, name, bases, dict):
-		super(ModelMeta, cls).__init__(name, bases, dict)
-		# Make sure this is a subclass of Model - mainly copied from django ModelBase (thanks!)
-		cls.__sub_classes__ = []
-		try:
-			if filter(lambda b: issubclass(b, BotoModel), bases):
-				for base in bases:
-					base.__sub_classes__.append(cls)
-				cls._manager = get_manager(cls)
-				# look for all of the Properties and set their names
-				for key in dict.keys():
-					if isinstance(dict[key], Property):
-						property = dict[key]
-						property.__property_config__(cls, key)
-				prop_names = []
-				props = cls.properties()
-				for prop in props:
-					if not prop.__class__.__name__.startswith('_'):
-						prop_names.append(prop.name)
-				setattr(cls, '_prop_names', prop_names)
-		except NameError:
-			# 'BotoModel' isn't defined yet, meaning we're looking at our own
-			# BotoModel class, defined below.
-			pass
-		
-class BotoooooModel(object):
-	__metaclass__ = ModelMeta
-	__consistent__ = False # Consistent is set off by default
-	id = None
-
-	@classmethod
-	def get_lineage(cls):
-		l = [c.__name__ for c in cls.mro()]
-		l.reverse()
-		return '.'.join(l)
-
-	@classmethod
-	def kind(cls):
-		return cls.__name__
-	
-	@classmethod
-	def _get_by_id(cls, id, manager=None):
-		if not manager:
-			manager = cls._manager
-		return manager.get_object(cls, id)
-			
-	@classmethod
-	def get_by_id(cls, ids=None, parent=None):
-		if isinstance(ids, list):
-			objs = [cls._get_by_id(id) for id in ids]
-			return objs
-		else:
-			return cls._get_by_id(ids)
-
-	get_by_ids = get_by_id
-
-	@classmethod
-	def get_by_key_name(cls, key_names, parent=None):
-		raise NotImplementedError, "Key Names are not currently supported"
-
-	@classmethod
-	def find(cls, limit=None, next_token=None, **params):
-		q = Query(cls, limit=limit, next_token=next_token)
-		for key, value in params.items():
-			q.filter('%s =' % key, value)
-		return q
-
-	@classmethod
-	def all(cls, limit=None, next_token=None):
-		return cls.find(limit=limit, next_token=next_token)
-
-	@classmethod
-	def get_or_insert(key_name, **kw):
-		raise NotImplementedError, "get_or_insert not currently supported"
-			
-	@classmethod
-	def properties(cls, hidden=True):
-		properties = []
-		while cls:
-			for key in cls.__dict__.keys():
-				prop = cls.__dict__[key]
-				if isinstance(prop, Property):
-					if hidden or not prop.__class__.__name__.startswith('_'):
-						properties.append(prop)
-			if len(cls.__bases__) > 0:
-				cls = cls.__bases__[0]
-			else:
-				cls = None
-		return properties
-
-	@classmethod
-	def find_property(cls, prop_name):
-		property = None
-		while cls:
-			for key in cls.__dict__.keys():
-				prop = cls.__dict__[key]
-				if isinstance(prop, Property):
-					if not prop.__class__.__name__.startswith('_') and prop_name == prop.name:
-						property = prop
-			if len(cls.__bases__) > 0:
-				cls = cls.__bases__[0]
-			else:
-				cls = None
-		return property
-
-	@classmethod
-	def get_xmlmanager(cls):
-		if not hasattr(cls, '_xmlmanager'):
-			from botoweb.db.manager.xmlmanager import XMLManager
-			cls._xmlmanager = XMLManager(cls, None, None, None,
-											None, None, None, None, False)
-		return cls._xmlmanager
-
-	@classmethod
-	def from_xml(cls, fp):
-		xmlmanager = cls.get_xmlmanager()
-		return xmlmanager.unmarshal_object(fp)
-
-	def __init__(self, id=None, **kw):
-		self._loaded = False
-		# first try to initialize all properties to their default values
-		for prop in self.properties(hidden=False):
-			try:
-				setattr(self, prop.name, prop.default_value())
-			except ValueError:
-				pass
-		if kw.has_key('manager'):
-			self._manager = kw['manager']
-		self.id = id
-		for key in kw:
-			if key != 'manager':
-				# We don't want any errors populating up when loading an object,
-				# so if it fails we just revert to it's default value
-				try:
-					setattr(self, key, kw[key])
-				except Exception, e:
-					boto.log.exception(e)
-
-	def __repr__(self):
-		return '%s<%s>' % (self.__class__.__name__, self.id)
-
-	def __str__(self):
-		return str(self.id)
-	
-	def __eq__(self, other):
-		return other and isinstance(other, BotoModel) and self.id == other.id
-
-	def _get_raw_item(self):
-		return self._manager.get_raw_item(self)
-
-	def load(self):
-		if self.id and not self._loaded:
-			self._manager.load_object(self)
-
-	def reload(self):
-		if self.id:
-			self._loaded = False
-			self._manager.load_object(self)
-
-	def put(self, expected_value=None):
-		"""
-		Save this object as it is, with an optional expected value
-
-		:param expected_value: Optional tuple of Attribute, and Value that 
-			must be the same in order to save this object. If this 
-			condition is not met, an SDBResponseError will be raised with a
-			Confict status code.
-		:type expected_value: tuple or list
-		:return: This object
-		:rtype: :class:`botoweb.db.BotoModel`
-		"""
-		self._manager.save_object(self, expected_value)
-		return self
-
-	save = put
-
-	def put_attributes(self, attrs):
-		"""
-		Save just these few attributes, not the whole object
-
-		:param attrs: Attributes to save, key->value dict
-		:type attrs: dict
-		:return: self
-		:rtype: :class:`botoweb.db.BotoModel`
-		"""
-		assert(isinstance(attrs, dict)), "Argument must be a dict of key->values to save"
-		for prop_name in attrs:
-			value = attrs[prop_name]
-			prop = self.find_property(prop_name)
-			assert(prop), "Property not found: %s" % prop_name
-			self._manager.set_property(prop, self, prop_name, value)
-		self.reload()
-		return self
-
-	def delete_attributes(self, attrs):
-		"""
-		Delete just these attributes, not the whole object.
-
-		:param attrs: Attributes to save, as a list of string names
-		:type attrs: list
-		:return: self
-		:rtype: :class:`botoweb.db.BotoModel`
-		"""
-		assert(isinstance(attrs, list)), "Argument must be a list of names of keys to delete."
-		self._manager.domain.delete_attributes(self.id, attrs)
-		self.reload()
-		return self
-
-	save_attributes = put_attributes
-		
-	def delete(self):
-		self._manager.delete_object(self)
-
-	def key(self):
-		return Key(obj=self)
-
-	def set_manager(self, manager):
-		self._manager = manager
-
-	def to_dict(self):
-		props = {}
-		for prop in self.properties(hidden=False):
-			props[prop.name] = getattr(self, prop.name)
-		obj = {'properties' : props,
-				'id' : self.id}
-		return {self.__class__.__name__ : obj}
-
-	def to_xml(self, doc=None):
-		xmlmanager = self.get_xmlmanager()
-		doc = xmlmanager.marshal_object(self, doc)
-		return doc
-
-	@classmethod
-	def find_subclass(cls, name):
-		"""Find a subclass with a given name"""
-		if name == cls.__name__:
-			return cls
-		for sc in cls.__sub_classes__:
-			r = sc.find_subclass(name)
-			if r != None:
-				return r
-
-class Expando(BotoModel):
-
-	def __setattr__(self, name, value):
-		if name in self._prop_names:
-			object.__setattr__(self, name, value)
-		elif name.startswith('_'):
-			object.__setattr__(self, name, value)
-		elif name == 'id':
-			object.__setattr__(self, name, value)
-		else:
-			self._manager.set_key_value(self, name, value)
-			object.__setattr__(self, name, value)
-
-	def __getattr__(self, name):
-		if not name.startswith('_'):
-			value = self._manager.get_key_value(self, name)
-			if value:
-				object.__setattr__(self, name, value)
-				return value
-		raise AttributeError
 
 class Model(BotoModel):
-	"""Standard model plus added some basic tracking information"""
-	created_at = DateTimeProperty(auto_now_add=True, verbose_name="Created Date")
-	created_by = ReferenceProperty(User, verbose_name="Created By")
+        """Standard model plus added some basic tracking information"""
+        created_at = DateTimeProperty(auto_now_add=True, verbose_name="Created Date")
+        created_by = ReferenceProperty(User, verbose_name="Created By")
 
-	modified_at = DateTimeProperty(verbose_name="Last Modified Date")
-	modified_by = ReferenceProperty(User, verbose_name="Last Modified By")
+        modified_at = DateTimeProperty(verbose_name="Last Modified Date")
+        modified_by = ReferenceProperty(User, verbose_name="Last Modified By")
 
-	deleted = BooleanProperty(verbose_name="Deleted")
-	deleted_at = DateTimeProperty(verbose_name="Deleted Date")
-	deleted_by = ReferenceProperty(User, verbose_name="Deleted By")
+        deleted = BooleanProperty(verbose_name="Deleted")
+        deleted_at = DateTimeProperty(verbose_name="Deleted Date")
+        deleted_by = ReferenceProperty(User, verbose_name="Deleted By")
 
-	# This is set every time the object is touched, even if it's by the system
-	sys_modstamp = DateTimeProperty(auto_now=True)
+        # This is set every time the object is touched, even if it's by the system
+        sys_modstamp = DateTimeProperty(auto_now=True)
 
-	@classmethod
-	def query(cls, qs):
-		return query(cls, qs)
+        @classmethod
+        def query(cls, qs):
+                return query(cls, qs)
 
 def query(cls, qs):
-	"""A generic SQL-like query function, which even allows for
-	nested queries using special syntax. 
+        """A generic SQL-like query function, which even allows for
+        nested queries using special syntax. 
 
-	In general, this follows the generic SQL-based syntax that
-	SDB uses after the WHERE clause, but it adds a special 
-	modifier for allowing you to specify properties by 
-	VerboseName or name. It also allows you to specify 
-	sub-queries using [ ], which returns a list of items in 
-	it's place. These are always evaluated first, before 
-	evaluating the rest of the query.
+        In general, this follows the generic SQL-based syntax that
+        SDB uses after the WHERE clause, but it adds a special 
+        modifier for allowing you to specify properties by 
+        VerboseName or name. It also allows you to specify 
+        sub-queries using [ ], which returns a list of items in 
+        it's place. These are always evaluated first, before 
+        evaluating the rest of the query.
 
-		* Backticks (`) specify a property.
-		* Single quotes (') specify a value.
-		* Square Brackets ([ ]) specify a sub-query.
+                * Backticks (`) specify a property.
+                * Single quotes (') specify a value.
+                * Square Brackets ([ ]) specify a sub-query.
 
-	For a simple example, take a model Book, which extends
-	this base-class therefore has a created_by property.
-	To look for all books created by any administrator, you
-	could simply use:
-		`Created By` in [ User `auth_groups` = 'admin' ]
-	The first thing that happens is the sub query is evaluated
-	(note that the sub-query must define what model we're searching
-	on), then that value replaces the original query:
-		`Created By` in ('123987123-29384732', '129387218371-1293874213'...)
-	When processed, this is translated into the SimpleDB query:
-		`created_by` in ('123987123-29384732', '129387218371-1293874213'...)
+        For a simple example, take a model Book, which extends
+        this base-class therefore has a created_by property.
+        To look for all books created by any administrator, you
+        could simply use:
+                `Created By` in [ User `auth_groups` = 'admin' ]
+        The first thing that happens is the sub query is evaluated
+        (note that the sub-query must define what model we're searching
+        on), then that value replaces the original query:
+                `Created By` in ('123987123-29384732', '129387218371-1293874213'...)
+        When processed, this is translated into the SimpleDB query:
+                `created_by` in ('123987123-29384732', '129387218371-1293874213'...)
 
-	:NOTE: Due to this handling of passing the query directly onto SDB,
-	you're limitted to the number of query modifiers you may use. This may be
-	quite quickly reached if you hit a sub-query which returns a lot of results.
-	I haven't yet figured out a better way to handle this.
-	"""
-	# First we need to find and resolve any sub-queries
-	qs = _findSubQueries(cls, qs)
-	for prop in cls.properties():
-		qs = qs.replace("`%s`" % prop.verbose_name, "`%s`" % prop.name)
-	q = cls.all()
-	q.select = qs
+        :NOTE: Due to this handling of passing the query directly onto SDB,
+        you're limitted to the number of query modifiers you may use. This may be
+        quite quickly reached if you hit a sub-query which returns a lot of results.
+        I haven't yet figured out a better way to handle this.
+        """
+        # First we need to find and resolve any sub-queries
+        qs = _findSubQueries(cls, qs)
+        for prop in cls.properties():
+                qs = qs.replace("`%s`" % prop.verbose_name, "`%s`" % prop.name)
+        q = cls.all()
+        q.select = qs
 
-	return q
+        return q
 
 def _findSubQueries(cls, qs):
-	"""Find any possible sub-queries in this query
-	This is a complicated bit of parsing which essentially
-	allows for nested sub-queries"""
-	# If there's no "[" in it, just return the query
-	if not "[" in qs:
-		return qs
-	# Otherwise, we split this apart, 
-	# the retQ is the return query we're
-	# building, and the leftovers still need
-	# to be processed
-	(retQ, leftovers) = qs.split("[", 1)
-	leftovers = _findSubQueries(cls, leftovers).split("]", 1)
-	subQ = leftovers[0].strip()
+        """Find any possible sub-queries in this query
+        This is a complicated bit of parsing which essentially
+        allows for nested sub-queries"""
+        # If there's no "[" in it, just return the query
+        if not "[" in qs:
+                return qs
+        # Otherwise, we split this apart, 
+        # the retQ is the return query we're
+        # building, and the leftovers still need
+        # to be processed
+        (retQ, leftovers) = qs.split("[", 1)
+        leftovers = _findSubQueries(cls, leftovers).split("]", 1)
+        subQ = leftovers[0].strip()
 
-	# Now that we FOUND the sub query, we need to 
-	# perform the query, and insert the IDs in
-	# it's place
-	# Step 1, find the model to use
-	(model_name, q2) = subQ.split(" ", 1)
-	model = BotoModel.find_subclass(model_name)
-	if not model:
-		raise Exception, "Error, model: %s not found" % model_name
-	subq_results = query(model, q2)
-	# A limit placed here to prevent catostrophic failures, 
-	# you can't really make this much higher or bad things happen
-	subq_results.limit = 30
+        # Now that we FOUND the sub query, we need to 
+        # perform the query, and insert the IDs in
+        # it's place
+        # Step 1, find the model to use
+        (model_name, q2) = subQ.split(" ", 1)
+        model = BotoModel.find_subclass(model_name)
+        if not model:
+                raise Exception, "Error, model: %s not found" % model_name
+        subq_results = query(model, q2)
+        # A limit placed here to prevent catostrophic failures, 
+        # you can't really make this much higher or bad things happen
+        subq_results.limit = 30
 
-	ids = ["'%s'" % obj.id for obj in subq_results]
-	retQ += "(%s)" % ",".join(ids)
-	if len(leftovers) > 1:
-		retQ += leftovers[1]
+        ids = ["'%s'" % obj.id for obj in subq_results]
+        retQ += "(%s)" % ",".join(ids)
+        if len(leftovers) > 1:
+                retQ += leftovers[1]
 
-	return retQ
+        return retQ
