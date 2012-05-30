@@ -1,4 +1,4 @@
-# Copyright (c) 2008 Chris Moyer http://coredumped.org
+# Copyright (c) 2006,2007,2008 Mitch Garnaat http://garnaat.org/
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
@@ -18,19 +18,42 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from botoweb.db.botomodel import Model
-from botoweb.db import property
-from botoweb.resources.user import User
 
-class FilterRule(Model):
-	"""
-	Filter Rule
-	"""
-	user = property.ReferenceProperty(User)
-	path = property.StringProperty(default="*")
-	method = property.StringProperty(default="*")
+class Key(object):
 
-	weight = property.IntegerProperty()
+	@classmethod
+	def from_path(cls, *args, **kwds):
+		raise NotImplementedError, "Paths are not currently supported"
 
-	input_filter = property.BlobProperty()
-	output_filter = property.BlobProperty()
+	def __init__(self, encoded=None, obj=None):
+		self.name = None
+		if obj:
+			self.id = obj.id
+			self.kind = obj.kind()
+		else:
+			self.id = None
+			self.kind = None
+
+	def app(self):
+		raise NotImplementedError, "Applications are not currently supported"
+
+	def kind(self):
+		return self.kind
+
+	def id(self):
+		return self.id
+
+	def name(self):
+		raise NotImplementedError, "Key Names are not currently supported"
+
+	def id_or_name(self):
+		return self.id
+
+	def has_id_or_name(self):
+		return self.id != None
+
+	def parent(self):
+		raise NotImplementedError, "Key parents are not currently supported"
+		
+	def __str__(self):
+		return self.id_or_name()

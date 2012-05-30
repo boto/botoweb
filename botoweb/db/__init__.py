@@ -3,13 +3,13 @@
 #
 # botoweb DB module overrides, this provides one simple
 # location for users to pull in the DB modules from
-# and adds a few new features on top of boto.sdb.db
+# and adds a few new features on top of botoweb.db
 
-import unicodedata
-import re
 def index_string(s):
 	"""Generates an index of this string,
 	stripping off all accents and making everything upper case"""
+	import unicodedata
+	import re
 	if isinstance(s, list):
 		s = " ".join(s)
 	if not isinstance(s, unicode):

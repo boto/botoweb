@@ -4,8 +4,8 @@ from boto.exception import SDBPersistenceError, SDBResponseError
 from botoweb.appserver.handlers import RequestHandler
 
 from boto.utils import find_class, Password
-from boto.sdb.db.blob import Blob
-from boto.sdb.db.model import Model
+from botoweb.db.blob import Blob
+from botoweb.db.botomodel import Model
 
 import urllib
 
@@ -452,7 +452,7 @@ class DBHandler(RequestHandler):
 
 	def get_property(self, request, response, obj, property):
 		"""Return just a single property"""
-		from boto.sdb.db.query import Query
+		from botoweb.db.query import Query
 		from boto.s3.key import Key
 
 		# Figure out what format to send

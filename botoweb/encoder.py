@@ -30,7 +30,7 @@
 from botoweb.fixed_datetime import datetime
 from datetime import datetime as datetime_type
 from datetime import date
-from boto.sdb.db.model import Model
+from botoweb.db.botomodel import Model
 
 
 url_map = None
@@ -103,8 +103,8 @@ def encode_datetime(value):
 
 def encode_object(value):
 	"""Encode a generic object (must have an "id" attribute)"""
-	from boto.sdb.db.query import Query
-	from boto.sdb.db.blob import Blob
+	from botoweb.db.query import Query
+	from botoweb.db.blob import Blob
 	from boto.s3.key import Key
 	if isinstance(value, Query):
 		return encode_query(value)

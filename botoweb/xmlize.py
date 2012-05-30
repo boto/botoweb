@@ -27,7 +27,7 @@ from botoweb.exceptions import BadRequest
 from datetime import datetime as datetime_type
 from datetime import date
 from boto.utils import Password
-from boto.sdb.db.key import Key
+from botoweb.db.key import Key
 
 TYPE_NAMES = {
 	str: "string",
@@ -135,8 +135,8 @@ class XMLSerializer(object):
 
 	def encode_object(self, prop_name, prop_value):
 		"""Encode a generic object (must have an "id" attribute)"""
-		from boto.sdb.db.query import Query
-		from boto.sdb.db.blob import Blob
+		from botoweb.db.query import Query
+		from botoweb.db.blob import Blob
 		from boto.s3.key import Key
 		prop_type = prop_value.__class__.__name__
 		if isinstance(prop_value, Query):
@@ -202,8 +202,8 @@ class XMLSerializer(object):
 
 	def dump(self, obj, objname = None):
 		"""Dump this object to our serialization"""
-		from boto.sdb.db.model import Model
-		from boto.sdb.db.property import CalculatedProperty
+		from botoweb.db.botomodel import Model
+		from botoweb.db.property import CalculatedProperty
 		if not isinstance(obj, object):
 			if not objname:
 				objname = obj.__name__

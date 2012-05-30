@@ -1,10 +1,26 @@
+# Copyright (c) 2006,2007,2008 Mitch Garnaat http://garnaat.org/
 #
-# Author: Chris Moyer http://coredumped.org/
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish, dis-
+# tribute, sublicense, and/or sell copies of the Software, and to permit
+# persons to whom the Software is furnished to do so, subject to the fol-
+# lowing conditions:
 #
-from botoweb.db.botomodel import Model as BotoModel
-from botoweb.db.property import DateTimeProperty, ReferenceProperty, BooleanProperty, Property
-from botoweb.resources.user import User
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
+# ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
 from botoweb.db.manager import get_manager
+from botoweb.db.property import Property
 from botoweb.db.key import Key
 from botoweb.db.query import Query
 import boto
@@ -17,7 +33,7 @@ class ModelMeta(type):
 		# Make sure this is a subclass of Model - mainly copied from django ModelBase (thanks!)
 		cls.__sub_classes__ = []
 		try:
-			if filter(lambda b: issubclass(b, BotoModel), bases):
+			if filter(lambda b: issubclass(b, Model), bases):
 				for base in bases:
 					base.__sub_classes__.append(cls)
 				cls._manager = get_manager(cls)
@@ -33,11 +49,11 @@ class ModelMeta(type):
 						prop_names.append(prop.name)
 				setattr(cls, '_prop_names', prop_names)
 		except NameError:
-			# 'BotoModel' isn't defined yet, meaning we're looking at our own
-			# BotoModel class, defined below.
+			# 'Model' isn't defined yet, meaning we're looking at our own
+			# Model class, defined below.
 			pass
 		
-class BotoooooModel(object):
+class Model(object):
 	__metaclass__ = ModelMeta
 	__consistent__ = False # Consistent is set off by default
 	id = None
@@ -157,7 +173,7 @@ class BotoooooModel(object):
 		return str(self.id)
 	
 	def __eq__(self, other):
-		return other and isinstance(other, BotoModel) and self.id == other.id
+		return other and isinstance(other, Model) and self.id == other.id
 
 	def _get_raw_item(self):
 		return self._manager.get_raw_item(self)
@@ -181,7 +197,7 @@ class BotoooooModel(object):
 			Confict status code.
 		:type expected_value: tuple or list
 		:return: This object
-		:rtype: :class:`botoweb.db.BotoModel`
+		:rtype: :class:`boto.sdb.db.model.Model`
 		"""
 		self._manager.save_object(self, expected_value)
 		return self
@@ -195,7 +211,7 @@ class BotoooooModel(object):
 		:param attrs: Attributes to save, key->value dict
 		:type attrs: dict
 		:return: self
-		:rtype: :class:`botoweb.db.BotoModel`
+		:rtype: :class:`boto.sdb.db.model.Model`
 		"""
 		assert(isinstance(attrs, dict)), "Argument must be a dict of key->values to save"
 		for prop_name in attrs:
@@ -213,7 +229,7 @@ class BotoooooModel(object):
 		:param attrs: Attributes to save, as a list of string names
 		:type attrs: list
 		:return: self
-		:rtype: :class:`botoweb.db.BotoModel`
+		:rtype: :class:`boto.sdb.db.model.Model`
 		"""
 		assert(isinstance(attrs, list)), "Argument must be a list of names of keys to delete."
 		self._manager.domain.delete_attributes(self.id, attrs)
@@ -254,7 +270,7 @@ class BotoooooModel(object):
 			if r != None:
 				return r
 
-class Expando(BotoModel):
+class Expando(Model):
 
 	def __setattr__(self, name, value):
 		if name in self._prop_names:
@@ -275,98 +291,4 @@ class Expando(BotoModel):
 				return value
 		raise AttributeError
 
-class Model(BotoModel):
-	"""Standard model plus added some basic tracking information"""
-	created_at = DateTimeProperty(auto_now_add=True, verbose_name="Created Date")
-	created_by = ReferenceProperty(User, verbose_name="Created By")
-
-	modified_at = DateTimeProperty(verbose_name="Last Modified Date")
-	modified_by = ReferenceProperty(User, verbose_name="Last Modified By")
-
-	deleted = BooleanProperty(verbose_name="Deleted")
-	deleted_at = DateTimeProperty(verbose_name="Deleted Date")
-	deleted_by = ReferenceProperty(User, verbose_name="Deleted By")
-
-	# This is set every time the object is touched, even if it's by the system
-	sys_modstamp = DateTimeProperty(auto_now=True)
-
-	@classmethod
-	def query(cls, qs):
-		return query(cls, qs)
-
-def query(cls, qs):
-	"""A generic SQL-like query function, which even allows for
-	nested queries using special syntax. 
-
-	In general, this follows the generic SQL-based syntax that
-	SDB uses after the WHERE clause, but it adds a special 
-	modifier for allowing you to specify properties by 
-	VerboseName or name. It also allows you to specify 
-	sub-queries using [ ], which returns a list of items in 
-	it's place. These are always evaluated first, before 
-	evaluating the rest of the query.
-
-		* Backticks (`) specify a property.
-		* Single quotes (') specify a value.
-		* Square Brackets ([ ]) specify a sub-query.
-
-	For a simple example, take a model Book, which extends
-	this base-class therefore has a created_by property.
-	To look for all books created by any administrator, you
-	could simply use:
-		`Created By` in [ User `auth_groups` = 'admin' ]
-	The first thing that happens is the sub query is evaluated
-	(note that the sub-query must define what model we're searching
-	on), then that value replaces the original query:
-		`Created By` in ('123987123-29384732', '129387218371-1293874213'...)
-	When processed, this is translated into the SimpleDB query:
-		`created_by` in ('123987123-29384732', '129387218371-1293874213'...)
-
-	:NOTE: Due to this handling of passing the query directly onto SDB,
-	you're limitted to the number of query modifiers you may use. This may be
-	quite quickly reached if you hit a sub-query which returns a lot of results.
-	I haven't yet figured out a better way to handle this.
-	"""
-	# First we need to find and resolve any sub-queries
-	qs = _findSubQueries(cls, qs)
-	for prop in cls.properties():
-		qs = qs.replace("`%s`" % prop.verbose_name, "`%s`" % prop.name)
-	q = cls.all()
-	q.select = qs
-
-	return q
-
-def _findSubQueries(cls, qs):
-	"""Find any possible sub-queries in this query
-	This is a complicated bit of parsing which essentially
-	allows for nested sub-queries"""
-	# If there's no "[" in it, just return the query
-	if not "[" in qs:
-		return qs
-	# Otherwise, we split this apart, 
-	# the retQ is the return query we're
-	# building, and the leftovers still need
-	# to be processed
-	(retQ, leftovers) = qs.split("[", 1)
-	leftovers = _findSubQueries(cls, leftovers).split("]", 1)
-	subQ = leftovers[0].strip()
-
-	# Now that we FOUND the sub query, we need to 
-	# perform the query, and insert the IDs in
-	# it's place
-	# Step 1, find the model to use
-	(model_name, q2) = subQ.split(" ", 1)
-	model = BotoModel.find_subclass(model_name)
-	if not model:
-		raise Exception, "Error, model: %s not found" % model_name
-	subq_results = query(model, q2)
-	# A limit placed here to prevent catostrophic failures, 
-	# you can't really make this much higher or bad things happen
-	subq_results.limit = 30
-
-	ids = ["'%s'" % obj.id for obj in subq_results]
-	retQ += "(%s)" % ",".join(ids)
-	if len(leftovers) > 1:
-		retQ += leftovers[1]
-
-	return retQ
+	

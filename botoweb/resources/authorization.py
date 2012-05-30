@@ -18,8 +18,8 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from boto.sdb.db.model import Model
-from boto.sdb.db import property
+from botoweb.db.botomodel import Model
+from botoweb.db import property
 
 class Authorization(Model):
 	"""Authorization Grant"""
