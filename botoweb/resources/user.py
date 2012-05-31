@@ -110,14 +110,27 @@ class User(Model):
 		return response.read()
 
 
-	def generate_password(self, length=10):
+	def generate_password(self, length=10, digits=True, loweralpha=True, upperalpha=True):
 		"""Generate and return a random password
 		:param length: the optional length of the password (default 10
 		:type length: int
 		"""
 		try:
 			import boto, urllib2
-			url = "https://www.random.org/cgi-bin/randstring?num=1&len=%s&digits=on&upperalpha=on&loweralpha=on&unique=on&format=text&rnd=new" % (length)
+			if digits:
+				digits = "on"
+			else:
+				digits = "off"
+			if loweralpha:
+				loweralpha = "on"
+			else:
+				loweralpha = "off"
+			if upperalpha:
+				upperalpha = "on"
+			else:
+				upperalpha = "off"
+
+			url = "https://www.random.org/cgi-bin/randstring?num=1&len=%s&digits=%s&upperalpha=%s&loweralpha=%s&unique=on&format=text&rnd=new" % (length, digits, upperalpha, loweralpha)
 			headers = {"User-Agent": "%s %s (%s)" % (boto.config.get("app", "name", "botoweb"), boto.config.get("app", "version", "0.1"), boto.config.get("app", "admin_email", ""))}
 			req = urllib2.Request(url, None, headers)
 			hand = urllib2.urlopen(req)
