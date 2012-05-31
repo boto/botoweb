@@ -78,10 +78,6 @@ class Environment(object):
 		if load_modules:
 			path = os.path.join(path, "modules")
 			for mod_name in self.dist.resource_listdir(path):
-				try:
-					__import__(mod_name)
-				except ImportError:
-					continue
 				log.info("Loading Module config: %s" % mod_name)
 				conf = self.get_config(os.path.join(path, mod_name))
 				config = self._merge(config, conf)
