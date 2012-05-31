@@ -30,6 +30,9 @@ def upload_file(file_path, bucket, prefix=""):
 	"""
 	f = open(file_path, "r")
 	file_name = os.path.basename(file_path)
+	# Ignore any "Makefile" or hidden files
+	if file_name == "Makefile" or file_name.startswith("."):
+		return
 	s3_path = "%s/%s" % (prefix, file_name)
 	update_file(f, bucket, s3_path)
 	if file_name == "index.html":
