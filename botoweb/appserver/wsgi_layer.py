@@ -64,10 +64,7 @@ class WSGILayer(object):
 		error catching.
 		"""
 		resp = Response()
-		try:
-			req = Request(environ)
-		except:
-			req = None
+		req = Request(environ)
 		try:
 			# If there's too many threads already, just toss a
 			# ServiceUnavailable to let the user know they should re-connect
