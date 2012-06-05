@@ -105,7 +105,7 @@ class WSGILayer(object):
 
 	def format_exception(self, e, resp, req):
 		resp.set_status(e.code)
-		if(req.file_extension == "json" or self.env.config.get("app", "format") == 'json'):
+		if((req and req.file_extension == "json") or self.env.config.get("app", "format") == 'json'):
 			resp.content_type = "application/json"
 			resp.body = e.to_json()
 		else:
