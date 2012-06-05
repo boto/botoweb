@@ -27,7 +27,6 @@ import re
 import boto
 import boto.s3.key
 from botoweb.db.blob import Blob
-
 import logging
 log = logging.getLogger("newscore")
 class Property(object):

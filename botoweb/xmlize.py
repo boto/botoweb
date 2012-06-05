@@ -202,7 +202,7 @@ class XMLSerializer(object):
 
 	def dump(self, obj, objname = None):
 		"""Dump this object to our serialization"""
-		from botoweb.db.botomodel import Model
+		from botoweb.db.coremodel import Model
 		from botoweb.db.property import CalculatedProperty
 		if not isinstance(obj, object):
 			if not objname:

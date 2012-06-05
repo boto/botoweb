@@ -30,7 +30,7 @@
 from botoweb.fixed_datetime import datetime
 from datetime import datetime as datetime_type
 from datetime import date
-from botoweb.db.botomodel import Model
+from botoweb.db.coremodel import Model
 
 
 url_map = None

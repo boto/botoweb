@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from botoweb.db.key import Key
-from botoweb.db.botomodel import Model
+from botoweb.db.coremodel import Model
 import psycopg2
 import psycopg2.extensions
 import uuid

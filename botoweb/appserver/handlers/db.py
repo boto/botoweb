@@ -5,7 +5,7 @@ from botoweb.appserver.handlers import RequestHandler
 
 from boto.utils import find_class, Password
 from botoweb.db.blob import Blob
-from botoweb.db.botomodel import Model
+from botoweb.db.coremodel import Model
 
 import urllib
 

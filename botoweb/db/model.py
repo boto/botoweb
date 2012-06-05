@@ -2,7 +2,7 @@
 # Author: Chris Moyer http://coredumped.org/
 #
 
-from botoweb.db.botomodel import Model as BotoModel
+from botoweb.db.coremodel import Model as BotoModel
 from botoweb.db.property import DateTimeProperty, ReferenceProperty, BooleanProperty
 from botoweb.resources.user import User
 

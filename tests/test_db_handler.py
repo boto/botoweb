@@ -4,7 +4,7 @@
 import boto
 import time
 from botoweb.appserver.handlers.db import DBHandler
-from botoweb.db.botomodel import Model
+from botoweb.db.coremodel import Model
 from botoweb.db.property import StringProperty
 from botoweb.environment import Environment
 from botoweb.xmlize import ProxyObject

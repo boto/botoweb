@@ -21,7 +21,7 @@
 import boto
 from boto.utils import find_class, Password
 from botoweb.db.key import Key
-from botoweb.db.botomodel import Model
+from botoweb.db.coremodel import Model
 from datetime import datetime
 from xml.dom.minidom import getDOMImplementation, parse, parseString, Node
 

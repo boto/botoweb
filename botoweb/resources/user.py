@@ -41,7 +41,7 @@ CREATED_TEMPLATE = """<html>
 
 SMS_URL = "https://api.twilio.com/2008-08-01/Accounts/%s/SMS/Messages.json"
 
-from botoweb.db.botomodel import Model
+from botoweb.db.coremodel import Model
 from botoweb.db import property
 
 class User(Model):

@@ -27,7 +27,7 @@ class ObjectTest(object):
 	"""Test Object to dump/load from XML"""
 	pass
 
-from botoweb.db.botomodel import Model
+from botoweb.db.coremodel import Model
 from botoweb.db.property import ReferenceProperty, StringProperty
 
 class ObjectTestReference(Model):

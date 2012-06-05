@@ -24,7 +24,7 @@ import re
 from boto.utils import find_class
 import uuid
 from botoweb.db.key import Key
-from botoweb.db.botomodel import Model
+from botoweb.db.coremodel import Model
 from botoweb.db.blob import Blob
 from botoweb.db.property import ListProperty, MapProperty
 from datetime import datetime, date, time
