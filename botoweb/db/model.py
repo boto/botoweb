@@ -2,11 +2,11 @@
 # Author: Chris Moyer http://coredumped.org/
 #
 
-from botoweb.db.coremodel import Model as BotoModel
+from botoweb.db.coremodel import Model as CoreModel
 from botoweb.db.property import DateTimeProperty, ReferenceProperty, BooleanProperty
 from botoweb.resources.user import User
 
-class Model(BotoModel):
+class Model(CoreModel):
         """Standard model plus added some basic tracking information"""
         created_at = DateTimeProperty(auto_now_add=True, verbose_name="Created Date")
         created_by = ReferenceProperty(User, verbose_name="Created By")
@@ -87,7 +87,7 @@ def _findSubQueries(cls, qs):
         # it's place
         # Step 1, find the model to use
         (model_name, q2) = subQ.split(" ", 1)
-        model = BotoModel.find_subclass(model_name)
+        model = CoreModel.find_subclass(model_name)
         if not model:
                 raise Exception, "Error, model: %s not found" % model_name
         subq_results = query(model, q2)
