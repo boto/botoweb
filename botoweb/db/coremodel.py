@@ -76,6 +76,9 @@ class Model(object):
 	
 	@classmethod
 	def lookup(*args,**kwargs):
+		""" 
+			returns get_by_id function value from the class that called lookup.
+		"""
 		return args[0].get_by_id(*args[1:], **kwargs)
 			
 	@classmethod
