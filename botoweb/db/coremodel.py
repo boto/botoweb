@@ -73,6 +73,10 @@ class Model(object):
 		if not manager:
 			manager = cls._manager
 		return manager.get_object(cls, id)
+	
+	@classmethod
+	def lookup(*args,**kwargs):
+		return args[0].get_by_id(*args[1:], **kwargs)
 			
 	@classmethod
 	def get_by_id(cls, ids=None, parent=None):
