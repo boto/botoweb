@@ -129,10 +129,10 @@ class DBHandler(RequestHandler):
 		if id:
 			vals = id.split("/",1)
 			if len(vals) > 1:
-				obj = self.db_class.get_by_id(vals[0])
+				obj = self.db_class.lookup(vals[0])
 				return self.update_property(request, response, obj, vals[1])
 			else:
-				obj = self.db_class.get_by_id(id)
+				obj = self.db_class.lookup(id)
 				if obj:
 					raise Conflict("Object %s already exists" % id)
 
@@ -158,7 +158,7 @@ class DBHandler(RequestHandler):
 		content = None
 		obj = None
 		if id:
-			obj = self.db_class.get_by_id(id)
+			obj = self.db_class.lookup(id)
 
 		if not obj:
 			raise NotFound()
@@ -203,7 +203,7 @@ class DBHandler(RequestHandler):
 		"""
 		if value:
 			if Model in type.mro():
-				return type.get_by_id(value)
+				return type.lookup(value)
 			elif type == bool:
 				if value.lower() == 'true':
 					return True
@@ -368,7 +368,7 @@ class DBHandler(RequestHandler):
 		"""
 		obj = None
 		try:
-			obj = self.db_class.get_by_id(id)
+			obj = self.db_class.lookup(id)
 		except:
 			raise NotFound()
 		if not obj:
