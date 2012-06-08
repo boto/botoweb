@@ -75,11 +75,11 @@ class Model(object):
 		return manager.get_object(cls, id)
 	
 	@classmethod
-	def lookup(*args,**kwargs):
+	def lookup(cls, *args,**kwargs):
 		""" 
 			returns get_by_id function value from the class that called lookup.
 		"""
-		return args[0].get_by_id(*args[1:], **kwargs)
+		return cls.get_by_id(*args, **kwargs)
 			
 	@classmethod
 	def get_by_id(cls, ids=None, parent=None):
