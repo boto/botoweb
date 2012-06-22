@@ -3,13 +3,14 @@
 #Description: Creates Sphinx documentation for given modules.
 
 import commands
+import sys
 
 class ModuleClass(object):
 	def __init__(self,module):
 		"""
 			Imports the module Sphinx will generate documentation for and creates the paths for the resulting documentation.
-				:param module: the module to be documented.
-				:type module: str
+			:param module: the module to be documented.
+			:type module: str
 		"""
 		module = __import__(module)
 		self.path = commands.getoutput(module.__file__).split(":")[1]
@@ -49,12 +50,9 @@ class ModuleClass(object):
 
 
 if __name__ == "__main__":
-	""" 
-		Usage example: python create_docs.py -b html,latex botoweb newscrawler
-	"""
 	from optparse import OptionParser
 	parser = OptionParser()
-	parser.add_option("-b", "--build_list", help="Add build types separated by comma. Build types include html,latex,dirhtml,singlehtml,text", dest="build_list")
+	parser.add_option("-b", "--build_list", help="Add build types separated by comma. Build types include html,latex,dirhtml,singlehtml,text", default="html", dest="build_list")
 	(options, args) = parser.parse_args()
 
 	for module in args:
