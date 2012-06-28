@@ -597,7 +597,10 @@ class SDBManager(object):
 								filter_parts_sub.append(self._build_filter(property, name, op, v))
 						else:
 							filter_parts_sub.append(self._build_filter(property, name, op, val))
-					filter_parts.append("(%s)" % (" OR ".join(filter_parts_sub)))
+					if op in ["not like", "not", "!="]:
+						filter_parts.append("(%s)" % (" AND ".join(filter_parts_sub)))
+					else:
+						filter_parts.append("(%s)" % (" OR ".join(filter_parts_sub)))
 				else:
 					val = self.encode_value(property, value)
 					if isinstance(val, list):
