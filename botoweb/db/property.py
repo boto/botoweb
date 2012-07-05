@@ -624,8 +624,8 @@ class ListProperty(Property):
 				if item_type == (int, long):
 					raise ValueError, 'Items in the %s list must all be integers.' % self.name
 				else:
-					raise ValueError('Items in the %s list must all be %s instances' %
-									(self.name, self.item_type.__name__))
+					raise ValueError('Items in the %s list must all be %s instances, got a %s instead' %
+									(self.name, self.item_type.__name__, type(item)))
 		return value
 
 	def empty(self, value):

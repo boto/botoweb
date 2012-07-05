@@ -4,9 +4,13 @@ import yaml
 from botoweb.config import Config
 from pkg_resources import get_provider, ResourceManager
 
+from botoweb import xmlize
+from boto.utils import find_class
+
 import boto 
 import logging
 log = logging.getLogger("botoweb")
+
 
 class Environment(object):
 	"""botoweb Environment"""
@@ -49,6 +53,18 @@ class Environment(object):
 			self.config['DB']['db_name'] = self.config["default_db"]
 		if self.config.has_key("session_db"):
 			self.config['DB']['Session'] = {'db_name': self.config["session_db"]}
+
+		# Bootstrap importing all db_classes for XMLize
+		if self.config['botoweb'].has_key("handlers"):
+			for handler in self.config['botoweb']['handlers']:
+				if handler.has_key("db_class"):
+					try:
+						db_class = find_class(handler['db_class'])
+					except:
+						log.exception("Could not load class: %s" % handler['db_class'])
+						db_class = None
+					if db_class:
+						xmlize.register(db_class)
 
 	def get_config(self, path):
 		"""Get configuration file at path
