@@ -83,7 +83,6 @@ class DynamoModel(Item):
 		"""Get the table object for the given class"""
 		if cls._table is None:
 			conn = boto.connect_dynamodb()
-			conn.http_exceptions = list(conn.http_exceptions) + [ssl.SSLError]
 			tbl_name = cls._table_name
 			if not tbl_name:
 				tbl_name = cls.__name__

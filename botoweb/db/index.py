@@ -54,7 +54,6 @@ class Index(object):
 		if not self._table and self.name is not None:
 			import boto
 			conn = boto.connect_dynamodb()
-			conn.http_exceptions = list(conn.http_exceptions) + [ssl.SSLError]
 			try:
 				table = conn.lookup(self.name)
 			except:
