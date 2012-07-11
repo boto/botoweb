@@ -57,7 +57,7 @@ class AuthLayer(WSGILayer):
 					if req.user.has_auth_group(group):
 						authed = True
 				if not authed:
-					raise Unauthorized()
+					raise Forbidden()
 		if req.user != None and req.user.auth_token != None:
 			response.set_cookie('BW_AUTH_TOKEN', req.user.auth_token)
 		if self.app:
