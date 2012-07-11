@@ -26,6 +26,7 @@
 # different variations of a string in order to 
 # get out a value. Most commonly this would be used
 # to index an object (by reference)
+import ssl
 import time
 import logging
 log = logging.getLogger("botoweb.index")
@@ -53,6 +54,7 @@ class Index(object):
 		if not self._table and self.name is not None:
 			import boto
 			conn = boto.connect_dynamodb()
+			conn.http_exceptions = list(conn.http_exceptions) + [ssl.SSLError]
 			try:
 				table = conn.lookup(self.name)
 			except:

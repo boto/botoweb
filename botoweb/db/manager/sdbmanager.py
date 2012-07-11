@@ -21,6 +21,7 @@
 # IN THE SOFTWARE.
 import boto.sdb
 import re
+import ssl
 from boto.utils import find_class
 import uuid
 from botoweb.db.key import Key
@@ -430,6 +431,7 @@ class SDBManager(object):
 		except IndexError:
 			pass
 		self._sdb = boto.connect_sdb(**args)
+		self._sdb.http_exceptions = list(self._sdb.http_exceptions) + [ssl.SSLError]
 		# This assumes that the domain has already been created
 		# It's much more efficient to do it this way rather than
 		# having this make a roundtrip each time to validate.
@@ -457,6 +459,7 @@ class SDBManager(object):
 	def get_s3_connection(self):
 		if not self.s3:
 			self.s3 = boto.connect_s3(self.db_user, self.db_passwd)
+			self.s3.http_exceptions = list(self.s3.http_exceptions) + [ssl.SSLError]
 		return self.s3
 
 	def get_blob_bucket(self, bucket_name=None):
