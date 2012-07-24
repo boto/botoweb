@@ -23,6 +23,7 @@
 # Description: DynamoDB related objects.
 # This is a lighter weight ORM for DynamoDB
 
+import ssl
 import boto
 from boto.dynamodb.item import Item
 from boto.dynamodb.table import Table
