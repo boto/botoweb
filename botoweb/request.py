@@ -6,6 +6,7 @@ import logging
 log = logging.getLogger("botoweb.request")
 from botoweb.response import Response
 import time
+import json
 
 CACHE_TIMEOUT = 300 # Keep user objects around for 300 seconds (5 minutes)
 USER_CACHE = {}
@@ -77,7 +78,7 @@ class Request(webob.Request):
 				vals[k] = self.POST[k]
 		return vals
 
-	def getUser(self):
+	def getUser(self, session_cache=None):
 		"""
 		Get the user from this request object
 		@return: User object, or None
@@ -110,6 +111,24 @@ class Request(webob.Request):
 						if user and user.password == password:
 							self._user = user
 							return self._user
+							
+				# ajax session authentication
+				session_key = self.cookies.get("session")
+				if session_key and session_cache:
+					session = session_cache.get(str(session_key))
+					session = json.loads(session)
+					addr = self.environ.get("REMOTE_ADDR")
+					if addr == session["last_ip"]:
+						try:
+							user = User.get_by_id(session["user"])
+							addCachedUser(user)
+						except:
+							user = None
+					if user:
+						self._user = user
+						return self._user
+
+
 				# Cookie based Authentication Token
 				auth_token_header = self.cookies.get("BW_AUTH_TOKEN")
 				if auth_token_header:

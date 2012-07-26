@@ -22,17 +22,16 @@ import httplib
 
 import boto
 import botoweb
+from botoweb.resources.user import User
 from botoweb.request import Request
 from botoweb.response import Response
 from botoweb.exceptions import *
-from datetime import datetime
 
+import json
+import uuid
 import traceback
 import logging
 log = logging.getLogger("botoweb")
-
-import re
-
 
 class WSGILayer(object):
 	"""
@@ -57,6 +56,14 @@ class WSGILayer(object):
 		"""
 		self.app = app
 		self.update(env)
+		servers = []
+		if env.config.has_section("cache"):
+			import memcache
+			for server in env.config['cache']['servers']:
+				servers.append("%s:%s" % (server['host'], server['port']))
+			self.memc = memcache.Client(servers)
+		else:
+			self.memc = None
 
 	def __call__(self, environ, start_response):
 		"""
@@ -65,6 +72,7 @@ class WSGILayer(object):
 		"""
 		resp = Response()
 		req = Request(environ)
+
 		try:
 			# If there's too many threads already, just toss a
 			# ServiceUnavailable to let the user know they should re-connect
@@ -85,6 +93,53 @@ class WSGILayer(object):
 			resp.set_status(e.code)
 			if self.env.config.get("app", "basic_auth", True):
 				resp.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
+			
+			# ajax authorization relies on memcached for session persistence.
+			elif self.env.config.get("app", "ajax_auth", False) and self.memc:
+				
+				# the session challenge header was set in the request, so
+				# assume this is an authentication attempt and check the
+				# hashed values provided for the user against what's stored
+				# in the db.
+				if req.headers.get("X-Session-Challenge", False):
+					challenge_id, challenge = req.headers.get("X-Session-Challenge").split(":")
+					challenge_hash = req.headers.get("X-Challenge-Hash")
+					username = req.headers.get("X-Username")
+					stored_challenge = self.memc.get(str(challenge_id))
+
+					print challenge, stored_challenge
+					assert challenge == stored_challenge, "returned challenge doesn't match stored value"
+
+					try:
+						user = User.find(username=username).next()
+					except StopIteration:
+						raise NotFound("Invalid user.")
+
+					if check_challenge(challenge_hash, stored_challenge, str(user.password)):
+						# save a session in memcache
+						session = {
+							"user": user.id,
+							"last_ip": req.environ.get("REMOTE_ADDR"),
+							"challenge": challenge,
+							"session_key": str(uuid.uuid4())
+						}
+						self.memc.delete(str(challenge_id))
+						self.memc.set(session["session_key"], str(json.dumps(session)))
+						# this cookie will be encrypted and last until the browser is
+						# closed.
+						resp.set_cookie("session", session["session_key"], secure=True)
+						resp.body = json.dumps(session)
+						resp.content_type = "application/json"
+						resp.set_status(200)
+						return resp(environ, start_response)
+
+				# generate a challenge value, cache it, and transmit it back
+				# to the user in the X-Session-Challenge custom header.
+				else:
+					challenge_id, challenge = generate_challenge()
+					self.memc.set(str(challenge_id), str(challenge))
+					resp.headers.add("X-Session-Challenge","%s:%s" % (challenge_id, challenge))
+
 			resp = self.format_exception(e, resp, req)
 		except HTTPException, e:
 			resp.set_status(e.code)
@@ -110,7 +165,6 @@ class WSGILayer(object):
 			e.to_xml().writexml(resp)
 		return resp
 
-
 	def update(self, env):
 		"""
 		Update this layer to use a new environment. Minimally
@@ -131,3 +185,42 @@ class WSGILayer(object):
 		"""Reload this application"""
 		if self.app:
 			return self.app.reload()
+
+	def validate_session(self, req):
+		"""
+		If a client has previously gone through the
+		session creation process successfully, then the client
+		should have a cookie with a session id that should match
+		a session stored in memcached. The ip address of the client
+		must match with the ip address stored for that session in order
+		to help verify that the session id hasn't been captured by
+		a 3rd party.
+
+		"""
+
+		user = None
+		if req.cookies and req.cookies.has_key("session"):
+			session = req.cookies.get("session")
+			session = self.memc.get(str(session))
+			if session:
+				session = json.loads(session)
+				if req.environ["REMOTE_ADDR"] == session["last_ip"]:
+					user = User.get_by_id(session["user"])
+		return user
+
+def generate_challenge():
+	import random
+	import uuid
+
+	challenge_id = str(uuid.uuid4())
+	challenge = random.getrandbits(32)
+	return challenge_id, str(challenge)
+
+def check_challenge(challenge_hash, challenge, password_hash):
+	import hashlib
+
+	sha512 = hashlib.sha512()
+	sha512.update(password_hash + str(challenge))
+	check_value = sha512.hexdigest()
+
+	return check_value == challenge_hash
