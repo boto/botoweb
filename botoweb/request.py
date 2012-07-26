@@ -90,6 +90,7 @@ class Request(webob.Request):
 		# already been attempted to be authed, 
 		# None if they haven't even been through 
 		# this yet
+
 		if self._user == None:
 			try:
 				self._user = False
@@ -104,7 +105,7 @@ class Request(webob.Request):
 						user = getCachedUser(username)
 						if not user:
 							try:
-								user = User.find(username=username,deleted=False).next()
+								user = botoweb.user.find(username=username,deleted=False).next()
 								addCachedUser(user)
 							except:
 								user = None
@@ -120,7 +121,7 @@ class Request(webob.Request):
 					addr = self.environ.get("REMOTE_ADDR")
 					if addr == session["last_ip"]:
 						try:
-							user = User.get_by_id(session["user"])
+							user = botoweb.user.get_by_id(session["user"])
 							addCachedUser(user)
 						except:
 							user = None
@@ -139,7 +140,7 @@ class Request(webob.Request):
 							user = getCachedUser(username)
 							if not user or not user.auth_token == unencoded_info:
 								try:
-									user = User.find(username=username,deleted=False).next()
+									user = botoweb.user.find(username=username,deleted=False).next()
 									addCachedUser(user)
 								except:
 									user = None
@@ -167,7 +168,7 @@ class Request(webob.Request):
 						# if so we use that to get the user
 						primary_key = profile.get("primaryKey")
 						if primary_key:
-							user = User.get_by_id(primary_key)
+							user = botoweb.user.get_by_id(primary_key)
 							if user:
 								boto.log.info("User '%s' logged in using PrimaryKey: %s" % (user, primary_key))
 
@@ -176,7 +177,7 @@ class Request(webob.Request):
 							auth_token = self.GET.get("auth_token")
 							if auth_token:
 								try:
-									user = User.find(auth_token=auth_token,deleted=False).next()
+									user = botoweb.user.find(auth_token=auth_token,deleted=False).next()
 								except:
 									user = None
 								if user:
@@ -187,7 +188,7 @@ class Request(webob.Request):
 						#  Try to get a user by OpenID identifier
 						if not user:
 							try:
-								user = User.find(oid=identifier,deleted=False).next()
+								user = botoweb.user.find(oid=identifier,deleted=False).next()
 							except:
 								user = None
 
@@ -195,7 +196,7 @@ class Request(webob.Request):
 						# via Email
 						if not user and email:
 							try:
-								user = User.find(email=email,deleted=False).next()
+								user = botoweb.user.find(email=email,deleted=False).next()
 							except:
 								user = None
 
@@ -221,7 +222,7 @@ class Request(webob.Request):
 					else:
 						boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
 						botoweb.report(auth_info['err']['msg'], status=500, req=self, name="LoginFailure", priority=1)
-			except Exception, e:
+			except Exception:
 				log.exception("Could not fetch user")
 
 		# This False means we tried by there was no User

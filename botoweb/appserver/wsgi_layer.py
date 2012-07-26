@@ -65,6 +65,8 @@ class WSGILayer(object):
 		else:
 			self.memc = None
 
+		botoweb.set_user_class()
+
 	def __call__(self, environ, start_response):
 		"""
 		Handles basic one-time-only WSGI setup, and handles
@@ -107,11 +109,10 @@ class WSGILayer(object):
 					username = req.headers.get("X-Username")
 					stored_challenge = self.memc.get(str(challenge_id))
 
-					print challenge, stored_challenge
 					assert challenge == stored_challenge, "returned challenge doesn't match stored value"
 
 					try:
-						user = User.find(username=username).next()
+						user = botoweb.user.find(username=username).next()
 					except StopIteration:
 						raise NotFound("Invalid user.")
 

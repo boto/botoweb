@@ -106,3 +106,29 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 			log.info("%s %s: %s" % (method, path, msg))
 		else:
 			log.error("%s %s: %s" % (method, path, msg))
+
+
+def set_user_class():
+
+	import botoweb
+	from botoweb.resources.user import User
+	botoweb.user = User
+
+	module_path = None
+
+	if botoweb.env:
+		module_path = botoweb.env.config.get("app", "user_class", False)
+
+	if module_path:
+		try:
+			path = ".".join(module_path.split(".")[:-1])
+			class_name = module_path.split(".")[-1]
+			mod = __import__(path, fromlist=[class_name])
+			botoweb.user = getattr(mod, class_name)
+		except ImportError:
+			log.warning("Couldn't import user class %s" % module_path)
+
+	return botoweb.user
+
+from botoweb.resources.user import User
+user = User
