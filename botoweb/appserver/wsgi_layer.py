@@ -187,28 +187,6 @@ class WSGILayer(object):
 		if self.app:
 			return self.app.reload()
 
-	def validate_session(self, req):
-		"""
-		If a client has previously gone through the
-		session creation process successfully, then the client
-		should have a cookie with a session id that should match
-		a session stored in memcached. The ip address of the client
-		must match with the ip address stored for that session in order
-		to help verify that the session id hasn't been captured by
-		a 3rd party.
-
-		"""
-
-		user = None
-		if req.cookies and req.cookies.has_key("session"):
-			session = req.cookies.get("session")
-			session = self.memc.get(str(session))
-			if session:
-				session = json.loads(session)
-				if req.environ["REMOTE_ADDR"] == session["last_ip"]:
-					user = User.get_by_id(session["user"])
-		return user
-
 def generate_challenge():
 	import random
 	import uuid
