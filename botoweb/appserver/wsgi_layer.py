@@ -56,16 +56,8 @@ class WSGILayer(object):
 		"""
 		self.app = app
 		self.update(env)
-		servers = []
-		if env.config.has_section("cache"):
-			import memcache
-			for server in env.config['cache']['servers']:
-				servers.append("%s:%s" % (server['host'], server['port']))
-			self.memc = memcache.Client(servers)
-		else:
-			self.memc = None
-
 		botoweb.set_user_class()
+		botoweb.set_cache()
 
 	def __call__(self, environ, start_response):
 		"""
@@ -97,8 +89,7 @@ class WSGILayer(object):
 				resp.headers.add("WWW-Authenticate", 'Basic realm="%s"' % self.env.config.get("app", "name", "Boto Web"))
 			
 			# ajax authorization relies on memcached for session persistence.
-			elif self.env.config.get("app", "ajax_auth", False) and self.memc:
-				
+			elif self.env.config.get("app", "ajax_auth", False) and botoweb.memc:
 				# the session challenge header was set in the request, so
 				# assume this is an authentication attempt and check the
 				# hashed values provided for the user against what's stored
@@ -107,14 +98,19 @@ class WSGILayer(object):
 					challenge_id, challenge = req.headers.get("X-Session-Challenge").split(":")
 					challenge_hash = req.headers.get("X-Challenge-Hash")
 					username = req.headers.get("X-Username")
-					stored_challenge = self.memc.get(str(challenge_id))
+					stored_challenge = botoweb.memc.get(str(challenge_id))
 
-					assert challenge == stored_challenge, "returned challenge doesn't match stored value"
+					log.info("challenge %s" % challenge)
+					log.info("stored %s" % stored_challenge) 
+					if not challenge == stored_challenge:
+						resp = self.format_exception(Unauthorized("Invalid challenge."), resp, req)
+						return resp(environ, start_response)
 
 					try:
 						user = botoweb.user.find(username=username).next()
 					except StopIteration:
-						raise NotFound("Invalid user.")
+						resp = self.format_exception(NotFound("Invalid user."), resp, req)
+						return resp(environ, start_response)
 
 					if check_challenge(challenge_hash, stored_challenge, str(user.password)):
 						# save a session in memcache
@@ -124,11 +120,11 @@ class WSGILayer(object):
 							"challenge": challenge,
 							"session_key": str(uuid.uuid4())
 						}
-						self.memc.delete(str(challenge_id))
-						self.memc.set(session["session_key"], str(json.dumps(session)))
+						botoweb.memc.delete(str(challenge_id))
+						botoweb.memc.set(session["session_key"], str(json.dumps(session)))
 						# this cookie will be encrypted and last until the browser is
 						# closed.
-						resp.set_cookie("session", session["session_key"], secure=True)
+						resp.set_cookie("session", session["session_key"], secure=False)
 						resp.body = json.dumps(session)
 						resp.content_type = "application/json"
 						resp.set_status(200)
@@ -138,7 +134,7 @@ class WSGILayer(object):
 				# to the user in the X-Session-Challenge custom header.
 				else:
 					challenge_id, challenge = generate_challenge()
-					self.memc.set(str(challenge_id), str(challenge))
+					botoweb.memc.set(str(challenge_id), str(challenge))
 					resp.headers.add("X-Session-Challenge","%s:%s" % (challenge_id, challenge))
 
 			resp = self.format_exception(e, resp, req)
@@ -202,4 +198,6 @@ def check_challenge(challenge_hash, challenge, password_hash):
 	sha512.update(password_hash + str(challenge))
 	check_value = sha512.hexdigest()
 
+	log.info("challenge_hash %s" % challenge_hash)
+	log.info("check_value %s" % check_value)
 	return check_value == challenge_hash

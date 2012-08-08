@@ -78,7 +78,7 @@ class Request(webob.Request):
 				vals[k] = self.POST[k]
 		return vals
 
-	def getUser(self, session_cache=None):
+	def getUser(self):
 		"""
 		Get the user from this request object
 		@return: User object, or None
@@ -115,8 +115,11 @@ class Request(webob.Request):
 							
 				# ajax session authentication
 				session_key = self.cookies.get("session")
-				if session_key and session_cache:
-					session = session_cache.get(str(session_key))
+				log.info(self.cookies)
+				if session_key and botoweb.memc:
+					import json
+					log.info("Starting ajax session auth")
+					session = botoweb.memc.get(str(session_key))
 					session = json.loads(session)
 					addr = self.environ.get("REMOTE_ADDR")
 					if addr == session["last_ip"]:
@@ -128,7 +131,8 @@ class Request(webob.Request):
 					if user:
 						self._user = user
 						return self._user
-
+				else:
+					log.info(session_key)
 
 				# Cookie based Authentication Token
 				auth_token_header = self.cookies.get("BW_AUTH_TOKEN")

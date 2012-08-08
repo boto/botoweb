@@ -130,5 +130,21 @@ def set_user_class():
 
 	return botoweb.user
 
+def set_cache():
+
+	import botoweb
+	servers = []
+	if env and env.config.has_section("cache"):
+		import memcache
+		for server in env.config['cache']['servers']:
+			servers.append("%s:%s" % (server['host'], server['port']))
+		botoweb.memc = memcache.Client(servers)
+	else:
+		botoweb.memc = None
+
+	log.info("Cache!")
+	return botoweb.memc
+
 from botoweb.resources.user import User
 user = User
+memc = None
