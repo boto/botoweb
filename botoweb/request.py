@@ -120,18 +120,21 @@ class Request(webob.Request):
 					import json
 					log.info("Starting ajax session auth")
 					session = botoweb.memc.get(str(session_key))
-					session = json.loads(session)
-					addr = self.environ.get("REMOTE_ADDR")
-					if addr == session["last_ip"]:
+					if session:
 						try:
-							user = botoweb.user.get_by_id(session["user"])
-							addCachedUser(user)
+							session = json.loads(session)
+							addr = self.environ.get("REMOTE_ADDR")
+							if addr == session["last_ip"]:
+								try:
+									user = botoweb.user.get_by_id(session["user"])
+									addCachedUser(user)
+								except:
+									user = None
+							if user:
+								self._user = user
+								return self._user
 						except:
-							user = None
-					if user:
-						self._user = user
-						return self._user
-				else:
+							log.info("Expired session key: %s" % session_key)
 					log.info(session_key)
 
 				# Cookie based Authentication Token
