@@ -43,6 +43,14 @@ class Request(webob.Request):
 		if not self.content_type:
 			self.content_type = content_type
 
+		if self.headers.has_key("X-Forwarded-For"):
+			try:
+				self.real_remote_addr = self.headers.get("X-Forwarded-For").split(", ")[0]
+			except:
+				self.real_remote_addr = self.environ.get("REMOTE_ADDR")
+		else:
+			self.real_remote_addr = self.environ.get("REMOTE_ADDR")
+
 	def get(self, argument_name, default_value='', allow_multiple=False):
 		param_value = self.get_all(argument_name, default_value)
 		if allow_multiple:
@@ -123,7 +131,7 @@ class Request(webob.Request):
 					if session:
 						try:
 							session = json.loads(session)
-							addr = self.environ.get("REMOTE_ADDR")
+							addr = self.real_remote_addr
 							if addr == session["last_ip"]:
 								try:
 									user = botoweb.user.get_by_id(session["user"])
