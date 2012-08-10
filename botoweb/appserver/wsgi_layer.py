@@ -114,7 +114,7 @@ class WSGILayer(object):
 						# save a session in memcache
 						session = {
 							"user": user.id,
-							"last_ip": req.environ.get("REMOTE_ADDR"),
+							"last_ip": req.real_remote_addr,
 							"challenge": challenge,
 							"session_key": str(uuid.uuid4())
 						}
