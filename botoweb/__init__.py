@@ -141,8 +141,7 @@ def set_cache():
 		botoweb.memc = memcache.Client(servers)
 	else:
 		botoweb.memc = None
-
-	log.info("Cache!")
+		
 	return botoweb.memc
 
 from botoweb.resources.user import User

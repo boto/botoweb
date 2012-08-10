@@ -142,8 +142,8 @@ class Request(webob.Request):
 								self._user = user
 								return self._user
 						except:
-							log.info("Expired session key: %s" % session_key)
-					log.info(session_key)
+							log.exception("Unavailable session: %s" % session_key)
+
 
 				# Cookie based Authentication Token
 				auth_token_header = self.cookies.get("BW_AUTH_TOKEN")
