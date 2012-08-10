@@ -126,6 +126,7 @@ class Request(webob.Request):
 				log.info(self.cookies)
 				if session_key and botoweb.memc:
 					import json
+					user = None
 					log.info("Starting ajax session auth")
 					session = botoweb.memc.get(str(session_key))
 					if session:
@@ -137,7 +138,7 @@ class Request(webob.Request):
 									user = botoweb.user.get_by_id(session["user"])
 									addCachedUser(user)
 								except:
-									user = None
+									log.exception("User not available.")
 							if user:
 								self._user = user
 								return self._user
