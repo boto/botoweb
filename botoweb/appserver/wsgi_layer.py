@@ -100,8 +100,6 @@ class WSGILayer(object):
 					username = req.headers.get("X-Username")
 					stored_challenge = botoweb.memc.get(str(challenge_id))
 
-					log.info("challenge %s" % challenge)
-					log.info("stored %s" % stored_challenge) 
 					if not challenge == stored_challenge:
 						resp = self.format_exception(Unauthorized("Invalid challenge."), resp, req)
 						return resp(environ, start_response)
@@ -198,6 +196,4 @@ def check_challenge(challenge_hash, challenge, password_hash):
 	sha512.update(password_hash + str(challenge))
 	check_value = sha512.hexdigest()
 
-	log.info("challenge_hash %s" % challenge_hash)
-	log.info("check_value %s" % check_value)
 	return check_value == challenge_hash
