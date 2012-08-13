@@ -40,6 +40,8 @@ class DynamoModel(Item):
 	"""
 	_table = None
 	_table_name = None
+	_properties = None
+	_prop_cache = None
 
 	def __init__(self, *args, **kwargs):
 		"""Create a new DynamoDB model
@@ -180,3 +182,31 @@ class DynamoModel(Item):
 				log.exception("could not execute scan")
 				cls._table = None
 				attempt += 1
+
+	@classmethod
+	def properties(cls, hidden=True):
+		"""Returns a list of property objects, for compatibility with SDB Model objects"""
+		if not cls._prop_cache:
+			cls._prop_cache = []
+			cursor = cls
+			while cursor:
+				if hasattr(cursor, "_properties") and cursor._properties:
+					for key in cursor._properties.keys():
+						prop = cursor._properties[key]
+						if isinstance(prop, basestring):
+							from botoweb.db.property import StringProperty
+							prop = StringProperty(verbose_name=prop, name=key)
+						if hidden or not prop.__class__.__name__.startswith('_'):
+							cursor._prop_cache.append(prop)
+				if len(cursor.__bases__) > 0:
+					cursor = cursor.__bases__[0]
+				else:
+					cursor = None
+		return cls._prop_cache
+
+	@classmethod
+	def find_property(cls, prop_name):
+		for prop in cls.properties():
+			if prop.name == prop_name:
+				return prop
+		return None

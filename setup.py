@@ -54,7 +54,7 @@ setup(name = "botoweb",
 		],
 		install_requires = [
 			"pyyaml",
-			"webob",
+			"webob==1.1",
 			"boto",
 			"lxml",
 			"pytz",

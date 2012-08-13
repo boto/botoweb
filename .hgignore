@@ -1,5 +1,7 @@
 syntax: glob
 *.pyc
+*.swp
 botoweb.egg-info/
 build/
 dist/
+sphinx-build/
