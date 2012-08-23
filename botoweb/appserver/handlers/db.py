@@ -224,6 +224,7 @@ class DBHandler(RequestHandler):
 		query_str = params.get("query", None)
 		sort_by = params.get("sort_by", None)
 		next_token = params.get("next_token", None)
+		properties = [p.name for p in query.model_class.properties(hidden=False)]
 		if query_str:
 			if query_str.startswith("["):
 				try:
@@ -273,7 +274,6 @@ class DBHandler(RequestHandler):
 			else:
 				pass
 		else:
-			properties = [p.name for p in query.model_class.properties(hidden=False)]
 			for filter in set(params.keys()):
 				if filter in ["sort_by", "next_token"]:
 					continue
@@ -292,7 +292,7 @@ class DBHandler(RequestHandler):
 			query.order(sort_by)
 		if next_token:
 			query.next_token = urllib.unquote(next_token.strip()).replace(" ", "+")
-		if not show_deleted:
+		if not show_deleted and "deleted" in properties:
 			query.filter("deleted =", [False, None]) # Allow deleted to be either not set or set to false
 		return query
 
@@ -310,7 +310,11 @@ class DBHandler(RequestHandler):
 		@param user: the user that is searching
 		@type user: User
 		"""
-		return self.build_query(params, query=self.db_class.find(), user=user)
+		from botoweb.db.dynamo import DynamoModel
+		if DynamoModel in self.db_class.mro():
+			return self.build_query(params, query=self.db_class.all(), user=user)
+		else:
+			return self.build_query(params, query=self.db_class.find(), user=user)
 
 	def create(self, obj, user, request):
 		"""Create an object in the DB

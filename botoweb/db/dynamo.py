@@ -38,6 +38,7 @@ class DynamoModel(Item):
 	This is just a wrapper around
 	boto.dynamodb.item.Item
 	"""
+	_manager = None # SDB Model Compatibility
 	_table = None
 	_table_name = None
 	_properties = None
@@ -172,16 +173,7 @@ class DynamoModel(Item):
 	@classmethod
 	def all(cls):
 		"""Uses Scan to return all of this type of object"""
-		attempt = 0
-		while attempt < 5:
-			try:
-				for item in cls.get_table().scan(item_class=cls):
-					yield item
-				return
-			except DynamoDBResponseError:
-				log.exception("could not execute scan")
-				cls._table = None
-				attempt += 1
+		return DynamoQuery(cls)
 
 	@classmethod
 	def properties(cls, hidden=True):
@@ -210,3 +202,35 @@ class DynamoModel(Item):
 			if prop.name == prop_name:
 				return prop
 		return None
+
+	def __getattr__(self, name):
+		return self.get(name)
+
+	@property
+	def id(self):
+		if self._range_key_name:
+			return "-".join([self[self._hash_key_name], self[self._range_key_name]])
+		else:
+			return self[self._hash_key_name]
+
+from botoweb.db.query import Query
+class DynamoQuery(Query):
+	"""Query iterator for Dynamo-based objects"""
+
+	def __iter__(self):
+		"""Override this to change how we query this
+		model"""
+		attempt = 0
+		while attempt < 5:
+			try:
+				for item in self.model_class.get_table().scan(item_class=self.model_class):
+					yield item
+				return
+			except DynamoDBResponseError:
+				log.exception("could not execute scan")
+				self.model_class._table = None
+				attempt += 1
+
+	def count(self, quick=True):
+		"""Can't get counts from DynamoDB"""
+		return self.model_class.get_table().item_count

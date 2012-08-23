@@ -203,12 +203,13 @@ class XMLSerializer(object):
 	def dump(self, obj, objname = None):
 		"""Dump this object to our serialization"""
 		from botoweb.db.coremodel import Model
+		from botoweb.db.dynamo import DynamoModel
 		from botoweb.db.property import CalculatedProperty
 		if not isinstance(obj, object):
 			if not objname:
 				objname = obj.__name__
 			self.encode(objname, obj)
-		elif isinstance(obj, list) or isinstance(obj, dict):
+		elif isinstance(obj, list) or isinstance(obj, dict) and not isinstance(obj, DynamoModel):
 			if not objname:
 				objname = obj.__class__.__name__
 			self.encode(objname, obj)
@@ -219,7 +220,7 @@ class XMLSerializer(object):
 				self.file.write("""<%s id="%s" href="%s">""" % (objname, obj.id, obj.id))
 			else:
 				self.file.write("<%s>" % objname)
-			if isinstance(obj, Model):
+			if isinstance(obj, Model) or isinstance(obj, DynamoModel):
 				for prop in obj.properties():
 					if not prop.name.startswith("_"):
 						if prop.__class__ == CalculatedProperty:
