@@ -14,6 +14,8 @@ This application has now been migrated to git and github, under the boto communi
 
 Please feel free to contribute!
 
+Check out the [Documentation](http://botoweb.readthedocs.org/)
+
 Objective
 ==========
 
@@ -27,7 +29,6 @@ Installation
  * [[Running|Running an Application Server]]
  * [[Shell|The botoweb shell environment]]
  * [[JSONEncoding|The JSON Encoding Specifics]]
- * [[http://cmoyer.bitbucket.org/botoweb/|API Documentation]]
 
 Overview
 ========
