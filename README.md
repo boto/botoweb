@@ -21,14 +21,6 @@ Objective
 
 botoweb is an **Application Framework** for highly scalable application servers. It uses the standard [Three-Tier](http://en.wikipedia.org/wiki/Multitier_architecture#Three-tier_architecture) architecture to be housed in the [Amazon Web Services](http://aws.amazon.com/) environment. It uses [boto](http://code.google.com/p/boto) for communication with these services (hence the name, botoweb).
 
-Installation
-=============
-
- * [[Installing]]
- * [[Building|Building your first Application]]
- * [[Running|Running an Application Server]]
- * [[Shell|The botoweb shell environment]]
- * [[JSONEncoding|The JSON Encoding Specifics]]
 
 Overview
 ========
