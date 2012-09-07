@@ -356,12 +356,22 @@ class SDBConverter(object):
 		if match:
 			s3 = self.manager.get_s3_connection()
 			bucket = s3.get_bucket(match.group(1), validate=False)
-			try:
-				key = bucket.get_key(match.group(2))
-			except S3ResponseError, e:
-				if e.reason != "Forbidden":
-					raise
-				return None
+			# Try to retrieve the blob up to five times
+			for attempt in range(0,5):
+				try:
+					key = bucket.get_key(match.group(2))
+				except S3ResponseError, e:
+					boto.log.exception(e)
+					if e.reason != "Forbidden":
+						time.sleep(attempt**2)
+						continue
+					return None
+				except Exception, e:
+					boto.log.exception(e)
+					time.sleep(attempt**2)
+					continue
+				else:
+					break
 		else:
 			return None
 		if key:
