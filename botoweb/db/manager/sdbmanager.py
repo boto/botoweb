@@ -29,6 +29,7 @@ from botoweb.db.coremodel import Model
 from botoweb.db.blob import Blob
 from botoweb.db.property import ListProperty, MapProperty
 from datetime import datetime, date, time
+from time import sleep
 from boto.exception import SDBPersistenceError, S3ResponseError
 
 ISO8601 = '%Y-%m-%dT%H:%M:%SZ'
@@ -363,12 +364,12 @@ class SDBConverter(object):
 				except S3ResponseError, e:
 					boto.log.exception(e)
 					if e.reason != "Forbidden":
-						time.sleep(attempt**2)
+						sleep(attempt**2)
 						continue
 					return None
 				except Exception, e:
 					boto.log.exception(e)
-					time.sleep(attempt**2)
+					sleep(attempt**2)
 					continue
 				else:
 					break
