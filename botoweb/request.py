@@ -163,6 +163,55 @@ class Request(webob.Request):
 							if user and user.auth_token == unencoded_info:
 								self._user = user
 								return self._user
+
+				# google federated login
+				openID = self.get("openid.op_endpoint")
+				if openID:
+					openParams = self.formDict()
+					import urllib, urllib2, json, boto
+					if 'openid.identity' in openParams and 'openid.ext1.value.email' in openParams:
+						identifier = openParams['openid.identity'].split('/id?id=')[1]
+						email = openParams['openid.ext1.value.email']
+						user = None
+
+						#  Try to get a user by OpenID identifier
+						if not user:
+							try:
+								user = botoweb.user.find(oid=identifier,deleted=False).next()
+							except:
+								user = None
+
+						# If no OID match, try to match
+						# via Email
+						if not user and email:
+							try:
+								user = botoweb.user.find(email=email,deleted=False).next()
+							except:
+								user = None
+
+						if user:
+							boto.log.info("OID: %s as %s" % (identifier, user))
+							self._user = user
+
+							# Re-use an old auth-token if it's available
+							from datetime import datetime, timedelta
+							now = datetime.utcnow()
+							if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6) and user.auth_token.startswith(user.username):
+								bw_auth_token = user.auth_token
+							else:
+								# Set up an Auth Token
+								bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
+								user.auth_token = bw_auth_token
+								user.put()
+							self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
+							addCachedUser(user)
+						else:
+							boto.log.warn("Invalid OpenID: %s" % identifier)
+							botoweb.report("Invalid OpenID: %s" % identifier, status=401, req=self, name="LoginFailure", priority=3)
+					else:
+						boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
+						botoweb.report(auth_info['err']['msg'], status=500, req=self, name="LoginFailure", priority=1)
+				
 				# JanRain Authentication token
 				jr_auth_token = self.POST.get("token")
 				if jr_auth_token:
