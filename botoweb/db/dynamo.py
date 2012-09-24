@@ -25,6 +25,7 @@
 
 import ssl
 import boto
+import time
 from boto.dynamodb.item import Item
 from boto.dynamodb.table import Table
 from boto.dynamodb import exceptions
@@ -32,6 +33,8 @@ from boto.exception import DynamoDBResponseError, BotoServerError
 
 import logging
 log = logging.getLogger("botoweb.db.dynamo")
+
+MAX_RETRIES = 10
 
 class DynamoModel(Item):
 	"""DynamoDB Model.
@@ -96,8 +99,9 @@ class DynamoModel(Item):
 	@classmethod
 	def get_by_id(cls, hash_key, range_key=None, consistent_read=False):
 		"""Get this type of item by a given ID"""
-		attempts = 0
-		while attempts < 5:
+		attempt = 0
+		last_error = None
+		while attempt < MAX_RETRIES:
 			table = cls.get_table()
 			try:
 				return table.lookup(
@@ -108,10 +112,14 @@ class DynamoModel(Item):
 				)
 			except exceptions.DynamoDBKeyNotFoundError:
 				return None
-			except DynamoDBResponseError:
+			except DynamoDBResponseError, e:
 				log.exception("Could not retrieve item")
 				cls._table = None
-				attempts += 1
+				attempt += 1
+				time.sleep(attempt**2)
+				last_error = e
+		if last_error:
+			raise e
 
 	lookup = get_by_id
 
@@ -150,7 +158,8 @@ class DynamoModel(Item):
 		"""
 
 		attempt = 0
-		while attempt < 5:
+		last_error = None
+		while attempt < MAX_RETRIES:
 			try:
 				for item in  cls.get_table().query(hash_key=hash_key,
 					range_key_condition=range_key_condition,
@@ -163,10 +172,16 @@ class DynamoModel(Item):
 				log.exception("Dynamo Response Error: %s" % e)
 				cls._table = None
 				attempt += 1
+				last_error = e
+				time.sleep(attempt**2)
 			except BotoServerError, e:
 				log.error("Boto Server Error: %s" % e)
 				cls._table = None
 				attempt += 1
+				last_error = e
+				time.sleep(attempt**2)
+		if last_error:
+			raise last_error
 
 	find = query
 
@@ -221,15 +236,19 @@ class DynamoQuery(Query):
 		"""Override this to change how we query this
 		model"""
 		attempt = 0
-		while attempt < 5:
+		last_error = None
+		while attempt < MAX_RETRIES:
 			try:
 				for item in self.model_class.get_table().scan(item_class=self.model_class):
 					yield item
 				return
-			except DynamoDBResponseError:
+			except DynamoDBResponseError, e:
 				log.exception("could not execute scan")
 				self.model_class._table = None
 				attempt += 1
+				last_error = e
+		if last_error:
+			raise last_error
 
 	def count(self, quick=True):
 		"""Can't get counts from DynamoDB"""
