@@ -118,6 +118,13 @@ class DynamoModel(Item):
 				attempt += 1
 				time.sleep(attempt**2)
 				last_error = e
+			except BotoServerError, e:
+				log.error("Boto Server Error: %s" % e)
+				cls._table = None
+				attempt += 1
+				last_error = e
+				time.sleep(attempt**2)
+
 		if last_error:
 			raise e
 
