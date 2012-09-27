@@ -123,7 +123,6 @@ class Request(webob.Request):
 							
 				# ajax session authentication
 				session_key = self.cookies.get("session")
-				log.info(self.cookies)
 				if session_key and botoweb.memc:
 					import json
 					user = None
