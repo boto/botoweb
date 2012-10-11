@@ -96,10 +96,6 @@ class XMLSerializer(object):
 		self.file.write("""<%(prop_name)s %(params)s>%(prop_value)s</%(prop_name)s>""" % args)
 
 	def encode_str(self, prop_name, prop_value, **params):
-		if isinstance(prop_value, unicode):
-			prop_value = prop_value.encode('ascii', 'xmlcharrefreplace')
-		else:
-			prop_value = str(prop_value)
 		return self.encode_default(prop_name, prop_value, "string", **params)
 
 	def encode_int(self, prop_name, prop_value, **params):
@@ -168,15 +164,8 @@ class XMLSerializer(object):
 		"""Return what might be a CDATA encoded string"""
 		if string == None:
 			return None
-		string = repr(string)
-		if string.startswith("u"):
-			string = string[1:]
-		if string.startswith("'"):
-			string = string.strip("'")
-		elif string.startswith('"'):
-			string = string.strip('"')
-		string = string.replace("\\n", "\n")
-
+		if isinstance(string, unicode):
+			string = string.encode('utf-8', 'replace')
 		for ch in BAD_CHARS:
 			if ch in string:
 				return "<![CDATA[%s]]>" % string
