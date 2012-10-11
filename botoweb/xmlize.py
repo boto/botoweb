@@ -62,6 +62,7 @@ class ProxyObject(object):
 	__id__ = None
 
 from lxml import etree
+import HTMLParser
 class XMLSerializer(object):
 	"""XML Serializer object"""
 
@@ -72,6 +73,8 @@ class XMLSerializer(object):
 			file = TemporaryFile()
 		self.file = file
 		self.num_objs = 0
+
+		self.htmlparser = HTMLParser.HTMLParser()
 
 	def encode(self, prop_name, prop_value):
 		"""Encode this value to XML"""
@@ -304,7 +307,9 @@ class XMLSerializer(object):
 		ret = node.text
 		# Prevent "None" from being sent back as a None, instead of an empty string
 		if not ret:
-			ret = ""
+			return ''
+		# unescape HTML characters
+		ret = self.htmlparser.unescape(ret)
 		return ret.strip()
 
 
