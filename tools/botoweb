@@ -47,6 +47,7 @@ if __name__ == "__main__":
 	parser.add_option("--add-user", dest="add_user", action="store_true", default=False, help="Add a user")
 	parser.add_option("--shell", dest="shell", action="store_true", default=False, help="Run the interactive command-line shell")
 	parser.add_option("--core", dest="core", action="store_true", default=False, help="Run only the core (URL Maper), no auth, filter, or cache layers")
+	parser.add_option("--cache", dest="cache", action="store_true", default=False, help="Enable the cache layer. Useful if you are not using user-based responses")
 	parser.add_option("--max-threads", dest="max_threads", default=20, help="Maximum number of threads to run (default 20)")
 	parser.add_option("-v", action="count", dest="verbose", default=0)
 	(options, args) = parser.parse_args()
@@ -110,11 +111,12 @@ if __name__ == "__main__":
 	from botoweb.appserver.auth_layer import AuthLayer
 	mapper = URLMapper(e)
 	if not options.core:
+		if options.cache:
+			mapper = CacheLayer(app=mapper, env=e)
 		mapper = AuthLayer(
 						app=FilterMapper(
-							app=CacheLayer(
-								app=mapper, env=e), 
-							env=e), 
+							app=mapper,
+							env=e),
 						env=e)
 
 
