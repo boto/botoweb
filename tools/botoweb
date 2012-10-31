@@ -113,6 +113,7 @@ if __name__ == "__main__":
 	if not options.core:
 		if options.cache:
 			mapper = CacheLayer(app=mapper, env=e)
+			log.info('Enabling Cache Layer')
 		mapper = AuthLayer(
 						app=FilterMapper(
 							app=mapper,
