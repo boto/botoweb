@@ -7,6 +7,8 @@ log = logging.getLogger("botoweb.request")
 from botoweb.response import Response
 import time
 import json
+import uuid
+import urllib, urllib2, boto
 
 CACHE_TIMEOUT = 300 # Keep user objects around for 300 seconds (5 minutes)
 USER_CACHE = {}
@@ -124,7 +126,6 @@ class Request(webob.Request):
 				# ajax session authentication
 				session_key = self.cookies.get("session")
 				if session_key and botoweb.memc:
-					import json
 					user = None
 					log.info("Starting ajax session auth")
 					session = botoweb.memc.get(str(session_key))
@@ -167,7 +168,6 @@ class Request(webob.Request):
 				openID = self.get("openid.op_endpoint")
 				if openID:
 					openParams = self.formDict()
-					import urllib, urllib2, json, boto
 					if 'openid.identity' in openParams and 'openid.ext1.value.email' in openParams:
 						identifier = openParams['openid.identity'].split('/id?id=')[1]
 						email = openParams['openid.ext1.value.email']
@@ -199,7 +199,7 @@ class Request(webob.Request):
 								bw_auth_token = user.auth_token
 							else:
 								# Set up an Auth Token
-								bw_auth_token = "%s:%s" % (user.username, jr_auth_token)
+								bw_auth_token = "%s:%s" % (user.username, uuid.uuid4().hex)
 								user.auth_token = bw_auth_token
 								user.put()
 							self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
@@ -208,13 +208,11 @@ class Request(webob.Request):
 							boto.log.warn("Invalid OpenID: %s" % identifier)
 							botoweb.report("Invalid OpenID: %s" % identifier, status=401, req=self, name="LoginFailure", priority=3)
 					else:
-						boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
-						botoweb.report(auth_info['err']['msg'], status=500, req=self, name="LoginFailure", priority=1)
+						boto.log.warn("An error occured trying to authenticate the user: %s" % openParams)
 				
 				# JanRain Authentication token
 				jr_auth_token = self.POST.get("token")
 				if jr_auth_token:
-					import urllib, urllib2, json, boto
 					api_params = {
 						"token": jr_auth_token,
 						"apiKey": boto.config.get("JanRain", "api_key"),
