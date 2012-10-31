@@ -254,13 +254,107 @@ class Model(object):
 	def set_manager(self, manager):
 		self._manager = manager
 
-	def to_dict(self):
-		props = {}
-		for prop in self.properties(hidden=False):
-			props[prop.name] = getattr(self, prop.name)
-		obj = {'properties' : props,
-				'id' : self.id}
-		return {self.__class__.__name__ : obj}
+	# Conversion to and from dictionary objects, for simple
+	# serialization with the JSON module
+
+	def to_dict(self, recursive=False):
+		"""Get this generic object as simple DICT
+		that can be easily JSON encoded"""
+		from botoweb.db.query import Query
+		from botoweb.db.property import CalculatedProperty
+		ret = {'__type__': self.__class__.__name__, '__id__': self.id}
+		for prop_name in self._prop_names:
+			prop_type = self.find_property(prop_name)
+			# Don't mess with calculated properties
+			if isinstance(prop_type, CalculatedProperty):
+				continue
+			val = getattr(self, prop_name)
+			if val is None:
+				pass
+			elif isinstance(val, int) or isinstance(val, long):
+				val = val
+			elif isinstance(val, Model):
+				val = val.id
+			elif hasattr(val, 'isoformat'):
+				val = val.isoformat() + 'Z'
+			elif isinstance(val, Query):
+				if recursive:
+					val = [v.to_dict() for v in val]
+				else:
+					# If we're not recursive, we ignore queries
+					continue
+			elif isinstance(val, list):
+				rv = []
+				for v in val:
+					if v is not None:
+						rv.append(str(v))
+				val = rv
+			elif isinstance(val, dict):
+				rv = {}
+				for k in val:
+					if val[k] is not None:
+						rv[k] = str(val[k])
+				val = rv
+			else:
+				# Fall back to encoding as a string
+				try:
+					val = str(val)
+				except:
+					val = unicode(val)
+			ret[prop_name] = val
+		return ret
+
+	@classmethod
+	def from_dict(cls, data):
+		"""Load this object from a dictionary as exported by
+		to_dict"""
+		obj = cls(data['__id__'])
+		obj._loaded = True
+		for prop_name in data:
+			val = data[prop_name]
+			if prop_name == '__id__':
+				obj.id = val
+			elif not prop_name.startswith('_'):
+				prop = obj.find_property(prop_name)
+				if prop:
+					if hasattr(prop, 'reference_class'):
+						t = prop.reference_class
+					else:
+						t = prop.data_type
+					val = cls._decode(t, val, prop)
+					setattr(obj, prop_name, val)
+		return obj
+
+	@classmethod
+	def _decode(cls, t, val, prop):
+		from datetime import datetime, date
+		if val is None:
+			return val
+		if isinstance(val, dict) and val.has_key('__id__'):
+			val = t(val['__id__'])
+		elif isinstance(val, dict) and val.has_key('ID'):
+			val = t(val['ID'])
+		elif t == datetime:
+			# If there a "T" in the datetime value, then 
+			# it's a full date and time
+			if 'T' in val:
+				# Remove fractional seconds, Z or +00:00Z time zone formatting
+				# Times are in UTC so formatting inconsistencies can be ignored
+				val = val[:19]
+				val = datetime.strptime(val, '%Y-%m-%dT%H:%M:%S')
+			else:
+				# Otherwise, it may just be a date
+				val = val.split('-')
+				val = date(int(val[0]), int(val[1]), int(val[2]))
+		elif t == list:
+			if not isinstance(val, list) and not isinstance(val, set):
+				val = [val]
+			val = [cls._decode(prop.item_type, v, prop) for v in val]
+		elif t not in (str, unicode, int):
+			val = t(val)
+		return val
+
+
 
 	def to_xml(self, doc=None):
 		xmlmanager = self.get_xmlmanager()

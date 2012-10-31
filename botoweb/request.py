@@ -2,25 +2,38 @@ import webob
 import cgi
 from botoweb.resources.user import User
 import botoweb
-import logging
-log = logging.getLogger("botoweb.request")
 from botoweb.response import Response
 import time
 import json
 import uuid
 import urllib, urllib2, boto
+import logging
+log = logging.getLogger("botoweb.request")
 
 CACHE_TIMEOUT = 300 # Keep user objects around for 300 seconds (5 minutes)
 USER_CACHE = {}
 def getCachedUser(username):
-	if USER_CACHE.has_key(username):
-		user, t = USER_CACHE[username]
-		if (time.time() - t) < CACHE_TIMEOUT:
-			return user
+	if isinstance(username, unicode):
+		username = username.encode('utf-8')
+	if botoweb.memc:
+		data = botoweb.memc.get(username)
+		if data:
+			return User.from_dict(json.loads(data))
+	else:
+		if USER_CACHE.has_key(username):
+			user, t = USER_CACHE[username]
+			if (time.time() - t) < CACHE_TIMEOUT:
+				return user
 	return None
 
 def addCachedUser(user):
-	USER_CACHE[user.username] = (user, time.time())
+	username = user.username
+	if isinstance(username, unicode):
+		username = username.encode('utf-8')
+	if botoweb.memc:
+		botoweb.memc.set(username, json.dumps(user.to_dict()), CACHE_TIMEOUT)
+	else:
+		USER_CACHE[username] = (user, time.time())
 	return user
 
 class Request(webob.Request):

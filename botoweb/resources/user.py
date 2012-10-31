@@ -259,3 +259,22 @@ class User(Model):
 		"""Auto-index"""
 		self._indexed_name = self.name.upper().strip()
 		return Model.put(self)
+
+	def to_dict(self, *args, **kwargs):
+		"""Get this object as a simple dict, to be serialized.
+		This just adds in the authorizations in addition to the
+		rest of the object that is serialized via Model.to_dict"""
+		ret = Model.to_dict(self, *args, **kwargs)
+		if not self.authorizations:
+			self.load_auths()
+		ret['authorizations'] = self.authorizations
+		return ret
+
+	@classmethod
+	def from_dict(cls, data):
+		"""Load this object from a dict, as exported
+		by to_dict"""
+		ret = super(cls, cls).from_dict(data)
+		ret.authorizations = data.get('authorizations')
+		return ret
+
