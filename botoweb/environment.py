@@ -88,7 +88,7 @@ class Environment(object):
 				# We allow a "modules" directory to include
 				# things in the base configuration conditionally, depending
 				# on if those modules exist or not
-			elif not cf.startswith("."):
+			elif not cf.startswith(".") and self.dist.resource_isdir(cf):
 				config[cf] = self.get_config(os.path.join(path, cf))
 
 		if load_modules:

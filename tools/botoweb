@@ -120,6 +120,19 @@ if __name__ == "__main__":
 							env=e),
 						env=e)
 
+	# NewRelic Agent support
+	# Setting up Newrelic support is as simple
+	# as adding a "newrelic.cfg" file to the "conf"
+	# directory
+	if e.dist.has_resource('conf/newrelic.cfg'):
+		import newrelic.agent
+		newrelic.agent.initialize(e.dist.get_resource_filename(e.mgr, 'conf/newrelic.cfg'), e.env)
+		# This maps the reload script to the newrelic
+		# WSGI wrapper
+		reload = mapper.reload
+		mapper = newrelic.agent.wsgi_application()(mapper)
+		mapper.reload = reload
+
 
 
 	# Add in a reload handler for SIGHUP
