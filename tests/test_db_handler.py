@@ -14,7 +14,7 @@ class SimpleObject(Model):
 	name = StringProperty()
 
 
-class TestDBHandler:
+class TestDBHandler(object):
 	"""Test the DBHandler"""
 
 	def setup_class(cls):

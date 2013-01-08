@@ -1,5 +1,5 @@
 # Copyright (c) 2006,2007,2008 Mitch Garnaat http://garnaat.org/
-# Copyright (c) 2010 Chris Moyer http://coredumped.org/
+# Copyright (c) 2010-2013 Chris Moyer http://coredumped.org/
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
@@ -20,311 +20,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import boto.sdb
-import re
 import ssl
 from boto.utils import find_class
 import uuid
-from botoweb.db.key import Key
-from botoweb.db.coremodel import Model
-from botoweb.db.blob import Blob
-from botoweb.db.property import ListProperty, MapProperty
-from datetime import datetime, date, time
+import re
 from time import sleep
+from botoweb.db.blob import Blob
 from boto.exception import SDBPersistenceError, S3ResponseError
+from botoweb.db.property import ListProperty
+from botoweb.db.converter import StringConverter
+from botoweb.db.manager import Manager
 
-ISO8601 = '%Y-%m-%dT%H:%M:%SZ'
+import logging
+log = logging.getLogger('botoweb.db.manager.sdbmanager')
 
-
-class TimeDecodeError(Exception):
-	pass
-
-class SDBConverter(object):
-	"""
-	Responsible for converting base Python types to format compatible with underlying
-	database.  For SimpleDB, that means everything needs to be converted to a string
-	when stored in SimpleDB and from a string when retrieved.
-
-	To convert a value, pass it to the encode or decode method.  The encode method
-	will take a Python native value and convert to DB format.  The decode method will
-	take a DB format value and convert it to Python native format.  To find the appropriate
-	method to call, the generic encode/decode methods will look for the type-specific
-	method by searching for a method called "encode_<type name>" or "decode_<type name>".
-	"""
-	def __init__(self, manager):
-		self.manager = manager
-		self.type_map = { bool : (self.encode_bool, self.decode_bool),
-						  int : (self.encode_int, self.decode_int),
-						  long : (self.encode_long, self.decode_long),
-						  float : (self.encode_float, self.decode_float),
-						  Model : (self.encode_reference, self.decode_reference),
-						  Key : (self.encode_reference, self.decode_reference),
-						  datetime : (self.encode_datetime, self.decode_datetime),
-						  date : (self.encode_date, self.decode_date),
-						  time : (self.encode_time, self.decode_time),
-						  Blob: (self.encode_blob, self.decode_blob),
-						  str: (self.encode_string, self.decode_string),
-					  }
-
-	def encode(self, item_type, value):
-		try:
-			if Model in item_type.mro():
-				item_type = Model
-		except:
-			pass
-		if item_type in self.type_map:
-			encode = self.type_map[item_type][0]
-			return encode(value)
-		return value
-
-	def decode(self, item_type, value):
-		if item_type in self.type_map:
-			decode = self.type_map[item_type][1]
-			return decode(value)
-		return value
-
-	def encode_list(self, prop, value):
-		if value in (None, []):
-			return []
-		if not isinstance(value, list):
-			# This is a little trick to avoid encoding when it's just a single value,
-			# since that most likely means it's from a query
-			item_type = getattr(prop, "item_type")
-			return self.encode(item_type, value)
-		# Just enumerate(value) won't work here because
-		# we need to add in some zero padding
-		# We support lists up to 1,000 attributes, since
-		# SDB technically only supports 1024 attributes anyway
-		values = {}
-		for k,v in enumerate(value):
-			values["%03d" % k] = v
-		return self.encode_map(prop, values)
-
-	def encode_map(self, prop, value):
-		import urllib
-		if value == None:
-			return None
-		if not isinstance(value, dict):
-			raise ValueError, 'Expected a dict value, got %s' % type(value)
-		new_value = []
-		for key in value:
-			item_type = getattr(prop, "item_type")
-			if Model in item_type.mro():
-				item_type = Model
-			encoded_value = self.encode(item_type, value[key])
-			if encoded_value != None:
-				new_value.append('%s:%s' % (urllib.quote(key), encoded_value))
-		return new_value
-
-	def encode_prop(self, prop, value):
-		if isinstance(prop, ListProperty):
-			return self.encode_list(prop, value)
-		elif isinstance(prop, MapProperty):
-			return self.encode_map(prop, value)
-		else:
-			return self.encode(prop.data_type, value)
-
-	def decode_list(self, prop, value):
-		if not isinstance(value, list):
-			value = [value]
-		if hasattr(prop, 'item_type'):
-			item_type = getattr(prop, "item_type")
-			dec_val = {}
-			for val in value:
-				if val != None:
-					k,v = self.decode_map_element(item_type, val)
-					try:
-						k = int(k)
-					except:
-						k = v
-					dec_val[k] = v
-			value = dec_val.values()
-		return value
-
-	def decode_map(self, prop, value):
-		if not isinstance(value, list):
-			value = [value]
-		ret_value = {}
-		item_type = getattr(prop, "item_type")
-		for val in value:
-			k,v = self.decode_map_element(item_type, val)
-			ret_value[k] = v
-		return ret_value
-
-	def decode_map_element(self, item_type, value):
-		"""Decode a single element for a map"""
-		import urllib
-		key = value
-		if ":" in value:
-			key, value = value.split(':',1)
-			key = urllib.unquote(key)
-		if Model in item_type.mro():
-			value = item_type(id=value)
-		else:
-			value = self.decode(item_type, value)
-		return (key, value)
-
-	def decode_prop(self, prop, value):
-		if isinstance(prop, ListProperty):
-			return self.decode_list(prop, value)
-		elif isinstance(prop, MapProperty):
-			return self.decode_map(prop, value)
-		else:
-			return self.decode(prop.data_type, value)
-
-	def encode_int(self, value):
-		value = int(value)
-		value += 2147483648
-		return '%010d' % value
-
-	def decode_int(self, value):
-		try:
-			value = int(value)
-		except:
-			boto.log.error("Error, %s is not an integer" % value)
-			value = 0
-		value = int(value)
-		value -= 2147483648
-		return int(value)
-
-	def encode_long(self, value):
-		value = long(value)
-		value += 9223372036854775808
-		return '%020d' % value
-
-	def decode_long(self, value):
-		value = long(value)
-		value -= 9223372036854775808
-		return value
-
-	def encode_bool(self, value):
-		if value == True or str(value).lower() in ("true", "yes"):
-			return 'true'
-		else:
-			return 'false'
-
-	def decode_bool(self, value):
-		if value.lower() == 'true':
-			return True
-		else:
-			return False
-
-	def encode_float(self, value):
-		"""
-		See http://tools.ietf.org/html/draft-wood-ldapext-float-00.
-		"""
-		s = '%e' % value
-		l = s.split('e')
-		mantissa = l[0].ljust(18, '0')
-		exponent = l[1]
-		if value == 0.0:
-			case = '3'
-			exponent = '000'
-		elif mantissa[0] != '-' and exponent[0] == '+':
-			case = '5'
-			exponent = exponent[1:].rjust(3, '0')
-		elif mantissa[0] != '-' and exponent[0] == '-':
-			case = '4'
-			exponent = 999 + int(exponent)
-			exponent = '%03d' % exponent
-		elif mantissa[0] == '-' and exponent[0] == '-':
-			case = '2'
-			mantissa = '%f' % (10 + float(mantissa))
-			mantissa = mantissa.ljust(18, '0')
-			exponent = exponent[1:].rjust(3, '0')
-		else:
-			case = '1'
-			mantissa = '%f' % (10 + float(mantissa))
-			mantissa = mantissa.ljust(18, '0')
-			exponent = 999 - int(exponent)
-			exponent = '%03d' % exponent
-		return '%s %s %s' % (case, exponent, mantissa)
-
-	def decode_float(self, value):
-		case = value[0]
-		exponent = value[2:5]
-		mantissa = value[6:]
-		if case == '3':
-			return 0.0
-		elif case == '5':
-			pass
-		elif case == '4':
-			exponent = '%03d' % (int(exponent) - 999)
-		elif case == '2':
-			mantissa = '%f' % (float(mantissa) - 10)
-			exponent = '-' + exponent
-		else:
-			mantissa = '%f' % (float(mantissa) - 10)
-			exponent = '%03d' % abs((int(exponent) - 999))
-		return float(mantissa + 'e' + exponent)
-
-	def encode_datetime(self, value):
-		if isinstance(value, str) or isinstance(value, unicode):
-			return value
-		if isinstance(value, datetime):
-			return value.strftime(ISO8601)
-		else:
-			return value.isoformat()
-
-	def decode_datetime(self, value):
-		"""Handles both Dates and DateTime objects"""
-		if value is None:
-			return value
-		try:
-			if "T" in value:
-				if "." in value:
-					# Handle true "isoformat()" dates, which may have a microsecond on at the end of them
-					return datetime.strptime(value.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-				else:
-					return datetime.strptime(value, ISO8601)
-			else:
-				value = value.split("-")
-				return date(int(value[0]), int(value[1]), int(value[2]))
-		except Exception, e:
-			return None
-
-	def encode_date(self, value):
-		if isinstance(value, str) or isinstance(value, unicode):
-			return value
-		return value.isoformat()
-
-	def decode_date(self, value):
-		try:
-			value = value.split("-")
-			return date(int(value[0]), int(value[1]), int(value[2]))
-		except:
-			return None
-
-	encode_time = encode_date
-
-	def decode_time(self, value):
-		""" converts strings in the form of HH:MM:SS.mmmmmm
-			(created by datetime.time.isoformat()) to
-			datetime.time objects.
-
-			Timzone-aware strings ("HH:MM:SS.mmmmmm+HH:MM") won't
-			be handled right now and will raise TimeDecodeError.
-		"""
-		if '-' in value or '+' in value:
-			# TODO: Handle tzinfo
-			raise TimeDecodeError("Can't handle timezone aware objects: %r" % value)
-		tmp = value.split('.')
-		arg = map(int, tmp[0].split(':'))
-		if len(tmp) == 2:
-			arg.append(int(tmp[1]))
-		return time(*arg)
-
-	def encode_reference(self, value):
-		if value in (None, 'None', '', ' '):
-			return None
-		if isinstance(value, str) or isinstance(value, unicode):
-			return value
-		else:
-			return value.id
-
-	def decode_reference(self, value):
-		if not value or value == "None":
-			return None
-		return value
+class SDBConverter(StringConverter):
+	"""SDBConverter is just a StringConverter with special Blob property handling"""
 
 	def encode_blob(self, value):
 		if not value:
@@ -335,15 +46,15 @@ class SDBConverter(object):
 		if not value.id:
 			bucket = self.manager.get_blob_bucket()
 			key = bucket.new_key(str(uuid.uuid4()))
-			value.id = "s3://%s/%s" % (key.bucket.name, key.name)
+			value.id = 's3://%s/%s' % (key.bucket.name, key.name)
 		else:
-			match = re.match("^s3:\/\/([^\/]*)\/(.*)$", value.id)
+			match = re.match('^s3:\/\/([^\/]*)\/(.*)$', value.id)
 			if match:
 				s3 = self.manager.get_s3_connection()
 				bucket = s3.get_bucket(match.group(1), validate=False)
 				key = bucket.get_key(match.group(2))
 			else:
-				raise SDBPersistenceError("Invalid Blob ID: %s" % value.id)
+				raise SDBPersistenceError('Invalid Blob ID: %s' % value.id)
 
 		if value.value != None:
 			key.set_contents_from_string(value.value)
@@ -353,7 +64,7 @@ class SDBConverter(object):
 	def decode_blob(self, value):
 		if not value:
 			return None
-		match = re.match("^s3:\/\/([^\/]*)\/(.*)$", value)
+		match = re.match('^s3:\/\/([^\/]*)\/(.*)$', value)
 		if match:
 			s3 = self.manager.get_s3_connection()
 			bucket = s3.get_bucket(match.group(1), validate=False)
@@ -364,13 +75,13 @@ class SDBConverter(object):
 					key = bucket.get_key(match.group(2))
 				except S3ResponseError, e:
 					error = e
-					boto.log.exception(e)
-					if e.reason != "Forbidden":
+					log.exception(e)
+					if e.reason != 'Forbidden':
 						sleep(attempt**2)
 						continue
 					return None
 				except Exception, e:
-					boto.log.exception(e)
+					log.exception(e)
 					sleep(attempt**2)
 					error = e
 					continue
@@ -382,49 +93,23 @@ class SDBConverter(object):
 		if error:
 			raise error
 		if key:
-			return Blob(file=key, id="s3://%s/%s" % (key.bucket.name, key.name))
+			return Blob(file=key, id='s3://%s/%s' % (key.bucket.name, key.name))
 		else:
 			return None
 
-	def encode_string(self, value):
-		"""Convert ASCII, Latin-1 or UTF-8 to pure Unicode"""
-		if not isinstance(value, str): return value
-		try:
-			return unicode(value, 'utf-8')
-		except: # really, this should throw an exception.
-				# in the interest of not breaking current
-				# systems, however:
-			arr = []
-			for ch in value:
-				arr.append(unichr(ord(ch)))
-			return u"".join(arr)
 
-	def decode_string(self, value):
-		"""Decoding a string is really nothing, just
-		return the value as-is"""
-		return value
-
-class SDBManager(object):
+class SDBManager(Manager):
+	"""SimpleDB Manager"""
+	_converter_class = SDBConverter
 	
 	def __init__(self, cls, db_name, db_user, db_passwd,
 				 db_host, db_port, db_table, ddl_dir, enable_ssl, consistent=None):
-		self.cls = cls
-		self.db_name = db_name
-		self.db_user = db_user
-		self.db_passwd = db_passwd
-		self.db_host = db_host
-		self.db_port = db_port
-		self.db_table = db_table
-		self.ddl_dir = ddl_dir
-		self.enable_ssl = enable_ssl
+		Manager.__init__(self, cls, db_name, db_user, db_passwd,
+			db_host, db_port, db_table, ddl_dir, enable_ssl, consistent)
 		self.s3 = None
 		self.bucket = None
-		self.converter = SDBConverter(self)
 		self._sdb = None
 		self._domain = None
-		if consistent == None and hasattr(cls, "__consistent__"):
-			consistent = cls.__consistent__
-		self.consistent = consistent
 
 	@property
 	def sdb(self):
@@ -457,22 +142,6 @@ class SDBManager(object):
 		if not self._domain:
 			self._domain = self._sdb.create_domain(self.db_name)
 
-	def _object_lister(self, cls, query_lister):
-		for item in query_lister:
-			obj = self.get_object(cls, item.name, item)
-			if obj:
-				yield obj
-			
-	def encode_value(self, prop, value):
-		if value == None:
-			return None
-		if not prop:
-			return str(value)
-		return self.converter.encode_prop(prop, value)
-
-	def decode_value(self, prop, value):
-		return self.converter.decode_prop(prop, value)
-
 	def get_s3_connection(self):
 		if not self.s3:
 			self.s3 = boto.connect_s3(self.db_user, self.db_passwd)
@@ -500,7 +169,7 @@ class SDBManager(object):
 						try:
 							setattr(obj, prop.name, value)
 						except Exception, e:
-							boto.log.exception(e)
+							log.exception(e)
 			obj._loaded = True
 		
 	def get_object(self, cls, id, a=None):
@@ -521,12 +190,9 @@ class SDBManager(object):
 				obj._loaded = True
 			else:
 				s = '(%s) class %s.%s not found' % (id, a['__module__'], a['__type__'])
-				boto.log.info('sdbmanager: %s' % s)
+				log.info('sdbmanager: %s' % s)
 		return obj
 		
-	def get_object_from_id(self, id):
-		return self.get_object(None, id)
-
 	def query(self, query):
 		query_str = "select * from `%s` %s" % (self.domain.name, self._build_filter_part(query.model_class, query.filters, query.sort_by, query.select))
 		if query.limit:
@@ -632,7 +298,7 @@ class SDBManager(object):
 
 
 		type_query = "(`__type__` = '%s'" % cls.__name__
-		for subclass in self._get_all_decendents(cls).keys():
+		for subclass in self.get_all_decendents(cls).keys():
 			type_query += " or `__type__` = '%s'" % subclass
 		type_query +=")"
 		query_parts.append(type_query)
@@ -651,18 +317,6 @@ class SDBManager(object):
 			return "WHERE %s %s" % (" AND ".join(query_parts), order_by_query)
 		else:
 			return ""
-
-
-	def _get_all_decendents(self, cls):
-		"""Get all decendents for a given class"""
-		decendents = {}
-		for sc in cls.__sub_classes__:
-			decendents[sc.__name__] = sc
-			decendents.update(self._get_all_decendents(sc))
-		return decendents
-
-	def query_gql(self, query_string, *args, **kwds):
-		raise NotImplementedError, "GQL queries not supported in SimpleDB"
 
 	def save_object(self, obj, expected_value=None):
 		if not obj.id:

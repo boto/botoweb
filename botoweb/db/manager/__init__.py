@@ -1,3 +1,4 @@
+# Copyright (c) 2012-2013 Chris Moyer http://coredumped.org/
 # Copyright (c) 2006,2007,2008 Mitch Garnaat http://garnaat.org/
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -71,6 +72,10 @@ def get_manager(cls):
 		db_name = cls._db_name
 	elif hasattr(cls.__bases__[0], "_manager"):
 		return cls.__bases__[0]._manager
+
+	if hasattr(cls, '_db_type') and cls._db_type is not None:
+		db_type = cls._db_type
+
 	if db_type == 'SimpleDB':
 		from botoweb.db.manager.sdbmanager import SDBManager
 		return SDBManager(cls, db_name, db_user, db_passwd,
@@ -86,6 +91,64 @@ def get_manager(cls):
 		from botoweb.db.manager.xmlmanager import XMLManager
 		return XMLManager(cls, db_name, db_user, db_passwd,
 						  db_host, db_port, db_table, sql_dir, enable_ssl)
+
+	elif db_type == 'DynamoDB':
+		from botoweb.db.manager.dynamodbmanager import DynamoDBManager
+		return DynamoDBManager(cls, db_name, db_user, db_passwd,
+						  db_host, db_port, db_table, sql_dir, enable_ssl)
 	else:
 		raise ValueError, 'Unknown db_type: %s' % db_type
 
+class Manager(object):
+	"""Base Manager class"""
+	# Each manager should override the _converter_class attribute
+	_converter_class = None
+	
+	def __init__(self, cls, db_name, db_user, db_passwd,
+				 db_host, db_port, db_table, ddl_dir, enable_ssl, consistent=None):
+		self.cls = cls
+		self.db_name = db_name
+		self.db_user = db_user
+		self.db_passwd = db_passwd
+		self.db_host = db_host
+		self.db_port = db_port
+		self.db_table = db_table
+		self.ddl_dir = ddl_dir
+		self.enable_ssl = enable_ssl
+		if consistent == None and hasattr(cls, '__consistent__'):
+			consistent = cls.__consistent__
+		self.consistent = consistent
+		if self._converter_class is not None:
+			self.converter = self._converter_class(self)
+		else:
+			self.converter = None
+
+	def get_all_decendents(self, cls):
+		"""Get all decendents for a given class"""
+		decendents = {}
+		for sc in cls.__sub_classes__:
+			decendents[sc.__name__] = sc
+			decendents.update(self.get_all_decendents(sc))
+		return decendents
+
+	def _object_lister(self, cls, query_lister):
+		for item in query_lister:
+			obj = self.get_object(cls, item.name, item)
+			if obj:
+				yield obj
+			
+	def encode_value(self, prop, value):
+		if value == None:
+			return None
+		if not prop:
+			return str(value)
+		return self.converter.encode_prop(prop, value)
+
+	def decode_value(self, prop, value):
+		return self.converter.decode_prop(prop, value)
+
+	def get_object_from_id(self, id):
+		return self.get_object(None, id)
+
+	def lookup(self, id):
+		return self.get_object(None, id)

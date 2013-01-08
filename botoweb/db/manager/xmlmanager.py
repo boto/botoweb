@@ -1,3 +1,4 @@
+# Copyright (c) 2012-2013 Chris Moyer http://coredumped.org/
 # Copyright (c) 2006-2008 Mitch Garnaat http://garnaat.org/
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,10 +25,10 @@ from botoweb.db.key import Key
 from botoweb.db.coremodel import Model
 from datetime import datetime
 from xml.dom.minidom import getDOMImplementation, parse, parseString, Node
+from botoweb.db.converter import Converter
+from botoweb import ISO8601
 
-ISO8601 = '%Y-%m-%dT%H:%M:%SZ'
-
-class XMLConverter:
+class XMLConverter(Converter):
 	"""
 	Responsible for converting base Python types to format compatible with underlying
 	database.  For SimpleDB, that means everything needs to be converted to a string

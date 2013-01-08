@@ -3,6 +3,9 @@
 from botoweb import status
 from xml.dom.minidom import getDOMImplementation
 
+class TimeDecodeError(Exception):
+	pass
+
 class HTTPException(Exception):
 	"""
 	Base HTTP Exception class

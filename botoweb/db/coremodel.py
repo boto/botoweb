@@ -56,6 +56,7 @@ class ModelMeta(type):
 class Model(object):
 	__metaclass__ = ModelMeta
 	__consistent__ = False # Consistent is set off by default
+	_raw_item = None # Allows us to cache the raw items
 	id = None
 
 	@classmethod
@@ -183,7 +184,9 @@ class Model(object):
 		return other and isinstance(other, Model) and self.id == other.id
 
 	def _get_raw_item(self):
-		return self._manager.get_raw_item(self)
+		if not self._raw_item:
+			self._raw_item =  self._manager.get_raw_item(self)
+		return self._raw_item
 
 	def load(self):
 		if self.id and not self._loaded:

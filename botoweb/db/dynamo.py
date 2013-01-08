@@ -24,6 +24,7 @@
 # This is a lighter weight ORM for DynamoDB
 
 import ssl
+import json
 import boto
 import time
 from boto.dynamodb.item import Item
@@ -235,6 +236,33 @@ class DynamoModel(Item):
 		else:
 			return self[self._hash_key_name]
 
+	#
+	# Converters
+	#
+	def to_json(self):
+		return json.dumps(self, cls=SetEncoder)
+
+	def to_dict(self, recursive=True, include_hidden=True):
+		"""Returns a copy of this item, converting all sets into lists"""
+
+		d = {}
+		for key, value in self.items():
+			if not include_hidden and key.startswith('_'):
+				continue
+			if isinstance(value, set):
+				value = list(value)
+			d[key] = value
+		return d
+
+	@classmethod
+	def from_dict(cls, data):
+		"""Takes a normal dict, and returns this object"""
+		assert(data.has_key(cls._hash_key_name)), 'Missing %s' % cls._hash_key_name
+		if cls._range_key_name:
+			assert(data.has_key(cls._range_key_name)), 'Missing %s' % cls._range_key_name
+		return cls(attrs=data)
+
+
 from botoweb.db.query import Query
 class DynamoQuery(Query):
 	"""Query iterator for Dynamo-based objects"""
@@ -260,3 +288,12 @@ class DynamoQuery(Query):
 	def count(self, quick=True):
 		"""Can't get counts from DynamoDB"""
 		return self.model_class.get_table().item_count
+
+
+class SetEncoder(json.JSONEncoder):
+	"""Custom JSON encoder for converting sets to lists."""
+
+	def default(self, obj):
+		if isinstance(obj, set):
+			obj = list(obj)
+		return json.JSONEncoder.default(self, obj)
