@@ -147,11 +147,13 @@ class Request(webob.Request):
 							session = json.loads(session)
 							addr = self.real_remote_addr
 							if addr == session["last_ip"]:
-								try:
-									user = botoweb.user.get_by_id(session["user"])
-									addCachedUser(user)
-								except:
-									log.exception("User not available.")
+								user = getCachedUser(session["user"])
+								if not user:
+									try:
+										user = botoweb.user.find(username=session["user"]).next()
+										addCachedUser(user)
+									except:
+										log.exception("User not available.")
 							if user:
 								self._user = user
 								return self._user

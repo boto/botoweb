@@ -113,7 +113,7 @@ class WSGILayer(object):
 					if check_challenge(challenge_hash, stored_challenge, str(user.password)):
 						# save a session in memcache
 						session = {
-							"user": user.id,
+							"user": user.username,
 							"last_ip": req.real_remote_addr,
 							"challenge": challenge,
 							"session_key": str(uuid.uuid4())

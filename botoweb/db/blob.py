@@ -49,7 +49,6 @@ class Blob(object):
 		else:
 			return value.decode('utf-8')
 
-
 	def read(self):
 		if hasattr(self.file, "get_contents_as_string"):
 			return self.file.get_contents_as_string()
