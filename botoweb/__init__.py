@@ -33,6 +33,10 @@ def set_env(name, conf=None):
 	boto.config = env.config
 	import botoweb
 	botoweb.env = env
+	
+	set_user_class()
+	set_cache()
+
 	return env
 
 #
@@ -107,7 +111,6 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 			log.info("%s %s: %s" % (method, path, msg))
 		else:
 			log.error("%s %s: %s" % (method, path, msg))
-
 
 def set_user_class():
 
