@@ -32,6 +32,10 @@ def set_env(name, conf=None):
 	boto.config = env.config
 	import botoweb
 	botoweb.env = env
+	
+	set_user_class()
+	set_cache()
+
 	return env
 
 #
@@ -146,5 +150,3 @@ def set_cache():
 from botoweb.resources.user import User
 user = User
 memc = None
-set_user_class()
-set_cache()
