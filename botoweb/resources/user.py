@@ -275,7 +275,7 @@ class User(Model):
 	def from_dict(cls, data):
 		"""Load this object from a dict, as exported
 		by to_dict"""
-		ret = super(cls, cls).from_dict(data)
+		ret = super(User, cls).from_dict(data)
 		ret.authorizations = data.get('authorizations')
 		return ret
 
