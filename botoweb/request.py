@@ -18,7 +18,7 @@ def getCachedUser(username):
 	if botoweb.memc:
 		data = botoweb.memc.get(username)
 		if data:
-			return User.from_dict(json.loads(data))
+			return botoweb.user.from_dict(json.loads(data))
 	else:
 		if USER_CACHE.has_key(username):
 			user, t = USER_CACHE[username]
