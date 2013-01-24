@@ -184,26 +184,27 @@ class User(Model):
 			"*": {"*": {"*": False} },
 			"": {"": {"": False} }
 		}
-		query = Authorization.find(auth_group=self.auth_groups)
-		for auth in query:
-			if not self.authorizations.has_key(auth.method):
-				self.authorizations[auth.method] = {}
-			if not self.authorizations[auth.method].has_key(auth.obj_name):
-				self.authorizations[auth.method][auth.obj_name] = {}
-			self.authorizations[auth.method][auth.obj_name][auth.prop_name] = True
+		if self.auth_groups:
+			query = Authorization.find(auth_group=self.auth_groups)
+			for auth in query:
+				if not self.authorizations.has_key(auth.method):
+					self.authorizations[auth.method] = {}
+				if not self.authorizations[auth.method].has_key(auth.obj_name):
+					self.authorizations[auth.method][auth.obj_name] = {}
+				self.authorizations[auth.method][auth.obj_name][auth.prop_name] = True
 
-			# Weird indexing to say "Yes, they have a value here somewhere"
-			if not self.authorizations[auth.method].has_key(""):
-				self.authorizations[auth.method][""] = {}
-			if not self.authorizations[""].has_key(auth.obj_name):
-				self.authorizations[""][auth.obj_name] = {"": True}
-			self.authorizations[""][""][""] = True
-			self.authorizations[""][""][auth.prop_name] = True
-			self.authorizations[""][auth.obj_name][""] = True
-			self.authorizations[""][auth.obj_name][auth.prop_name] = True
-			self.authorizations[auth.method][auth.obj_name][""] = True
-			self.authorizations[auth.method][""][auth.prop_name] = True
-			self.authorizations[auth.method][""][""] = True
+				# Weird indexing to say "Yes, they have a value here somewhere"
+				if not self.authorizations[auth.method].has_key(""):
+					self.authorizations[auth.method][""] = {}
+				if not self.authorizations[""].has_key(auth.obj_name):
+					self.authorizations[""][auth.obj_name] = {"": True}
+				self.authorizations[""][""][""] = True
+				self.authorizations[""][""][auth.prop_name] = True
+				self.authorizations[""][auth.obj_name][""] = True
+				self.authorizations[""][auth.obj_name][auth.prop_name] = True
+				self.authorizations[auth.method][auth.obj_name][""] = True
+				self.authorizations[auth.method][""][auth.prop_name] = True
+				self.authorizations[auth.method][""][""] = True
 
 		return self.authorizations
 
