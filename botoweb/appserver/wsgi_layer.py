@@ -56,8 +56,6 @@ class WSGILayer(object):
 		"""
 		self.app = app
 		self.update(env)
-		botoweb.set_user_class()
-		botoweb.set_cache()
 
 	def __call__(self, environ, start_response):
 		"""

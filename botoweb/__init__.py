@@ -107,7 +107,6 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 		else:
 			log.error("%s %s: %s" % (method, path, msg))
 
-
 def set_user_class():
 
 	import botoweb
@@ -147,3 +146,5 @@ def set_cache():
 from botoweb.resources.user import User
 user = User
 memc = None
+set_user_class()
+set_cache()
