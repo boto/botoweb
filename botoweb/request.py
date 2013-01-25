@@ -4,10 +4,15 @@ from botoweb.resources.user import User
 import botoweb
 from botoweb.response import Response
 import time
-import json
 import uuid
 import urllib, urllib2, boto
 import logging
+
+try:
+	import simplejson as json
+except:
+	import json
+
 log = logging.getLogger("botoweb.request")
 
 CACHE_TIMEOUT = 300 # Keep user objects around for 300 seconds (5 minutes)

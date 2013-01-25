@@ -27,7 +27,11 @@ from botoweb.request import Request
 from botoweb.response import Response
 from botoweb.exceptions import *
 
-import json
+try:
+	import simplejson as json
+except:
+	import json
+
 import uuid
 import traceback
 import logging

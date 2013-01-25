@@ -25,7 +25,6 @@ from lxml import etree
 import logging
 log = logging.getLogger("botoweb.handlers.db")
 
-
 from botoweb.xmlize import TYPE_NAMES
 TYPE_CONVERSIONS = {
 	"map": "complexType",
