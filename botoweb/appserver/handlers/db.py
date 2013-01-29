@@ -15,12 +15,10 @@ from time import time
 from botoweb import xmlize
 from botoweb.db import index_string
 
-
 try:
-	import json
-	json.loads("[]")
-except ImportError:
 	import simplejson as json
+except:
+	import json
 
 class DBHandler(RequestHandler):
 	"""
