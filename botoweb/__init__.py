@@ -48,6 +48,27 @@ def report_exception(e, req=None, priority=None, msg=None, req_body=None, uri=No
 	if msg == None:
 		msg = str(e)
 	report(msg=msg, status=e.code, name=e.__class__.__name__, tb=traceback.format_exc(), req=req, priority=priority, req_body=req_body, uri=uri)
+	# If NewRelic is configured, we use that as well:
+	try:
+		import botoweb
+		if botoweb.env.dist.has_resource('conf/newrelic.cfg'):
+			import newrelic.agent
+			params = {}
+			if req:
+				params['uri'] = req.real_path_url
+				params['path'] = req.path_info
+				params['body'] = req.body
+				params['remote_ip'] = req.headers.get('X-Forwarded-For', req.remote_addr)
+				params['method'] = req.method
+			if uri:
+				params['uri'] = uri
+			if priority:
+				params['priority'] = priority
+			newrelic.agent.record_exception(e, msg, traceback.format_exc(), params=params)
+			log.info('logged exception to newrelic')
+	except:
+		log.exception('Could not log to newrelic')
+	
 
 def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_body=None, uri=None):
 	"""Generic Error notification"""
