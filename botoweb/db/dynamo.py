@@ -252,6 +252,12 @@ class DynamoModel(Item):
 			if isinstance(value, set):
 				value = list(value)
 			d[key] = value
+		# Auto set the __type__ and __id__ properties
+		# if they aren't already specified
+		if not self.has_key('__type__'):
+			d['__type__'] = self.__class__.__name__
+		if not self.has_key('__id__'):
+			d['__id__'] = self.id
 		return d
 
 	@classmethod
@@ -262,6 +268,24 @@ class DynamoModel(Item):
 			assert(data.has_key(cls._range_key_name)), 'Missing %s' % cls._range_key_name
 		return cls(attrs=data)
 
+	#
+	# Override the save and put methods
+	# to auto-set some properties
+	#
+	def on_save_or_update(self):
+		"""Automatically set properties, to be called
+		from put() and save()"""
+		if not self.has_key('created_at'):
+			self['created_at'] = int(time.time())
+		self['modified_at'] = int(time.time())
+
+	def put(self, *args, **kwargs):
+		self.on_save_or_update()
+		Item.put(self, *args, **kwargs)
+
+	def save(self, *args, **kwargs):
+		self.on_save_or_update()
+		Item.save(self, *args, **kwargs)
 
 from botoweb.db.query import Query
 class DynamoQuery(Query):
