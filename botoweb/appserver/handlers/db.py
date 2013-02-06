@@ -458,7 +458,7 @@ class DBHandler(RequestHandler):
 		from boto.s3.key import Key
 
 		# Figure out what format to send
-		format = "xml"
+		format = None
 		if "." in property:
 			property,format = property.split(".")
 
@@ -475,10 +475,16 @@ class DBHandler(RequestHandler):
 		except Exception, e:
 			raise BadRequest(str(e))
 		if type(val) in (str, unicode):
-			response.content_type = "text/plain"
+			if format is None:
+				response.content_type = "text/plain"
+			elif format == 'xml':
+				response.content_type = 'text/xml'
 			response.write(str(val))
 		elif isinstance(val, Blob):
-			response.content_type = "text/plain"
+			if format is None:
+				response.content_type = "text/plain"
+			elif format == 'xml':
+				response.content_type = 'text/xml'
 			try:
 				response.write(str(val))
 			except:
@@ -508,7 +514,7 @@ class DBHandler(RequestHandler):
 				response.write('<link type="text/xml" rel="self" href="%s"/>' % (self_link))
 			response.write("</%s>" % property)
 		elif val:
-			if format == "xml":
+			if format in [None, "xml"]:
 				response.content_type = "text/xml"
 				if hasattr(val, "to_xml"):
 					response.write(val.to_xml())
