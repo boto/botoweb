@@ -197,19 +197,21 @@ class Request(webob.Request):
 						if not user:
 							try:
 								user = botoweb.user.find(oid=identifier,deleted=False).next()
-							except:
+							except StopIteration:
 								user = None
 
 						# If no OID match, try to match
-						# via Email
-						if not user and email:
+						# via Email, but only for trusted
+						# OID endpoints
+						if not user and email and openID.startswith('https://www.google.com'):
+							log.info('Looking up user email: %s' % email)
 							try:
 								user = botoweb.user.find(email=email,deleted=False).next()
-							except:
+							except StopIteration:
 								user = None
 
 						if user:
-							boto.log.info("OID: %s as %s" % (identifier, user))
+							log.info("OID: %s as %s" % (identifier, user))
 							self._user = user
 
 							# Re-use an old auth-token if it's available
@@ -225,10 +227,10 @@ class Request(webob.Request):
 							self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
 							addCachedUser(user)
 						else:
-							boto.log.warn("Invalid OpenID: %s" % identifier)
+							log.warn("Invalid OpenID: %s" % identifier)
 							botoweb.report("Invalid OpenID: %s" % identifier, status=401, req=self, name="LoginFailure", priority=3)
 					else:
-						boto.log.warn("An error occured trying to authenticate the user: %s" % openParams)
+						log.warn("An error occured trying to authenticate the user: %s" % openParams)
 				
 				# JanRain Authentication token
 				jr_auth_token = self.POST.get("token")
@@ -252,7 +254,7 @@ class Request(webob.Request):
 						if primary_key:
 							user = botoweb.user.get_by_id(primary_key)
 							if user:
-								boto.log.info("User '%s' logged in using PrimaryKey: %s" % (user, primary_key))
+								log.info("User '%s' logged in using PrimaryKey: %s" % (user, primary_key))
 
 						# If that didn't work, check to see if they had an auth_token
 						if not user:
@@ -283,7 +285,7 @@ class Request(webob.Request):
 								user = None
 
 						if user:
-							boto.log.info("Authenticated OID: %s as %s" % (identifier, user))
+							log.info("Authenticated OID: %s as %s" % (identifier, user))
 							self._user = user
 
 							# Re-use an old auth-token if it's available
@@ -299,10 +301,10 @@ class Request(webob.Request):
 							self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
 							addCachedUser(user)
 						else:
-							boto.log.warn("Invalid OpenID: %s" % identifier)
+							log.warn("Invalid OpenID: %s" % identifier)
 							botoweb.report("Invalid OpenID: %s" % identifier, status=401, req=self, name="LoginFailure", priority=3)
 					else:
-						boto.log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
+						log.warn("An error occured trying to authenticate the user: %s" % auth_info['err']['msg'])
 						botoweb.report(auth_info['err']['msg'], status=500, req=self, name="LoginFailure", priority=1)
 			except Exception:
 				log.exception("Could not fetch user")
