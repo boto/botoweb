@@ -279,13 +279,20 @@ class DynamoModel(Item):
 			self['created_at'] = int(time.time())
 		self['modified_at'] = int(time.time())
 
+	def after_save_or_update(self):
+		"""Automatically called *after* any save or update
+		has been performed"""
+		pass
+
 	def put(self, *args, **kwargs):
 		self.on_save_or_update()
 		Item.put(self, *args, **kwargs)
+		self.after_save_or_update()
 
 	def save(self, *args, **kwargs):
 		self.on_save_or_update()
 		Item.save(self, *args, **kwargs)
+		self.after_save_or_update()
 
 from botoweb.db.query import Query
 class DynamoQuery(Query):
