@@ -268,6 +268,14 @@ class DynamoModel(Item):
 			assert(data.has_key(cls._range_key_name)), 'Missing %s' % cls._range_key_name
 		return cls(attrs=data)
 
+	def put_attributes(self, attrs):
+		"""Put multiple attributes, really just calls
+		put_attribute for each key/value pair, then 
+		calls save"""
+		for key, val in attrs.items():
+			self.put_attribute(key, val)
+		self.save()
+
 	#
 	# Override the save and put methods
 	# to auto-set some properties
