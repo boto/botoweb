@@ -194,6 +194,8 @@ class IndexHandler(RequestHandler):
 						# Property Info
 						route_dict['properties'] = {}
 						for prop in model_class.properties():
+							if isinstance(prop, tuple):
+								continue
 							if prop.name.startswith("_"):
 								continue
 							route_dict['properties'][prop.name] = {
