@@ -64,6 +64,8 @@ def report_exception(e, req=None, priority=None, msg=None, req_body=None, uri=No
 				params['uri'] = uri
 			if priority:
 				params['priority'] = priority
+			if not hasattr(e, '__name__'):
+				e.__name__ = e.__class__.__name__
 			newrelic.agent.record_exception(e, msg, traceback.format_exc(), params=params)
 			log.info('logged exception to newrelic')
 	except:
