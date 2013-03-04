@@ -53,6 +53,7 @@ def report_exception(e, req=None, priority=None, msg=None, req_body=None, uri=No
 		import botoweb
 		if botoweb.env.dist.has_resource('conf/newrelic.cfg'):
 			import newrelic.agent
+			import sys
 			params = {}
 			if req:
 				params['uri'] = req.real_path_url
@@ -66,7 +67,7 @@ def report_exception(e, req=None, priority=None, msg=None, req_body=None, uri=No
 				params['priority'] = priority
 			if not hasattr(e, '__name__'):
 				e.__name__ = e.__class__.__name__
-			newrelic.agent.record_exception(e, msg, traceback.format_exc(), params=params)
+			newrelic.agent.record_exception(e, msg, sys.exc_info()[2], params=params)
 			log.info('logged exception to newrelic')
 	except:
 		log.exception('Could not log to newrelic')
