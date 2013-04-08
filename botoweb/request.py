@@ -20,15 +20,20 @@ USER_CACHE = {}
 def getCachedUser(username):
 	if isinstance(username, unicode):
 		username = username.encode('utf-8')
-	if botoweb.memc:
+
+	# FIRST: Try local cache
+	if USER_CACHE.has_key(username):
+		user, t = USER_CACHE[username]
+		if (time.time() - t) < CACHE_TIMEOUT:
+			return user
+	elif botoweb.memc:
+		# SECOND: try memcache
 		data = botoweb.memc.get(username)
 		if data:
-			return botoweb.user.from_dict(json.loads(data))
-	else:
-		if USER_CACHE.has_key(username):
-			user, t = USER_CACHE[username]
-			if (time.time() - t) < CACHE_TIMEOUT:
-				return user
+			try:
+				return botoweb.user.from_dict(json.loads(data))
+			except:
+				log.exception('Could not load cached user')
 	return None
 
 def addCachedUser(user):
