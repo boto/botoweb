@@ -194,9 +194,9 @@ class DynamoModel(Item):
 	find = query
 
 	@classmethod
-	def all(cls):
+	def all(cls, request_limit=None):
 		"""Uses Scan to return all of this type of object"""
-		return DynamoQuery(cls)
+		return DynamoQuery(cls, request_limit=request_limit)
 
 	@classmethod
 	def properties(cls, hidden=True):
@@ -263,9 +263,10 @@ class DynamoModel(Item):
 	@classmethod
 	def from_dict(cls, data):
 		"""Takes a normal dict, and returns this object"""
-		assert(data.has_key(cls._hash_key_name)), 'Missing %s' % cls._hash_key_name
-		if cls._range_key_name:
-			assert(data.has_key(cls._range_key_name)), 'Missing %s' % cls._range_key_name
+		table = cls.get_table()
+		assert(data.has_key(table.schema.hash_key_name)), 'Missing %s' % table.schema.hash_key_name
+		if table.schema.range_key_name:
+			assert(data.has_key(table.schema.range_key_name)), 'Missing %s' % table.schema.range_key_name
 		return cls(attrs=data)
 
 	def put_attributes(self, attrs, expected_value=None, return_values=None):
@@ -306,6 +307,12 @@ from botoweb.db.query import Query
 class DynamoQuery(Query):
 	"""Query iterator for Dynamo-based objects"""
 
+	def __init__(self, *args, **kwargs):
+		if kwargs.has_key('request_limit'):
+			self.request_limit = kwargs['request_limit']
+			del(kwargs['request_limit'])
+		Query.__init__(self, *args, **kwargs)
+
 	def __iter__(self):
 		"""Override this to change how we query this
 		model"""
@@ -313,7 +320,7 @@ class DynamoQuery(Query):
 		last_error = None
 		while attempt < MAX_RETRIES:
 			try:
-				for item in self.model_class.get_table().scan(item_class=self.model_class):
+				for item in self.model_class.get_table().scan(item_class=self.model_class, request_limit=self.request_limit):
 					yield item
 				return
 			except DynamoDBResponseError, e:
