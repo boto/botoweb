@@ -76,6 +76,9 @@ class Request(webob.Request):
 		else:
 			self.real_remote_addr = self.environ.get("REMOTE_ADDR")
 
+		# Cache objects
+		self.cache = {}
+
 	def get(self, argument_name, default_value='', allow_multiple=False):
 		param_value = self.get_all(argument_name, default_value)
 		if allow_multiple:

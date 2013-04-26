@@ -131,8 +131,11 @@ if __name__ == "__main__":
 		# This maps the reload script to the newrelic
 		# WSGI wrapper
 		reload = mapper.reload
+		# We also need to grab the handle function
+		handle = mapper.handle
 		mapper = newrelic.agent.wsgi_application()(mapper)
 		mapper.reload = reload
+		mapper.handle = handle
 
 
 
