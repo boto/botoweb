@@ -149,8 +149,7 @@ if __name__ == "__main__":
 		# Plop in a top-layer SocketIO Wrapper
 		from botoweb.appserver.socket import SocketIOLayer
 		SocketIOServer((options.hostname, int(options.port)), SocketIOLayer(app=mapper, env=e),
-			resource='socket.io', policy_server=True,
-			policy_listener=(options.hostname, 10843)).serve_forever()
+			resource='socket.io', policy_server=False).serve_forever()
 	else:
 
 		# Figure out which HTTP server to use,
