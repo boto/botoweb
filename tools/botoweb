@@ -143,7 +143,9 @@ if __name__ == "__main__":
 	if options.socketio:
 		from gevent import monkey; monkey.patch_all()
 		from socketio.server import SocketIOServer
-		SocketIOServer((options.hostname, int(options.port)), mapper,
+		# Plop in a top-layer SocketIO Wrapper
+		from botoweb.appserver.socket import SocketIOLayer
+		SocketIOServer((options.hostname, int(options.port)), SocketIOLayer(app=mapper, env=e),
 			resource='socket.io', policy_server=True,
 			policy_listener=(options.hostname, 10843)).serve_forever()
 	else:
