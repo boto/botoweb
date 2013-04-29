@@ -144,7 +144,6 @@ if __name__ == "__main__":
 
 	# If we're configured,use the socketIO server first
 	if options.socketio:
-		from gevent import monkey; monkey.patch_all()
 		from socketio.server import SocketIOServer
 		# Plop in a top-layer SocketIO Wrapper
 		from botoweb.appserver.socket import SocketIOLayer
