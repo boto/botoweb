@@ -13,6 +13,7 @@ log = logging.getLogger('botoweb.appserver.socketio')
 
 import json
 import gevent
+import urllib
 
 class BWNamespace(BaseNamespace):
 	"""Simple BotoWeb Namespace which routes requests directly
@@ -23,7 +24,19 @@ class BWNamespace(BaseNamespace):
 		self.cache = {}
 
 	def _request(self, method, args):
-		"""Generic Request"""
+		"""Generic Request
+		All request args must contain at least:
+		:msg_id: The message ID to correspond back when returning a response
+		:model: The name of the model corresponding to this request
+			(this corresponds to the "name" attribtute in handlers.yaml)
+
+		Requests may also contain:
+		:id: ID of the object to request
+		:params: Any GET/POST parameters to pass in. The proper parameters are always
+			used determined by what request type this is
+		:post: POST parameters to send (ignores request method)
+		:get: GET parameters to send (ignores request method)
+		"""
 		try:
 			# Sanity Checking
 			if not args.has_key('msg_id'):
@@ -36,11 +49,36 @@ class BWNamespace(BaseNamespace):
 			path = self.request['routes'].get(args['model'], args['model'])
 			log.info('%s: %s => %s' % (method, args['model'], path))
 
+			# Add in any GET/POST parameters
+			post_params = None
+			get_params = None
+			if method == 'POST':
+				post_params = args.get('params')
+			else:
+				get_params = args.get('params')
+			if args.has_key('get'):
+				get_params = args.get('get')
+			if args.has_key('post'):
+				post_params = args.get('post')
+
 			# Set up the Request and Response
 			# objects
 			resp = Response()
 			environ = self.environ.copy()
+			environ['REQUEST_METHOD'] = method.upper()
+			# If an ID is specified, add that to the path
+			if args.has_key('id'):
+				path += '/' + args['id']
+			# Also allow a parameter
+			if args.has_key('param'):
+				path += '/' + args['param']
+
+			# Set the path
 			environ['PATH_INFO'] = path
+			# Add in any GET paramters
+			if get_params:
+				environ['QUERY_STRING'] = urllib.urlencode(get_params)
+
 			# Set up authorization
 			if self.request.has_key('AUTH'):
 				username = self.request['AUTH'].get('username')
@@ -50,6 +88,11 @@ class BWNamespace(BaseNamespace):
 				environ['HTTP_AUTHORIZATION'] = auth_header
 			req = Request(environ)
 			req.accept = self.headers.get('accept', req.headers.get('X-Application-Accept', 'application/json'))
+			# Add in any POST params
+			if post_params:
+				req.content_type = 'application/x-www-form-urlencoded'
+				req.body = urllib.urlencode(post_params)
+				
 			for header in self.headers:
 				# We already handled the accept header above
 				if header == 'accept':
