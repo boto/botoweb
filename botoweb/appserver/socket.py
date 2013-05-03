@@ -6,6 +6,7 @@ SocketIO Basic functionality
 from botoweb.request import Request
 from botoweb.response import Response
 from botoweb.appserver.wsgi_layer import WSGILayer
+from botoweb.exceptions import HTTPException
 from socketio import socketio_manage
 from socketio.namespace import BaseNamespace
 import logging
@@ -114,8 +115,11 @@ class BWNamespace(BaseNamespace):
 							self.emit('data', {'msg_id': args['msg_id'], 'msg': data})
 				else:
 					self.emit('data', {'msg_id': args['msg_id'], 'msg': resp.body})
+			except HTTPException, e:
+				self.emit('err', {'msg_id': args['msg_id'], 'code': e.code, 'msg': str(e)})
 			except Exception:
-				log.exception('Error processing: %s' % args)
+				self.emit('err', {'msg_id': args['msg_id'], 'code': 500, 'msg': str(e)})
+				log.exception('Unhandled Error processing: %s' % args)
 
 			# Handle any caching
 			if req.user:
