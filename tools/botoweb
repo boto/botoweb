@@ -49,6 +49,7 @@ if __name__ == "__main__":
 	parser.add_option("--core", dest="core", action="store_true", default=False, help="Run only the core (URL Maper), no auth, filter, or cache layers")
 	parser.add_option("--cache", dest="cache", action="store_true", default=False, help="Enable the cache layer. Useful if you are not using user-based responses")
 	parser.add_option("--max-threads", dest="max_threads", default=20, help="Maximum number of threads to run (default 20)")
+	parser.add_option("--socketio", help='Use gevent-socketio', action='store_true')
 	parser.add_option("-v", action="count", dest="verbose", default=0)
 	(options, args) = parser.parse_args()
 
@@ -130,92 +131,104 @@ if __name__ == "__main__":
 		# This maps the reload script to the newrelic
 		# WSGI wrapper
 		reload = mapper.reload
+		# We also need to grab the handle function
+		handle = mapper.handle
 		mapper = newrelic.agent.wsgi_application()(mapper)
 		mapper.reload = reload
+		mapper.handle = handle
 
 
 
 	# Add in a reload handler for SIGHUP
 	signal.signal(signal.SIGHUP, mapper.reload)
 
-	# Figure out which HTTP server to use,
-	# we based this off of:
-	# http://nichol.as/benchmark-of-python-web-servers
-	try:
-		# First up, Twisted
-		import twisted
-		from twisted.web.server import Site
-		from twisted.web.wsgi import WSGIResource
-		from twisted.python.threadpool import ThreadPool
-		from twisted.internet import reactor
+	# If we're configured,use the socketIO server first
+	if options.socketio:
+		from socketio.server import SocketIOServer
+		# Plop in a top-layer SocketIO Wrapper
+		from botoweb.appserver.socket import SocketIOLayer
+		SocketIOServer((options.hostname, int(options.port)), SocketIOLayer(app=mapper, env=e),
+			resource='socket.io', policy_server=False).serve_forever()
+	else:
 
-		log.info("Max Threads: %s" % options.max_threads)
-		wsgiThreadPool = ThreadPool(maxthreads=options.max_threads, minthreads=min(options.max_threads, 5))
-		wsgiThreadPool.start()
-
-
-
-		def getInfo(signum, stack):
-			log.info("================ INFO ===================")
-			log.info("queue: %s"   % len(wsgiThreadPool.q.queue))
-			log.info("waiters: %s" % len(wsgiThreadPool.waiters))
-			log.info("working: %s" % len(wsgiThreadPool.working))
-			log.info("threads: %s" % len(wsgiThreadPool.threads))
-			log.info("=========================================")
-
-		def stop(signum, stack):
-			log.info("Gracefully Stopping botoweb server")
-			reactor.stop()
-
+		# Figure out which HTTP server to use,
+		# we based this off of:
+		# http://nichol.as/benchmark-of-python-web-servers
 		try:
-			# Bind SIGKILL
-			signal.signal(signal.SIGINT, stop)
-			# Bind SIGINFO
-			signal.signal(29, getInfo)
-		except:
-			pass
+			# First up, Twisted
+			import twisted
+			from twisted.web.server import Site
+			from twisted.web.wsgi import WSGIResource
+			from twisted.python.threadpool import ThreadPool
+			from twisted.internet import reactor
 
-		# ensuring that it will be stopped when the reactor shuts down
-		reactor.addSystemEventTrigger('after', 'shutdown', wsgiThreadPool.stop)
+			log.info("Max Threads: %s" % options.max_threads)
+			wsgiThreadPool = ThreadPool(maxthreads=options.max_threads, minthreads=min(options.max_threads, 5))
+			wsgiThreadPool.start()
 
-		log.info("Using Twisted version: %s" % twisted.__version__)
-		log.info("running on http://localhost:%s" % (options.port))
-		mapper.threadpool = wsgiThreadPool
-		mapper.maxthreads = int(options.max_threads)
-		resource = WSGIResource(reactor, wsgiThreadPool, mapper)
-		reactor.listenTCP(int(options.port),Site(resource))
-		reactor.run()
 
-	except ImportError:
-		try:
-			# Next, try CherryPy
-			from cherrypy import wsgiserver
-			log.info("Using CherryPyWSGIServer")
-			log.info("running on http://%s:%s" % (options.hostname, options.port))
-			s = wsgiserver.CherryPyWSGIServer((options.hostname, int(options.port)),mapper)
+
+			def getInfo(signum, stack):
+				log.info("================ INFO ===================")
+				log.info("queue: %s"   % len(wsgiThreadPool.q.queue))
+				log.info("waiters: %s" % len(wsgiThreadPool.waiters))
+				log.info("working: %s" % len(wsgiThreadPool.working))
+				log.info("threads: %s" % len(wsgiThreadPool.threads))
+				log.info("=========================================")
+
+			def stop(signum, stack):
+				log.info("Gracefully Stopping botoweb server")
+				reactor.stop()
+
 			try:
-				s.start()
-			finally:
-				s.stop()
+				# Bind SIGKILL
+				signal.signal(signal.SIGINT, stop)
+				# Bind SIGINFO
+				signal.signal(29, getInfo)
+			except:
+				pass
+
+			# ensuring that it will be stopped when the reactor shuts down
+			reactor.addSystemEventTrigger('after', 'shutdown', wsgiThreadPool.stop)
+
+			log.info("Using Twisted version: %s" % twisted.__version__)
+			log.info("running on http://localhost:%s" % (options.port))
+			mapper.threadpool = wsgiThreadPool
+			mapper.maxthreads = int(options.max_threads)
+			resource = WSGIResource(reactor, wsgiThreadPool, mapper)
+			reactor.listenTCP(int(options.port),Site(resource))
+			reactor.run()
+
 		except ImportError:
 			try:
-				# Next, try Paste
-				from paste import httpserver
-				log.info("Using python paste server")
+				# Next, try CherryPy
+				from cherrypy import wsgiserver
+				log.info("Using CherryPyWSGIServer")
 				log.info("running on http://%s:%s" % (options.hostname, options.port))
-				httpserver.serve(mapper,
-					host=options.hostname,
-					port=int(options.port),
-					daemon_threads=True,
-					socket_timeout=60,
-					protocol_version="HTTP/1.1",
-				)
+				s = wsgiserver.CherryPyWSGIServer((options.hostname, int(options.port)),mapper)
+				try:
+					s.start()
+				finally:
+					s.stop()
 			except ImportError:
-				# As a last resort, fall back to WsgiRef which has been included since Python2.5
-				from wsgiref import simple_server
-				log.info("No other servers available, using wsgiref instead")
-				log.info("running on http://%s:%s" % (options.hostname, options.port))
-				httpd = simple_server.WSGIServer((options.hostname,int(options.port)),
-										simple_server.WSGIRequestHandler)
-				httpd.set_app(mapper)
-				httpd.serve_forever()
+				try:
+					# Next, try Paste
+					from paste import httpserver
+					log.info("Using python paste server")
+					log.info("running on http://%s:%s" % (options.hostname, options.port))
+					httpserver.serve(mapper,
+						host=options.hostname,
+						port=int(options.port),
+						daemon_threads=True,
+						socket_timeout=60,
+						protocol_version="HTTP/1.1",
+					)
+				except ImportError:
+					# As a last resort, fall back to WsgiRef which has been included since Python2.5
+					from wsgiref import simple_server
+					log.info("No other servers available, using wsgiref instead")
+					log.info("running on http://%s:%s" % (options.hostname, options.port))
+					httpd = simple_server.WSGIServer((options.hostname,int(options.port)),
+											simple_server.WSGIRequestHandler)
+					httpd.set_app(mapper)
+					httpd.serve_forever()
