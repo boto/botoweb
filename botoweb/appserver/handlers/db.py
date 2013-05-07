@@ -64,7 +64,7 @@ class DBHandler(RequestHandler):
 			if property:
 				return self.get_property(request, response, obj, property)
 			else:
-				if request.file_extension == "json":
+				if request.file_extension == "json" or "application/json" in request.accept:
 					response.content_type = "application/json"
 					response.app_iter = JSONWrapper(iter([obj]), request.user)
 				else:
@@ -79,7 +79,7 @@ class DBHandler(RequestHandler):
 				del(params['next_token'])
 			base_url = '%s%s%s' % (request.real_host_url, request.base_url, request.script_name)
 			#objs.limit = self.page_size
-			if request.file_extension == "json":
+			if request.file_extension == "json" or "application/json" in request.accept:
 				response.content_type = "application/json"
 				response.app_iter = JSONWrapper(objs, request.user, "%s.json" % base_url, params)
 			elif request.file_extension == "csv":
@@ -134,7 +134,7 @@ class DBHandler(RequestHandler):
 				if obj:
 					raise Conflict("Object %s already exists" % id)
 
-		if request.file_extension == "json":
+		if request.file_extension == "json" or "application/json" in request.accept:
 			new_obj = json.loads(request.body)
 			new_obj['__id__'] = id
 		else:
@@ -142,7 +142,7 @@ class DBHandler(RequestHandler):
 			new_obj.__id__ = id
 		obj = self.create(new_obj, request.user, request)
 		response.set_status(201)
-		if(request.file_extension == "json"):
+		if(request.file_extension == "json" or "application/json" in request.accept):
 			response.content_type = "application/json"
 			response.app_iter = JSONWrapper(iter([obj]), request.user)
 		else:
@@ -176,7 +176,7 @@ class DBHandler(RequestHandler):
 					props[prop] = prop_value
 		obj =  self.update(obj, props, request.user, request)
 
-		if request.file_extension == "json":
+		if request.file_extension == "json" or "application/json" in request.accept:
 			response.content_type = "application/json"
 			response.app_iter = JSONWrapper(iter([obj]), request.user)
 		else:
@@ -461,6 +461,9 @@ class DBHandler(RequestHandler):
 		format = None
 		if "." in property:
 			property,format = property.split(".")
+		elif 'application/json' in request.accept:
+			format = 'json'
+
 
 		# Some leakage here of authorizations, but 
 		# I'm not quite sure how to handle this elsewhere

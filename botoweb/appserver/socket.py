@@ -24,7 +24,7 @@ class BWNamespace(BaseNamespace):
 		self.headers = {}
 		self.cache = {}
 
-	def _request(self, method, args):
+	def _request(self, method, args, path='/'):
 		"""Generic Request
 		All request args must contain at least:
 		:msg_id: The message ID to correspond back when returning a response
@@ -40,39 +40,46 @@ class BWNamespace(BaseNamespace):
 		"""
 		try:
 			# Sanity Checking
-			if not args.has_key('msg_id'):
-				self.emit('err', {'code': 400, 'msg': 'No msg_id provided'})
-				return
-			if not args.has_key('model'):
-				self.emit('err', {'code': 400, 'msg': 'No model provided'})
-				return
+			if args:
+				msg_id = args.get('msg_id')
+				if not args.has_key('msg_id'):
+					self.emit('err', {'code': 400, 'msg': 'No msg_id provided'})
+					return
+				if not args.has_key('model'):
+					self.emit('err', {'code': 400, 'msg': 'No model provided'})
+					return
 
-			path = self.request['routes'].get(args['model'], args['model'])
-			log.info('%s: %s => %s' % (method, args['model'], path))
+				path = self.request['routes'].get(args['model'], args['model'])
+				log.info('%s: %s => %s' % (method, args['model'], path))
+			else:
+				log.info('%s %s' % (method, path))
+				msg_id = 0
 
 			# Add in any GET/POST parameters
 			post_params = None
 			get_params = None
-			if method == 'POST':
-				post_params = args.get('params')
-			else:
-				get_params = args.get('params')
-			if args.has_key('get'):
-				get_params = args.get('get')
-			if args.has_key('post'):
-				post_params = args.get('post')
+			if args:
+				if method == 'POST':
+					post_params = args.get('params')
+				else:
+					get_params = args.get('params')
+				if args.has_key('get'):
+					get_params = args.get('get')
+				if args.has_key('post'):
+					post_params = args.get('post')
 
 			# Set up the Request and Response
 			# objects
 			resp = Response()
 			environ = self.environ.copy()
 			environ['REQUEST_METHOD'] = method.upper()
-			# If an ID is specified, add that to the path
-			if args.has_key('id'):
-				path += '/' + args['id']
-			# Also allow a parameter
-			if args.has_key('param'):
-				path += '/' + args['param']
+			if args:
+				# If an ID is specified, add that to the path
+				if args.has_key('id'):
+					path += '/' + args['id']
+				# Also allow a parameter
+				if args.has_key('param'):
+					path += '/' + args['param']
 
 			# Set the path
 			environ['PATH_INFO'] = path
@@ -111,14 +118,22 @@ class BWNamespace(BaseNamespace):
 				if 'json' in resp.content_type:
 					for line in resp.app_iter:
 						if line:
-							data = json.loads(line)
-							self.emit('data', {'msg_id': args['msg_id'], 'msg': data})
+							for item in line.split('\r\n'):
+								if item:
+									try:
+										data = json.loads(item)
+									except:
+										print '='*80
+										print item
+										print '='*80
+										raise
+									self.emit('data', {'msg_id': msg_id, 'msg': data})
 				else:
-					self.emit('data', {'msg_id': args['msg_id'], 'msg': resp.body})
+					self.emit('data', {'msg_id': msg_id, 'msg': resp.body})
 			except HTTPException, e:
-				self.emit('err', {'msg_id': args['msg_id'], 'code': e.code, 'msg': str(e)})
-			except Exception:
-				self.emit('err', {'msg_id': args['msg_id'], 'code': 500, 'msg': str(e)})
+				self.emit('err', {'msg_id': msg_id, 'code': e.code, 'msg': str(e)})
+			except Exception, e:
+				self.emit('err', {'msg_id': msg_id, 'code': 500, 'msg': str(e)})
 				log.exception('Unhandled Error processing: %s' % args)
 
 			# Handle any caching
@@ -153,6 +168,9 @@ class BWNamespace(BaseNamespace):
 
 	def on_DELETE(self, args):
 		gevent.spawn(self._request, 'DELETE', args)
+
+	def on_DESCRIBE(self, args=None):
+		gevent.spawn(self._request, 'GET', args, path='/')
 
 class SocketIOLayer(WSGILayer):
 	"""SocketIO WSGI Layer.
