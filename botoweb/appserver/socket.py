@@ -13,16 +13,18 @@ import logging
 log = logging.getLogger('botoweb.appserver.socketio')
 
 import json
-import gevent
 import urllib
+
+from gevent.coros import Semaphore
 
 class BWNamespace(BaseNamespace):
 	"""Simple BotoWeb Namespace which routes requests directly
 	to the application object"""
-	def __init__(self, *args, **kwargs):
-		super(BWNamespace, self).__init__(*args, **kwargs)
+
+	def initialize(self, *args, **kwargs):
 		self.headers = {}
-		self.cache = {}
+		self.cache_lock = Semaphore()
+		return BaseNamespace.initialize(self, *args, **kwargs)
 
 	def _request(self, method, args, path='/'):
 		"""Generic Request
@@ -108,39 +110,44 @@ class BWNamespace(BaseNamespace):
 				req.headers[header] = self.headers[header]
 
 			# Add in any cached items
-			req.cache = self.cache
-			if self.cache.has_key('user'):
-				req._user = self.cache['user']
+			with self.cache_lock:
+				req.cache = self.session
+				if self.session.has_key('user'):
+					req._user = self.session['user']
 
 			# Execute the application
 			try:
+				# Run the request
 				self.request['app'].handle(req, resp)
+
+				# Handle any caching
+				with self.cache_lock:
+					if req.user:
+						self.session['user'] = req.user
+					for item in req.cache:
+						self.session[item] = req.cache[item]
+
+				# Return the response
 				if 'json' in resp.content_type:
 					for line in resp.app_iter:
+						if not self.socket.connected:
+							log.error('Client unexpectedly disconnected')
+							return
 						if line:
 							for item in line.split('\r\n'):
 								if item:
-									try:
-										data = json.loads(item)
-									except:
-										print '='*80
-										print item
-										print '='*80
-										raise
+									data = json.loads(item)
 									self.emit('data', {'msg_id': msg_id, 'msg': data})
 				else:
 					self.emit('data', {'msg_id': msg_id, 'msg': resp.body})
 			except HTTPException, e:
 				self.emit('err', {'msg_id': msg_id, 'code': e.code, 'msg': str(e)})
+				log.error('Error "%s" processing command: %s %s %s' % (str(e), method, args, path))
 			except Exception, e:
 				self.emit('err', {'msg_id': msg_id, 'code': 500, 'msg': str(e)})
 				log.exception('Unhandled Error processing: %s' % args)
 
-			# Handle any caching
-			if req.user:
-				self.cache['user'] = req.user
-			for item in req.cache:
-				self.cache[item] = req.cache[item]
+
 		except Exception:
 			log.exception('Error processing: %s' % args)
 
@@ -154,23 +161,25 @@ class BWNamespace(BaseNamespace):
 	def on_AUTH(self, args):
 		"""Auth just sends username/password, which we
 		then just build into our request object"""
-		self.request['AUTH'] = args
+		with self.cache_lock:
+			self.request['AUTH'] = args
 
 	def on_GET(self, args):
 		"""GET request"""
-		gevent.spawn(self._request, 'GET', args)
+		self.spawn(self._request, 'GET', args)
 
 	def on_POST(self, args):
-		gevent.spawn(self._request, 'POST', args)
+		self.spawn(self._request, 'POST', args)
 
 	def on_PUT(self, args):
-		gevent.spawn(self._request, 'PUT', args)
+		self.spawn(self._request, 'PUT', args)
 
 	def on_DELETE(self, args):
-		gevent.spawn(self._request, 'DELETE', args)
+		self.spawn(self._request, 'DELETE', args)
 
 	def on_DESCRIBE(self, args=None):
-		gevent.spawn(self._request, 'GET', args, path='/')
+		self.spawn(self._request, 'GET', args, path='/')
+
 
 class SocketIOLayer(WSGILayer):
 	"""SocketIO WSGI Layer.
