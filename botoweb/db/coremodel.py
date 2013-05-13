@@ -348,7 +348,10 @@ class Model(object):
 			else:
 				# Otherwise, it may just be a date
 				val = val.split('-')
-				val = date(int(val[0]), int(val[1]), int(val[2]))
+				try:
+					val = date(int(val[0]), int(val[1]), int(val[2]))
+				except:
+					return None
 		elif t == list:
 			if not isinstance(val, list) and not isinstance(val, set):
 				val = [val]
