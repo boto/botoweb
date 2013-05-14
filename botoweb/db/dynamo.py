@@ -211,6 +211,8 @@ class DynamoModel(Item):
 						if isinstance(prop, basestring):
 							from botoweb.db.property import StringProperty
 							prop = StringProperty(verbose_name=prop, name=key)
+						if not prop.name:
+							prop.name = key
 						if hidden or not prop.__class__.__name__.startswith('_'):
 							cursor._prop_cache.append(prop)
 				if len(cursor.__bases__) > 0:
