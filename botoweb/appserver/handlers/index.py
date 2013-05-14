@@ -153,6 +153,8 @@ class IndexHandler(RequestHandler):
 		ret = {}
 		if self.env.config.get("app", "version"):
 			ret['__version__'] = self.env.config.get("app", "version")
+		if self.env.config.get("app", "name"):
+			ret["__name__"] = self.env.config.get("app", "name")
 		if request.user:
 			ret["User"] = {
 				"__id__": request.user.id,
