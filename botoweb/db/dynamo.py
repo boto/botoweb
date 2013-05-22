@@ -275,9 +275,12 @@ class DynamoModel(Item):
 		"""Put multiple attributes, really just calls
 		put_attribute for each key/value pair, then 
 		calls save"""
+		updates = self._updates
+		self._updates = {}
 		for key, val in attrs.items():
 			self.put_attribute(key, val)
 		self.save(expected_value=expected_value, return_values=return_values)
+		self._updates = updates
 
 	#
 	# Override the save and put methods
