@@ -290,13 +290,20 @@ class Model(object):
 				rv = []
 				for v in val:
 					if v is not None:
-						rv.append(str(v))
+						if isinstance(v, unicode):
+							v = v.encode('utf-8')
+						else:
+							v = str(v)
+						rv.append(v)
 				val = rv
 			elif isinstance(val, dict):
 				rv = {}
 				for k in val:
 					if val[k] is not None:
-						rv[k] = str(val[k])
+						if isinstance(val[k], unicode):
+							rv[k] = val[k].encode('utf-8')
+						else:
+							rv[k] = str(val[k])
 				val = rv
 			else:
 				# Fall back to encoding as a string
