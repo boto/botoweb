@@ -211,6 +211,8 @@ class DynamoModel(Item):
 						if isinstance(prop, basestring):
 							from botoweb.db.property import StringProperty
 							prop = StringProperty(verbose_name=prop, name=key)
+						if not prop.name:
+							prop.name = key
 						if hidden or not prop.__class__.__name__.startswith('_'):
 							cursor._prop_cache.append(prop)
 				if len(cursor.__bases__) > 0:
@@ -273,9 +275,12 @@ class DynamoModel(Item):
 		"""Put multiple attributes, really just calls
 		put_attribute for each key/value pair, then 
 		calls save"""
+		updates = self._updates
+		self._updates = {}
 		for key, val in attrs.items():
 			self.put_attribute(key, val)
 		self.save(expected_value=expected_value, return_values=return_values)
+		self._updates = updates
 
 	#
 	# Override the save and put methods

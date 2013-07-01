@@ -53,22 +53,20 @@ class Request(webob.Request):
 
 	def __init__(self, environ):
 		self._user = None
-		charset = 'ascii'
+		charset = 'utf-8'
 		content_type = environ.get("CONTENT_TYPE", environ.get("HTTP_CONTENT_TYPE", ""))
-		if content_type.find('charset') == -1:
-			charset = 'utf-8'
 
 		webob.Request.__init__(self, environ, charset=charset,
 			unicode_errors= 'ignore', decode_param_names=True)
-		if self.headers.has_key("X-Forwarded-Host"):
-			self.real_host_url = "%s://%s" % (self.headers.get("X-Forwarded-Proto", "http"), self.headers.get("X-Forwarded-Host"))
+		if self.headers.get('X-Forwarded-Host'):
+			self.real_host_url = "%s://%s" % (self.headers.get('X-Forwarded-Proto', 'http'), self.headers.get('X-Forwarded-Host'))
 		else:
 			self.real_host_url = self.host_url
 		self.real_path_url = self.real_host_url + self.path
 		if not self.content_type:
 			self.content_type = content_type
 
-		if self.headers.has_key("X-Forwarded-For"):
+		if self.headers.get('X-Forwarded-For'):
 			try:
 				self.real_remote_addr = self.headers.get("X-Forwarded-For").split(", ")[0]
 			except:

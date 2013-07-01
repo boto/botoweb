@@ -48,7 +48,7 @@ class IndexHandler(RequestHandler):
 	def _get(self, request, response, id=None):
 		"""List all our APIs,
 		as well as properties on each object we have."""
-		if self.config.get("format", self.env.config.get("app", "format")) == "json":
+		if self.config.get("format", self.env.config.get("app", "format")) == "json" or request.accept.best_match(['application/xml', 'application/json']) == 'application/json':
 			return self.to_json(request, response)
 		else:
 			return self.to_xml(request, response)
@@ -153,6 +153,8 @@ class IndexHandler(RequestHandler):
 		ret = {}
 		if self.env.config.get("app", "version"):
 			ret['__version__'] = self.env.config.get("app", "version")
+		if self.env.config.get("app", "name"):
+			ret["__name__"] = self.env.config.get("app", "name")
 		if request.user:
 			ret["User"] = {
 				"__id__": request.user.id,
