@@ -71,10 +71,13 @@ class DBHandler(RequestHandler):
 					response.write(xmlize.dumps(obj))
 					
 		else:
-			# Add the count to the header
-			response = self._head(request, response)
 			params = request.GET.mixed()
 			objs = self.search(params=params, user=request.user)
+			# Add the count to the header
+			try:
+				response.headers['X-Result-Count'] = str(objs.count())
+			except:
+				raise BadRequest('Invalid Query')
 			if params.has_key("next_token"):
 				del(params['next_token'])
 			base_url = '%s%s%s' % (request.real_host_url, request.base_url, request.script_name)
