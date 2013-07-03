@@ -194,10 +194,13 @@ class Converter(object):
 			return 'false'
 
 	def decode_bool(self, value):
-		if value.lower() == 'true':
-			return True
+		if isinstance(value, basestring):
+			if value.lower() == 'true':
+				return True
+			else:
+				return False
 		else:
-			return False
+			return bool(value)
 
 	def encode_float(self, value):
 		"""
