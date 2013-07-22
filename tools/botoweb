@@ -22,10 +22,10 @@
 
 # Gevent must monkey-patch the STDLIB before anything
 # else is imported, but only if it's available
-try:
-	from gevent.monkey import patch_all;patch_all()
-except ImportError:
-	pass
+#try:
+#	from gevent.monkey import patch_all;patch_all()
+#except ImportError:
+#	pass
 
 def get_function(session, f_name):
 	"""

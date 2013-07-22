@@ -132,7 +132,7 @@ class XMLSerializer(object):
 		"""Encode a DATETIME into standard ISO 8601 Internet Format"""
 		self.encode_default(prop_name, prop_value.isoformat(), "dateTime", **params)
 
-	def encode_object(self, prop_name, prop_value):
+	def encode_object(self, prop_name, prop_value, **params):
 		"""Encode a generic object (must have an "id" attribute)"""
 		from botoweb.db.query import Query
 		from botoweb.db.blob import Blob
@@ -148,7 +148,11 @@ class XMLSerializer(object):
 			prop_value = str(prop_value.id)
 		else:
 			return
-		self.file.write("""<%s type="reference" item_type="%s" id="%s" href="%s"/>""" % (prop_name, prop_type, prop_value, prop_name))
+		if not params.has_key("href"):
+			params["href"] = prop_name
+		params["item_type"] = prop_type
+		params["id"] = prop_value
+		return self.encode_default(prop_name, "", "reference", **params)
 
 	def encode_query(self, prop_name, prop_value=None):
 		"""Encode a query, this is sent as a reference"""
