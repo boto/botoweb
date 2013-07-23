@@ -156,7 +156,6 @@ class DBHandler(RequestHandler):
 
 	def _put(self, request, response, id=None):
 		"""Update an existing resource"""
-		content = None
 		obj = None
 		if id:
 			obj = self.db_class.lookup(id)
@@ -487,10 +486,9 @@ class DBHandler(RequestHandler):
 				response.content_type = 'text/xml'
 			response.write(str(val))
 		elif isinstance(val, Blob):
-			if format is None:
-				response.content_type = "text/plain"
-			elif format == 'xml':
-				response.content_type = 'text/xml'
+			response.content_type = 'text/plain'
+			#if format == 'xml':
+			#	response.content_type = 'text/xml'
 			try:
 				response.write(str(val))
 			except:
