@@ -266,8 +266,8 @@ class Model(object):
 		from botoweb.db.query import Query
 		from botoweb.db.property import CalculatedProperty
 		ret = {'__type__': self.__class__.__name__, '__id__': self.id}
-		for prop_name in self._prop_names:
-			prop_type = self.find_property(prop_name)
+		for prop_type in self.properties():
+			prop_name = prop_type.name
 			# Don't mess with calculated properties
 			if isinstance(prop_type, CalculatedProperty):
 				continue
