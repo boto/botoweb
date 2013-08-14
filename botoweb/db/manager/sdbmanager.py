@@ -150,7 +150,7 @@ class SDBManager(Manager):
 
 	def get_blob_bucket(self, bucket_name=None):
 		s3 = self.get_s3_connection()
-		bucket_name = "%s-%s" % (s3.aws_access_key_id, self.domain.name)
+		bucket_name = '%s-%s' % (boto.config.get('DB', 'blob_bucket_prefix', s3.aws_access_key_id), self.domain.name)
 		bucket_name = bucket_name.lower()
 		try:
 			self.bucket = s3.get_bucket(bucket_name)
