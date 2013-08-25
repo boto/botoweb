@@ -160,8 +160,11 @@ def encode_query(value):
 def encode_blob(value):
 	"""Encode a blob, this is actually a link which
 	may point to an S3 location"""
+	from StringIO import StringIO
 	ret = {"__type__": "__blob__"}
-	ret['__href__'] = value.file.generate_url(3600)
+	# TODO: Make this work for StringIO objects
+	if not isinstance(value.file, StringIO):
+		ret['__href__'] = value.file.generate_url(3600)
 	return ret
 
 def encode_key(value):
