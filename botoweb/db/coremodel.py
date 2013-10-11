@@ -345,9 +345,14 @@ class Model(object):
 		elif isinstance(val, dict) and val.has_key('ID'):
 			val = t(val['ID'])
 		elif t == datetime:
-			# If there a "T" in the datetime value, then 
-			# it's a full date and time
-			if 'T' in val:
+			# Some exports turn this into an integer,
+			# which is the Unix Timestamp
+			if isinstance(val, int):
+				val = datetime.fromtimestamp(val)
+			elif 'T' in val:
+				# If there a "T" in the datetime value, then 
+				# it's a full date and time
+				
 				# Remove fractional seconds, Z or +00:00Z time zone formatting
 				# Times are in UTC so formatting inconsistencies can be ignored
 				val = val[:19]
