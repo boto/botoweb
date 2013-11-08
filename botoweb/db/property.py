@@ -514,9 +514,9 @@ class ReferenceProperty(Property):
 			cls_lineage = self.reference_class.get_lineage()
 			if obj_lineage.startswith(cls_lineage):
 				return
-			raise TypeError, '%s not instance of %s' % (obj_lineage, cls_lineage)
 		except:
-			raise ValueError, '%s is not a Model' % value
+			raise ValueError, '%s is not a Model' % repr(value)
+		raise TypeError, '%s not instance of %s' % (obj_lineage, cls_lineage)
 			
 	def validate(self, value):
 		if self.validator:

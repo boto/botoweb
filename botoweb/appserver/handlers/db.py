@@ -224,6 +224,7 @@ class DBHandler(RequestHandler):
 		query_str = params.get("query", None)
 		sort_by = params.get("sort_by", None)
 		next_token = params.get("next_token", None)
+		simple_query = params.get('q', None)
 		properties = [p.name for p in query.model_class.properties(hidden=False)]
 		if query_str:
 			if query_str.startswith("["):
@@ -273,6 +274,11 @@ class DBHandler(RequestHandler):
 						query.filter(param_filters, prop_value)
 			else:
 				pass
+		elif simple_query:
+			if hasattr(self.db_class, '_indexed_name'):
+				query.filter('_indexed_name like', '%%%s%%' % index_string(simple_query))
+			else:
+				query.filter('name like', '%%%s%%' % simple_query)
 		else:
 			for filter in set(params.keys()):
 				if filter in ["sort_by", "next_token"]:

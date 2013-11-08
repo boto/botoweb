@@ -24,6 +24,8 @@ from botoweb.db.property import Property
 from botoweb.db.key import Key
 from botoweb.db.query import Query
 import boto
+import logging
+log = logging.getLogger('botoweb.db.model')
 
 class ModelMeta(type):
 	"Metaclass for all Models"
@@ -172,7 +174,7 @@ class Model(object):
 				try:
 					setattr(self, key, kw[key])
 				except Exception, e:
-					boto.log.exception(e)
+					log.exception(e)
 
 	def __repr__(self):
 		return '%s<%s>' % (self.__class__.__name__, self.id)
@@ -264,10 +266,10 @@ class Model(object):
 		"""Get this generic object as simple DICT
 		that can be easily JSON encoded"""
 		from botoweb.db.query import Query
-		from botoweb.db.property import CalculatedProperty
+		from botoweb.db.property import CalculatedProperty, IntegerProperty
 		ret = {'__type__': self.__class__.__name__, '__id__': self.id}
-		for prop_name in self._prop_names:
-			prop_type = self.find_property(prop_name)
+		for prop_type in self.properties():
+			prop_name = prop_type.name
 			# Don't mess with calculated properties
 			if isinstance(prop_type, CalculatedProperty):
 				continue
@@ -276,6 +278,15 @@ class Model(object):
 				pass
 			elif isinstance(val, int) or isinstance(val, long):
 				val = val
+			elif isinstance(val, basestring) and isinstance(prop_type, IntegerProperty):
+				# Handle strings masquarading as integers
+				if val:
+					try:
+						val = int(val)
+					except:
+						log.exception('Could not convert value to integer', val)
+				else:
+					val = 0
 			elif isinstance(val, Model):
 				val = val.id
 			elif hasattr(val, 'isoformat'):
@@ -345,9 +356,14 @@ class Model(object):
 		elif isinstance(val, dict) and val.has_key('ID'):
 			val = t(val['ID'])
 		elif t == datetime:
-			# If there a "T" in the datetime value, then 
-			# it's a full date and time
-			if 'T' in val:
+			# Some exports turn this into an integer,
+			# which is the Unix Timestamp
+			if isinstance(val, int):
+				val = datetime.fromtimestamp(val)
+			elif 'T' in val:
+				# If there a "T" in the datetime value, then 
+				# it's a full date and time
+				
 				# Remove fractional seconds, Z or +00:00Z time zone formatting
 				# Times are in UTC so formatting inconsistencies can be ignored
 				val = val[:19]
