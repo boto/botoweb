@@ -24,6 +24,8 @@ from botoweb.db.property import Property
 from botoweb.db.key import Key
 from botoweb.db.query import Query
 import boto
+import logging
+log = logging.getLogger('botoweb.db.model')
 
 class ModelMeta(type):
 	"Metaclass for all Models"
@@ -172,7 +174,7 @@ class Model(object):
 				try:
 					setattr(self, key, kw[key])
 				except Exception, e:
-					boto.log.exception(e)
+					log.exception(e)
 
 	def __repr__(self):
 		return '%s<%s>' % (self.__class__.__name__, self.id)
@@ -264,7 +266,7 @@ class Model(object):
 		"""Get this generic object as simple DICT
 		that can be easily JSON encoded"""
 		from botoweb.db.query import Query
-		from botoweb.db.property import CalculatedProperty
+		from botoweb.db.property import CalculatedProperty, IntegerProperty
 		ret = {'__type__': self.__class__.__name__, '__id__': self.id}
 		for prop_type in self.properties():
 			prop_name = prop_type.name
@@ -276,6 +278,15 @@ class Model(object):
 				pass
 			elif isinstance(val, int) or isinstance(val, long):
 				val = val
+			elif isinstance(val, basestring) and isinstance(prop_type, IntegerProperty):
+				# Handle strings masquarading as integers
+				if val:
+					try:
+						val = int(val)
+					except:
+						log.exception('Could not convert value to integer', val)
+				else:
+					val = 0
 			elif isinstance(val, Model):
 				val = val.id
 			elif hasattr(val, 'isoformat'):
