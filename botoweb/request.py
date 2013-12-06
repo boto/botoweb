@@ -210,7 +210,7 @@ class Request(webob.Request):
 						# via Email, but only for trusted
 						# OID endpoints
 						if not user and email and openID.startswith('https://www.google.com'):
-							log.info('Looking up user email: %s' % email)
+							log.info('Looking up user email: "%s"' % email)
 							try:
 								user = botoweb.user.find(email=email,deleted=False).next()
 							except StopIteration:

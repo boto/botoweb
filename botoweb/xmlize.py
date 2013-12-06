@@ -187,6 +187,7 @@ class XMLSerializer(object):
 		int: encode_int,
 		unicode: encode_str,
 		list: encode_list,
+		set: encode_list,
 		dict: encode_dict,
 		datetime: encode_datetime,
 		datetime_type: encode_datetime,

@@ -14,6 +14,7 @@ from time import time
 
 from botoweb import xmlize
 from botoweb.db import index_string
+from botoweb.db.dynamo import DynamoModel
 
 try:
 	import simplejson as json
@@ -316,7 +317,6 @@ class DBHandler(RequestHandler):
 		@param user: the user that is searching
 		@type user: User
 		"""
-		from botoweb.db.dynamo import DynamoModel
 		if DynamoModel in self.db_class.mro():
 			return self.build_query(params, query=self.db_class.all(), user=user)
 		else:
@@ -352,18 +352,31 @@ class DBHandler(RequestHandler):
 			# Anything else they try to send is ignored
 			if not prop.startswith("_") and (user.has_auth('PUT', newobj.__class__.__name__, prop) or user.has_auth('POST', newobj.__class__.__name__, prop)):
 				prop_value = prop_dict[prop]
-				try:
-					setattr(newobj, prop, prop_value)
-				except Exception, e:
-					raise BadRequest("Invalid value for %s" % prop)
+				if isinstance(newobj, DynamoModel):
+					# DynamoDB Objects get set as dict-values
+					# Check to make sure the value isn't empty
+					if prop_value:
+						# Check to make sure it's a valid property
+						if newobj._properties.has_key(prop):
+							newobj[prop] = prop_value
+						else:
+							self.log.error('Ignoring invalid property %s for object %s' % (prop, newobj.__class__.__name__))
+				else:
+					# SimpleDB objects get set as attributes
+					try:
+						setattr(newobj, prop, prop_value)
+					except Exception, e:
+						raise BadRequest("Invalid value for %s" % prop)
 
 				# Set an index, if it exists
 				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
 					setattr(newobj, "_indexed_%s" % prop, index_string(prop_value))
-		newobj.created_at = now
-		newobj.modified_at = now
-		newobj.created_by = user
-		newobj.modified_by = user
+		# Only set these properties for non-dynamo models
+		if not isinstance(newobj, DynamoModel):
+			newobj.created_at = now
+			newobj.modified_at = now
+			newobj.created_by = user
+			newobj.modified_by = user
 		try:
 			newobj.put()
 		except SDBPersistenceError, e:
