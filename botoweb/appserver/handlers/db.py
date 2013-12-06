@@ -439,12 +439,25 @@ class DBHandler(RequestHandler):
 			if not prop_name.startswith("_") and user.has_auth('PUT', obj.__class__.__name__, prop_name):
 				prop_val = props[prop_name]
 				self.log.debug("%s = %s" % (prop_name, prop_val))
-				try:
-					setattr(obj, prop_name, prop_val)
-				except Exception, e:
-					if prop_val != "": # If it was a nothing request, we ignore it
-						self.log.exception(e)
-						raise BadRequest("Bad value for %s: %s" % (prop_name, e))
+				if isinstance(obj, DynamoModel):
+					# DynamoDB Objects get set as dict-values
+					# Check to make sure the value isn't empty
+					if prop_val:
+						# Check to make sure it's a valid property
+						if obj._properties.has_key(prop_name):
+							obj[prop_name] = prop_val
+						else:
+							self.log.error('Ignoring invalid property %s for object %s' % (prop_name, obj.__class__.__name__))
+					else:
+						# If it's not there, we delete it
+						del obj[prop_name]
+				else:
+					try:
+						setattr(obj, prop_name, prop_val)
+					except Exception, e:
+						if prop_val != "": # If it was a nothing request, we ignore it
+							self.log.exception(e)
+							raise BadRequest("Bad value for %s: %s" % (prop_name, e))
 
 				if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
 					setattr(obj, "_indexed_%s" % prop_name, index_string(prop_val))
