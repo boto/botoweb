@@ -85,6 +85,9 @@ class DynamoModel(Item):
 		recursively when Lists are passed in"""
 		from botoweb.db.model import Model
 		from datetime import datetime
+		# Allow null or empty values
+		if not value:
+			return value
 		if isinstance(value, datetime):
 			value = value.strftime("%Y-%m-%dT%H:%M:%S")
 		elif isinstance(value, list):
