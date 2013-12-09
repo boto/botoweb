@@ -78,12 +78,26 @@ class DynamoModel(Item):
 	def __setitem__(self, key, value):
 		"""Overwrite the setter to automatically
 		convert types to DynamoDB supported types"""
+		return Item.__setitem__(self, key, self.convert(key, value))
+
+	def convert(self, key, value):
+		"""Convert the value, this is called from __setitem__ but also called
+		recursively when Lists are passed in"""
+		from botoweb.db.model import Model
 		from datetime import datetime
 		if isinstance(value, datetime):
 			value = value.strftime("%Y-%m-%dT%H:%M:%S")
 		elif isinstance(value, list):
+			# Make sure to convert all the items in the list first
+			for x, item in enumerate(value):
+				value[x] = self.convert(key, item)
 			value = set(value)
-		return Item.__setitem__(self, key, value)
+		elif isinstance(value, DynamoModel):
+			value = value.id
+		elif isinstance(value, Model):
+			value = value.id
+			
+		return value
 	
 	@classmethod
 	def get_table(cls):
@@ -229,7 +243,31 @@ class DynamoModel(Item):
 		return None
 
 	def __getattr__(self, name):
-		return self.get(name)
+		ret = self.get(name)
+		# Decode
+		prop = self.find_property(name)
+		if prop:
+			try:
+				if hasattr(prop, 'data_type'):
+					# Decode lists
+					if prop.data_type == list:
+						# Singular values sometimes don't come out as lists, but as their
+						# base value, like a String instead of a String Set
+						if not isinstance(ret, set) and not isinstance(ret, list):
+							ret = [ret]
+						# Sets aren't modifyable, so we need to convert it to a list instead
+						if isinstance(ret, set):
+							ret = list(ret)
+						if hasattr(prop, 'item_type'):
+							for x, val in enumerate(ret):
+								ret[x] = prop.item_type(val)
+					# Decode everything else
+					else:
+							ret = prop.data_type(ret)
+			except Exception:
+				log.exception('Could not decode %s: %s', prop.data_type, ret)
+
+		return ret
 
 	@property
 	def id(self):
