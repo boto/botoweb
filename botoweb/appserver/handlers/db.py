@@ -2,6 +2,7 @@
 from botoweb.exceptions import NotFound, Forbidden, BadRequest, Conflict, Gone
 from boto.exception import SDBPersistenceError, SDBResponseError
 from botoweb.appserver.handlers import RequestHandler
+from botoweb.db.dynamo import BatchItemFetcher
 
 from boto.utils import find_class, Password
 from botoweb.db.blob import Blob
@@ -528,7 +529,7 @@ class DBHandler(RequestHandler):
 		elif isinstance(val, Key):
 			response.content_type = val.content_type
 			response.write(val.get_contents_as_string())
-		elif isinstance(val, Query):
+		elif isinstance(val, Query) or isinstance(val, BatchItemFetcher):
 			objs = self.build_query(request.GET.mixed(), query=val, user=request.user)
 			response.headers['X-Result-Count'] = str(objs.count())
 			response.write("<%s>" % property)

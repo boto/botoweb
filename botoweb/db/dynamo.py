@@ -31,6 +31,7 @@ from boto.dynamodb.item import Item
 from boto.dynamodb.table import Table
 from boto.dynamodb import exceptions
 from boto.exception import DynamoDBResponseError, BotoServerError
+from base64 import b32decode, b32encode
 
 import logging
 log = logging.getLogger("botoweb.db.dynamo")
@@ -47,6 +48,9 @@ class DynamoModel(Item):
 	_table_name = None
 	_properties = None
 	_prop_cache = None
+	# Supports CloudSearch
+	_cs_search_endpoint = None
+	_cs_document_endpoint = None
 
 	def __init__(self, *args, **kwargs):
 		"""Create a new DynamoDB model
@@ -216,6 +220,46 @@ class DynamoModel(Item):
 		return DynamoQuery(cls, request_limit=request_limit)
 
 	@classmethod
+	def search(cls, q=None, bq=None, rank=None, **kwargs):
+		"""Search using CloudSearch. This requires a _cs_search_endpoint property to be set
+		:param q: The optional TEXT search query
+		:type q: str
+		:param bq: The optional BOOLEAN search query
+		:type bq: str
+		:param rank: The optional Search rank
+		:type rank: str
+		:param: Other KW args are supported and used as direct matches in the Boolean Query"""
+		from boto.cloudsearch.search import SearchConnection
+		if not cls._cs_search_endpoint:
+			raise NotImplemented('No CloudSearch Domain Set')
+
+		# Converts all the keyword arguments to a boolaen query
+		if kwargs:
+			query_parts = []
+			if bq:
+				query_parts.append(bq)
+
+			# Build all the query parts
+			for arg in kwargs:
+				query_parts.append('%s:\'%s\'' % (arg, kwargs[arg]))
+
+			# Reduce the query back to a single string
+			bq = '(and %s)' % ' '.join(query_parts)
+
+		# Build the search args
+		args = {}
+		if q:
+			args['q'] = q
+		if bq:
+			args['bq'] = bq
+		if rank:
+			args['rank'] = rank
+
+		conn = SearchConnection(endpoint=cls._cs_search_endpoint)
+		return BatchItemFetcher(conn.search(**args), cls)
+
+
+	@classmethod
 	def properties(cls, hidden=True):
 		"""Returns a list of property objects, for compatibility with SDB Model objects"""
 		if not cls._prop_cache:
@@ -275,7 +319,7 @@ class DynamoModel(Item):
 	@property
 	def id(self):
 		if self._range_key_name:
-			return "-".join([self[self._hash_key_name], self[self._range_key_name]])
+			return '/'.join([self[self._hash_key_name], self[self._range_key_name]])
 		else:
 			return self[self._hash_key_name]
 
@@ -340,14 +384,61 @@ class DynamoModel(Item):
 		pass
 
 	def put(self, *args, **kwargs):
+		if self._cs_document_endpoint:
+			self.save_to_cloudsearch()
 		self.on_save_or_update()
 		Item.put(self, *args, **kwargs)
 		self.after_save_or_update()
 
 	def save(self, *args, **kwargs):
+		if self._cs_document_endpoint:
+			self.save_to_cloudsearch()
 		self.on_save_or_update()
 		Item.save(self, *args, **kwargs)
 		self.after_save_or_update()
+
+	def save_to_cloudsearch(self, conn=None):
+		"""Save/Update this item in CloudSearch"""
+		from boto.cloudsearch.document import DocumentServiceConnection
+		if conn is None:
+			conn = DocumentServiceConnection(endpoint=self._cs_document_endpoint)
+		# Build the document ID
+		doc_id = self.id
+		doc_id = b32encode(doc_id).lower().replace('=', '_')
+		conn.add(doc_id, int(time.time()), fields=self.get_sdf())
+		conn.commit()
+
+	def get_sdf(self):
+		"""GET a SDF (Search Data Format) for use in CloudSearch"""
+		data = self.to_dict()
+		# Adds a "Model" field if one doesn't already exist
+		if not data.has_key('model'):
+			data['model'] =  self.__class__.__name__
+
+		# Remove all null values
+		for key in data.keys():
+			val = data[key]
+			if key.startswith('_') or val in (' ', '  ',  [''], [' '], ['  ']) or (not val and not isinstance(val, bool) and not isinstance(val, int)):
+				del(data[key])
+			elif isinstance(val, list) or isinstance(val, tuple):
+				val = list(set(val))
+				for item in val:
+					if isinstance(item, basestring):
+						item = item.strip()
+					if not item:
+						val.remove(item)
+				if not val and not isinstance(val, bool) and not isinstance(val, int):
+					del(data[key])
+				else:
+					data[key] = val
+			elif isinstance(val, basestring):
+				# Prevents rouge empty strings
+				data[key] = val.strip()
+				if not data[key]:
+					del(data[key])
+		return data
+
+
 
 from botoweb.db.query import Query
 class DynamoQuery(Query):
@@ -389,3 +480,58 @@ class SetEncoder(json.JSONEncoder):
 		if isinstance(obj, set):
 			obj = list(obj)
 		return json.JSONEncoder.default(self, obj)
+
+class BatchItemFetcher(object):
+	"""Fetches items in bulk, instead of individually"""
+
+	def __init__(self, items, model_class, count=-1, limit=None):
+		from boto.cloudsearch.search import SearchResults
+		# Handle SearchResults from CloudSearch
+		if isinstance(items, SearchResults):
+			self.items = []
+			for item in items:
+				obj_id = b32decode(item['id'].upper().replace('_', '='))
+				if model_class.get_table().schema.range_key_name:
+					obj_id = obj_id.split('/')
+				self.items.append(obj_id)
+			count = items.hits
+		else:
+			self.items = items
+
+		self._count = count
+		self.limit = limit
+		self.next_token = None
+		self.model_class = model_class
+		self.results = {}
+
+		# If there are items to be fetched, do the batch lookup
+		if self.items:
+			for result in model_class.get_table().batch_get_item(self.items):
+				obj_id = result[model_class.get_table().schema.hash_key_name]
+				if model_class.get_table().schema.range_key_name:
+					obj_id =  '/'.join([obj_id, result[model_class.get_table().schema.range_key_name]])
+				self.results[obj_id] = self.get_obj(result)
+
+	def __iter__(self):
+		for item in self.items:
+			item_id = '/'.join(item)
+			if self.results.has_key(item_id):
+				yield self.results[item_id]
+			else:
+				yield self.model_class.lookup(item)
+
+	def get_obj(self, item):
+		"""Turns a DynamoDB result into an object"""
+		item = dict(item)
+
+		# Convert sets back to lists
+		for key in item.keys():
+			val = item[key]
+			if isinstance(val, set):
+				item[key] = list(val)
+		# Get it as an object
+		obj = self.model_class.from_dict(item)
+		return obj
+
+	def count(self, *args, **kwargs):
+		return self._count
