@@ -499,6 +499,8 @@ class BatchItemFetcher(object):
 			self.items = items
 
 		self._count = count
+		# Aliased because some things use 'total' instead of count()
+		self.total = count
 		self.limit = limit
 		self.next_token = None
 		self.model_class = model_class
