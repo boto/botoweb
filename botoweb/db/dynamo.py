@@ -384,16 +384,16 @@ class DynamoModel(Item):
 		pass
 
 	def put(self, *args, **kwargs):
+		self.on_save_or_update()
 		if self._cs_document_endpoint:
 			self.save_to_cloudsearch()
-		self.on_save_or_update()
 		Item.put(self, *args, **kwargs)
 		self.after_save_or_update()
 
 	def save(self, *args, **kwargs):
+		self.on_save_or_update()
 		if self._cs_document_endpoint:
 			self.save_to_cloudsearch()
-		self.on_save_or_update()
 		Item.save(self, *args, **kwargs)
 		self.after_save_or_update()
 
