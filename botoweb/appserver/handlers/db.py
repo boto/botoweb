@@ -473,18 +473,31 @@ class DBHandler(RequestHandler):
 		"""
 		Delete the object
 		"""
-		self.log.info("Deleted object %s" % (obj.id))
-
-		if hasattr(obj, "deleted"):
-			# Don't actually remove it from the DB, just set it
-			# to "deleted" and flag who did it and when
-			# TODO: Allow them to be purged if it was just created?
-			obj.deleted = True
-			obj.deleted_at = datetime.utcnow()
-			obj.deleted_by = user
-			obj.put()
+		self.log.info('Deleted object %s' % (obj.id))
+		# Handle DynamoModels
+		if isinstance(obj, DynamoModel):
+			if obj._properties.has_key('deleted'):
+				obj['deleted'] = True
+				obj['deleted_at'] = datetime.utcnow()
+				obj['deleted_by'] = user.id
+				obj.put()
+			else:
+				try:
+					obj.delete()
+				except:
+					self.log.exception('Could not delete %s' % obj)
+					raise
 		else:
-			obj.delete()
+			if hasattr(obj, 'deleted'):
+				# Don't actually remove it from the DB, just set it
+				# to "deleted" and flag who did it and when
+				# TODO: Allow them to be purged if it was just created?
+				obj.deleted = True
+				obj.deleted_at = datetime.utcnow()
+				obj.deleted_by = user
+				obj.put()
+			else:
+				obj.delete()
 		return obj
 
 	def get_property(self, request, response, obj, property):
