@@ -34,7 +34,7 @@ from boto.exception import DynamoDBResponseError, BotoServerError
 from base64 import b32decode, b32encode
 
 import logging
-log = logging.getLogger("botoweb.db.dynamo")
+log = logging.getLogger('botoweb.db.dynamo')
 
 MAX_RETRIES = 10
 
@@ -55,20 +55,20 @@ class DynamoModel(Item):
 	def __init__(self, *args, **kwargs):
 		"""Create a new DynamoDB model
 		This supports both:
-		>>> DynamoModel(table, "hash_key", "range_key", attrs)
-		>>> DynamoModel("hash_key", "range_key")
+		>>> DynamoModel(table, 'hash_key', 'range_key', attrs)
+		>>> DynamoModel('hash_key', 'range_key')
 
 		as well as using keyword args:
-		>>> DynamoModel(table=table, hash_key="hash_key", range_key="range_key")
-		>>> DynamoModel(hash_key="hash_key", range_key="range_key")
-		>>> DynamoModel(table, hash_key="hash_key", range_key="range_key")
+		>>> DynamoModel(table=table, hash_key='hash_key', range_key='range_key')
+		>>> DynamoModel(hash_key='hash_key', range_key='range_key')
+		>>> DynamoModel(table, hash_key='hash_key', range_key='range_key')
 
 		This could be coming from Layer2, or it could be just called
 		directly by us."""
 		if len(args) > 0:
 			first_arg = args[0]
 		else:
-			first_arg = kwargs.get("table")
+			first_arg = kwargs.get('table')
 		if first_arg and isinstance(first_arg, Table):
 			# If the first argment is a Table, then
 			# we assume this came from Layer2, so just pass this
@@ -93,7 +93,7 @@ class DynamoModel(Item):
 		if not value:
 			return value
 		if isinstance(value, datetime):
-			value = value.strftime("%Y-%m-%dT%H:%M:%S")
+			value = value.strftime('%Y-%m-%dT%H:%M:%S')
 		elif isinstance(value, list):
 			# Make sure to convert all the items in the list first
 			for x, item in enumerate(value):
@@ -115,7 +115,7 @@ class DynamoModel(Item):
 			if not tbl_name:
 				tbl_name = cls.__name__
 			cls._table = conn.lookup(tbl_name)
-		assert(cls._table), "Table not created for %s" % cls.__name__
+		assert(cls._table), 'Table not created for %s' % cls.__name__
 		return cls._table
 
 	@classmethod
@@ -135,13 +135,13 @@ class DynamoModel(Item):
 			except exceptions.DynamoDBKeyNotFoundError:
 				return None
 			except DynamoDBResponseError, e:
-				log.exception("Could not retrieve item")
+				log.exception('Could not retrieve item')
 				cls._table = None
 				attempt += 1
 				time.sleep(attempt**2)
 				last_error = e
 			except BotoServerError, e:
-				log.error("Boto Server Error: %s" % e)
+				log.error('Boto Server Error: %s' % e)
 				cls._table = None
 				attempt += 1
 				last_error = e
@@ -198,13 +198,13 @@ class DynamoModel(Item):
 					yield item
 				return
 			except DynamoDBResponseError, e:
-				log.exception("Dynamo Response Error: %s" % e)
+				log.exception('Dynamo Response Error: %s' % e)
 				cls._table = None
 				attempt += 1
 				last_error = e
 				time.sleep(attempt**2)
 			except BotoServerError, e:
-				log.error("Boto Server Error: %s" % e)
+				log.error('Boto Server Error: %s' % e)
 				cls._table = None
 				attempt += 1
 				last_error = e
@@ -266,7 +266,7 @@ class DynamoModel(Item):
 			cls._prop_cache = []
 			cursor = cls
 			while cursor:
-				if hasattr(cursor, "_properties") and cursor._properties:
+				if hasattr(cursor, '_properties') and cursor._properties:
 					for key in cursor._properties.keys():
 						prop = cursor._properties[key]
 						if isinstance(prop, basestring):
@@ -291,6 +291,9 @@ class DynamoModel(Item):
 
 	def __getattr__(self, name):
 		ret = self.get(name)
+		# Handle none and empty values
+		if not ret:
+			return ret
 		# Decode
 		prop = self.find_property(name)
 		if prop:
@@ -310,7 +313,7 @@ class DynamoModel(Item):
 								ret[x] = prop.item_type(val)
 					# Decode everything else
 					else:
-							ret = prop.data_type(ret)
+						ret = prop.data_type(ret)
 			except Exception:
 				log.exception('Could not decode %s: %s', prop.data_type, ret)
 
@@ -438,6 +441,18 @@ class DynamoModel(Item):
 					del(data[key])
 		return data
 
+	def delete(self, *args, **kwargs):
+		"""Intercept the delete function to also remove this record from CloudSearch
+		if it is indexed"""
+		if self._cs_document_endpoint:
+			from boto.cloudsearch.document import DocumentServiceConnection
+			conn = DocumentServiceConnection(endpoint=self._cs_document_endpoint)
+			doc_id = self.id
+			doc_id = b32encode(doc_id).lower().replace('=', '_')
+			conn.delete(doc_id, int(time.time()))
+			conn.commit()
+		return Item.delete(self, *args, **kwargs)
+
 
 
 from botoweb.db.query import Query
@@ -461,7 +476,7 @@ class DynamoQuery(Query):
 					yield item
 				return
 			except DynamoDBResponseError, e:
-				log.exception("could not execute scan")
+				log.exception('could not execute scan')
 				self.model_class._table = None
 				attempt += 1
 				last_error = e
