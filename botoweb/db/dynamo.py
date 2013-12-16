@@ -485,7 +485,7 @@ class DynamoQuery(Query):
 
 	def count(self, quick=True):
 		"""Can't get counts from DynamoDB"""
-		return self.model_class.get_table().item_count
+		return -1
 
 
 class SetEncoder(json.JSONEncoder):
