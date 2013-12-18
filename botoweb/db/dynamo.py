@@ -219,7 +219,7 @@ class DynamoModel(Item):
 		return DynamoQuery(cls, request_limit=request_limit)
 
 	@classmethod
-	def search(cls, q=None, bq=None, rank=None, **kwargs):
+	def search(cls, q=None, bq=None, rank=None, start=0, **kwargs):
 		"""Search using CloudSearch. This requires a _cs_search_endpoint property to be set
 		:param q: The optional TEXT search query
 		:type q: str
@@ -227,6 +227,8 @@ class DynamoModel(Item):
 		:type bq: str
 		:param rank: The optional Search rank
 		:type rank: str
+		:param start: The optional start point to begin the search
+		:type start: int
 		:param: Other KW args are supported and used as direct matches in the Boolean Query"""
 		from boto.cloudsearch.search import SearchConnection
 		if not cls._cs_search_endpoint:
@@ -253,6 +255,8 @@ class DynamoModel(Item):
 			args['bq'] = bq
 		if rank:
 			args['rank'] = rank
+		if start:
+			args['start'] = start
 
 		conn = SearchConnection(endpoint=cls._cs_search_endpoint)
 		return BatchItemFetcher(conn.search(**args), cls)
@@ -289,6 +293,7 @@ class DynamoModel(Item):
 		return None
 
 	def __getattr__(self, name):
+		from datetime import datetime
 		ret = self.get(name)
 		# Handle none and empty values
 		if not ret:
@@ -316,6 +321,9 @@ class DynamoModel(Item):
 					# Decode Objects
 					elif hasattr(prop, 'reference_class'):
 						ret = prop.reference_class(ret)
+					# Decode Datetimes
+					elif prop.data_type == datetime:
+						ret = datetime.utcfromtimestamp(ret)
 					# Decode everything else
 					else:
 						ret = prop.data_type(ret)
