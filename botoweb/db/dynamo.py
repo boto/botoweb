@@ -103,7 +103,6 @@ class DynamoModel(Item):
 			value = value.id
 		elif isinstance(value, Model):
 			value = value.id
-			
 		return value
 	
 	@classmethod
@@ -275,7 +274,7 @@ class DynamoModel(Item):
 						if not prop.name:
 							prop.name = key
 						if hidden or not prop.__class__.__name__.startswith('_'):
-							cursor._prop_cache.append(prop)
+							cls._prop_cache.append(prop)
 				if len(cursor.__bases__) > 0:
 					cursor = cursor.__bases__[0]
 				else:
@@ -294,6 +293,9 @@ class DynamoModel(Item):
 		# Handle none and empty values
 		if not ret:
 			return ret
+		# Handle Unicode
+		if isinstance(ret, unicode):
+			ret = ret.encode('utf-8')
 		# Decode
 		prop = self.find_property(name)
 		if prop:
@@ -311,6 +313,9 @@ class DynamoModel(Item):
 						if hasattr(prop, 'item_type'):
 							for x, val in enumerate(ret):
 								ret[x] = prop.item_type(val)
+					# Decode Objects
+					elif hasattr(prop, 'reference_class'):
+						ret = prop.reference_class(ret)
 					# Decode everything else
 					else:
 						ret = prop.data_type(ret)
@@ -319,12 +324,20 @@ class DynamoModel(Item):
 
 		return ret
 
-	@property
-	def id(self):
+	def get_id(self):
 		if self._range_key_name:
 			return '/'.join([self[self._hash_key_name], self[self._range_key_name]])
 		else:
 			return self[self._hash_key_name]
+
+	def set_id(self, val):
+		"""Allows for setting the ID"""
+		if self._range_key_name:
+			(self[self._hash_key_name], self[self._range_key_name]) = val.split('/', 1)
+		else:
+			self[self._hash_key_name] = val
+
+	id = property(get_id, set_id)
 
 	#
 	# Converters
