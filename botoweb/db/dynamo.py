@@ -552,7 +552,10 @@ class BatchItemFetcher(object):
 
 	def __iter__(self):
 		for item in self.items:
-			item_id = '/'.join(item)
+			if isinstance(item, list):
+				item_id = '/'.join(item)
+			else:
+				item_id = item
 			if self.results.has_key(item_id):
 				yield self.results[item_id]
 			else:
