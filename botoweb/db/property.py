@@ -545,7 +545,7 @@ class _ReverseReferenceProperty(Property):
 		if model_instance is not None:
 			# Support DynamoDB Objects
 			if DynamoModel in self.__model.mro():
-				return self.__model.search(bq="%s:'%s'" % (self.__property, model_instance))
+				return self.__model.search(bq="%s:'%s'" % (self.__property, model_instance.id))
 			else:
 				query = Query(self.__model)
 				if type(self.__property) == list:
