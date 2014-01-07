@@ -445,7 +445,7 @@ class DBHandler(RequestHandler):
 					# Check to make sure the value isn't empty
 					if prop_val:
 						# Check to make sure it's a valid property
-						if obj._properties.has_key(prop_name):
+						if obj.find_property(prop_name):
 							obj[prop_name] = prop_val
 						else:
 							self.log.error('Ignoring invalid property %s for object %s' % (prop_name, obj.__class__.__name__))
