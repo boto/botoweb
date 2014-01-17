@@ -187,6 +187,7 @@ class XMLSerializer(object):
 		int: encode_int,
 		unicode: encode_str,
 		list: encode_list,
+		set: encode_list,
 		dict: encode_dict,
 		datetime: encode_datetime,
 		datetime_type: encode_datetime,
@@ -200,7 +201,7 @@ class XMLSerializer(object):
 		"""Dump this object to our serialization"""
 		from botoweb.db.coremodel import Model
 		from botoweb.db.dynamo import DynamoModel
-		from botoweb.db.property import CalculatedProperty
+		from botoweb.db.property import CalculatedProperty, _ReverseReferenceProperty
 		if not isinstance(obj, object):
 			if not objname:
 				objname = obj.__name__
@@ -219,12 +220,15 @@ class XMLSerializer(object):
 			if isinstance(obj, Model) or isinstance(obj, DynamoModel):
 				for prop in obj.properties():
 					if not prop.name.startswith("_"):
-						if prop.__class__ == CalculatedProperty:
+						if isinstance(prop, CalculatedProperty):
 							# We encode calculated properties similar to queries because we don't
 							# want them to be cached, or automatically sent
 							# since they're really something external and usually 
 							# require an additional method call
 							self.file.write("""<%s calculated="true" type="%s" href="%s"/>""" % (prop.name, prop.calculated_type.__name__.lower(), prop.name))
+						elif isinstance(prop, _ReverseReferenceProperty):
+							# Query properties really shouldn't be dumped directly
+							self.file.write("""<%s calculated="true" type="%s" href="%s"/>""" % (prop.name, prop.item_type.__name__.lower(), prop.name))
 						else:
 							self.encode(prop.name, getattr(obj, prop.name))
 			else:

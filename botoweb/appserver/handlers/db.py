@@ -2,6 +2,7 @@
 from botoweb.exceptions import NotFound, Forbidden, BadRequest, Conflict, Gone
 from boto.exception import SDBPersistenceError, SDBResponseError
 from botoweb.appserver.handlers import RequestHandler
+from botoweb.db.dynamo import BatchItemFetcher
 
 from boto.utils import find_class, Password
 from botoweb.db.blob import Blob
@@ -14,6 +15,7 @@ from time import time
 
 from botoweb import xmlize
 from botoweb.db import index_string
+from botoweb.db.dynamo import DynamoModel
 
 try:
 	import simplejson as json
@@ -316,7 +318,6 @@ class DBHandler(RequestHandler):
 		@param user: the user that is searching
 		@type user: User
 		"""
-		from botoweb.db.dynamo import DynamoModel
 		if DynamoModel in self.db_class.mro():
 			return self.build_query(params, query=self.db_class.all(), user=user)
 		else:
@@ -352,18 +353,31 @@ class DBHandler(RequestHandler):
 			# Anything else they try to send is ignored
 			if not prop.startswith("_") and (user.has_auth('PUT', newobj.__class__.__name__, prop) or user.has_auth('POST', newobj.__class__.__name__, prop)):
 				prop_value = prop_dict[prop]
-				try:
-					setattr(newobj, prop, prop_value)
-				except Exception, e:
-					raise BadRequest("Invalid value for %s" % prop)
+				if isinstance(newobj, DynamoModel):
+					# DynamoDB Objects get set as dict-values
+					# Check to make sure the value isn't empty
+					if prop_value:
+						# Check to make sure it's a valid property
+						if newobj._properties.has_key(prop):
+							newobj[prop] = prop_value
+						else:
+							self.log.error('Ignoring invalid property %s for object %s' % (prop, newobj.__class__.__name__))
+				else:
+					# SimpleDB objects get set as attributes
+					try:
+						setattr(newobj, prop, prop_value)
+					except Exception, e:
+						raise BadRequest("Invalid value for %s" % prop)
 
 				# Set an index, if it exists
 				if hasattr(newobj, "_indexed_%s" % prop) and prop_value:
 					setattr(newobj, "_indexed_%s" % prop, index_string(prop_value))
-		newobj.created_at = now
-		newobj.modified_at = now
-		newobj.created_by = user
-		newobj.modified_by = user
+		# Only set these properties for non-dynamo models
+		if not isinstance(newobj, DynamoModel):
+			newobj.created_at = now
+			newobj.modified_at = now
+			newobj.created_by = user
+			newobj.modified_by = user
 		try:
 			newobj.put()
 		except SDBPersistenceError, e:
@@ -426,12 +440,25 @@ class DBHandler(RequestHandler):
 			if not prop_name.startswith("_") and user.has_auth('PUT', obj.__class__.__name__, prop_name):
 				prop_val = props[prop_name]
 				self.log.debug("%s = %s" % (prop_name, prop_val))
-				try:
-					setattr(obj, prop_name, prop_val)
-				except Exception, e:
-					if prop_val != "": # If it was a nothing request, we ignore it
-						self.log.exception(e)
-						raise BadRequest("Bad value for %s: %s" % (prop_name, e))
+				if isinstance(obj, DynamoModel):
+					# DynamoDB Objects get set as dict-values
+					# Check to make sure the value isn't empty
+					if prop_val:
+						# Check to make sure it's a valid property
+						if obj.find_property(prop_name):
+							obj[prop_name] = prop_val
+						else:
+							self.log.error('Ignoring invalid property %s for object %s' % (prop_name, obj.__class__.__name__))
+					else:
+						# If it's not there, we delete it
+						del obj[prop_name]
+				else:
+					try:
+						setattr(obj, prop_name, prop_val)
+					except Exception, e:
+						if prop_val != "": # If it was a nothing request, we ignore it
+							self.log.exception(e)
+							raise BadRequest("Bad value for %s: %s" % (prop_name, e))
 
 				if hasattr(obj, "_indexed_%s" % prop_name) and prop_val:
 					setattr(obj, "_indexed_%s" % prop_name, index_string(prop_val))
@@ -446,18 +473,31 @@ class DBHandler(RequestHandler):
 		"""
 		Delete the object
 		"""
-		self.log.info("Deleted object %s" % (obj.id))
-
-		if hasattr(obj, "deleted"):
-			# Don't actually remove it from the DB, just set it
-			# to "deleted" and flag who did it and when
-			# TODO: Allow them to be purged if it was just created?
-			obj.deleted = True
-			obj.deleted_at = datetime.utcnow()
-			obj.deleted_by = user
-			obj.put()
+		self.log.info('Deleted object %s' % (obj.id))
+		# Handle DynamoModels
+		if isinstance(obj, DynamoModel):
+			if obj._properties.has_key('deleted'):
+				obj['deleted'] = True
+				obj['deleted_at'] = datetime.utcnow()
+				obj['deleted_by'] = user.id
+				obj.put()
+			else:
+				try:
+					obj.delete()
+				except:
+					self.log.exception('Could not delete %s' % obj)
+					raise
 		else:
-			obj.delete()
+			if hasattr(obj, 'deleted'):
+				# Don't actually remove it from the DB, just set it
+				# to "deleted" and flag who did it and when
+				# TODO: Allow them to be purged if it was just created?
+				obj.deleted = True
+				obj.deleted_at = datetime.utcnow()
+				obj.deleted_by = user
+				obj.put()
+			else:
+				obj.delete()
 		return obj
 
 	def get_property(self, request, response, obj, property):
@@ -502,7 +542,7 @@ class DBHandler(RequestHandler):
 		elif isinstance(val, Key):
 			response.content_type = val.content_type
 			response.write(val.get_contents_as_string())
-		elif isinstance(val, Query):
+		elif isinstance(val, Query) or isinstance(val, BatchItemFetcher):
 			objs = self.build_query(request.GET.mixed(), query=val, user=request.user)
 			response.headers['X-Result-Count'] = str(objs.count())
 			response.write("<%s>" % property)

@@ -266,12 +266,12 @@ class Model(object):
 		"""Get this generic object as simple DICT
 		that can be easily JSON encoded"""
 		from botoweb.db.query import Query
-		from botoweb.db.property import CalculatedProperty, IntegerProperty
+		from botoweb.db.property import CalculatedProperty, IntegerProperty, _ReverseReferenceProperty
 		ret = {'__type__': self.__class__.__name__, '__id__': self.id}
 		for prop_type in self.properties():
 			prop_name = prop_type.name
 			# Don't mess with calculated properties
-			if isinstance(prop_type, CalculatedProperty):
+			if isinstance(prop_type, CalculatedProperty) or isinstance(prop_type, _ReverseReferenceProperty):
 				continue
 			val = getattr(self, prop_name)
 			if val is None:
