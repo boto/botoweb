@@ -23,6 +23,7 @@ from botoweb.db.manager import get_manager
 from botoweb.db.property import Property
 from botoweb.db.key import Key
 from botoweb.db.query import Query
+from decimal import Decimal
 import boto
 import logging
 log = logging.getLogger('botoweb.db.model')
@@ -358,7 +359,7 @@ class Model(object):
 		elif t == datetime:
 			# Some exports turn this into an integer,
 			# which is the Unix Timestamp
-			if isinstance(val, int):
+			if isinstance(val, int) or isinstance(val, Decimal):
 				val = datetime.fromtimestamp(val)
 			elif 'T' in val:
 				# If there a "T" in the datetime value, then 
