@@ -526,7 +526,7 @@ class DBHandler(RequestHandler):
 		except Exception, e:
 			raise BadRequest(str(e))
 		if type(val) in (str, unicode):
-			if format is None:
+			if format is None or format == 'txt':
 				response.content_type = "text/plain"
 			elif format == 'xml':
 				response.content_type = 'text/xml'
