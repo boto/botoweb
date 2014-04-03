@@ -159,6 +159,7 @@ class Model(object):
 
 	def __init__(self, id=None, **kw):
 		self._loaded = False
+		self._validate = True
 		# first try to initialize all properties to their default values
 		for prop in self.properties(hidden=False):
 			try:
@@ -332,6 +333,7 @@ class Model(object):
 		to_dict"""
 		obj = cls(data['__id__'])
 		obj._loaded = True
+		obj._validate = False
 		for prop_name in data:
 			val = data[prop_name]
 			if prop_name == '__id__':
@@ -345,6 +347,7 @@ class Model(object):
 						t = prop.data_type
 					val = cls._decode(t, val, prop)
 					setattr(obj, prop_name, val)
+		obj._validate = True
 		return obj
 
 	@classmethod
