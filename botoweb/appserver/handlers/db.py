@@ -100,9 +100,8 @@ class DBHandler(RequestHandler):
 				for obj in objs:
 					dataStr = xmlize.dumps(obj)
 					if '\x80' in dataStr or '\x1d' in dataStr:
-						print 'Invalid Object', obj, obj.id
-					else:
-						response.write(dataStr)
+						dataStr.replace('\x80','').replace('\x1d','')
+					response.write(dataStr)
 				if page and objs.next_token:
 					if params.has_key("next_token"):
 						del(params['next_token'])
