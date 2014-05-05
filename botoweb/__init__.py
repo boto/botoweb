@@ -21,9 +21,9 @@
 __version__ = '1.4.5'
 env = None
 import logging
-log = logging.getLogger("botoweb")
+log = logging.getLogger('botoweb')
 
-HTTP_DATE_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
+HTTP_DATE_FORMAT = '%a, %d %b %Y %H:%M:%S GMT'
 ISO8601 = '%Y-%m-%dT%H:%M:%SZ'
 
 def set_env(name, conf=None):
@@ -78,63 +78,63 @@ def report(msg, status=400, name=None, tb=None, req=None, priority=None, req_bod
 	import boto
 	from datetime import datetime
 	arecibo = None
-	if boto.config.get("arecibo", "public_key"):
+	if boto.config.get('arecibo', 'public_key'):
 		try:
 			from arecibo import post
 			arecibo = post()
-			arecibo.server(url=boto.config.get("arecibo", "url"))
-			arecibo.set("account", boto.config.get("arecibo", "public_key"))
+			arecibo.server(url=boto.config.get('arecibo', 'url'))
+			arecibo.set('account', boto.config.get('arecibo', 'public_key'))
 		except:
 			arecibo = None
 
-	method = ""
-	remote_ip = ""
+	method = ''
+	remote_ip = ''
 	path = uri
 	if req:
 		uri = req.real_path_url
 		path = req.path_info
 		req_body = req.body
-		remote_ip = req.headers.get("X-Forwarded-For", req.remote_addr)
+		remote_ip = req.headers.get('X-Forwarded-For', req.remote_addr)
 		method = req.method
 
 	if arecibo:
-		log.info("Arecibo Log: %s" % msg)
+		log.info('Arecibo Log: %s' % msg)
 		try:
-			arecibo.set("status", status)
-			arecibo.set("msg", msg)
-			arecibo.set("server", boto.config.get("Instance", "public-ipv4"))
-			arecibo.set("timestamp", datetime.utcnow().isoformat());
+			arecibo.set('status', status)
+			arecibo.set('msg', msg)
+			arecibo.set('server', boto.config.get('Instance', 'public-ipv4'))
+			arecibo.set('timestamp', datetime.utcnow().isoformat());
 
 			if name:
-				arecibo.set("type", name)
+				arecibo.set('type', name)
 
 			if priority:
-				arecibo.set("priority", str(priority))
+				arecibo.set('priority', str(priority))
 
 			if uri:
-				arecibo.set("url", uri)
+				arecibo.set('url', uri)
 			if req_body:
-				arecibo.set("request", req_body)
+				arecibo.set('request', req_body)
 			if tb:
-				arecibo.set("traceback", tb)
+				arecibo.set('traceback', tb)
 
 			if req:
 				if req.user:
-					arecibo.set("username", req.user.username)
-				if req.environ.has_key("HTTP_USER_AGENT"):
-					arecibo.set("user_agent", req.environ['HTTP_USER_AGENT'])
+					arecibo.set('username', req.user.username)
+				if req.environ.has_key('HTTP_USER_AGENT'):
+					arecibo.set('user_agent', req.environ['HTTP_USER_AGENT'])
 				if remote_ip:
-					arecibo.set("ip", remote_ip)
+					arecibo.set('ip', remote_ip)
 			arecibo.send()
 		except Exception, e:
-			log.critical("Exception sending to arecibo: %s" % e)
+			log.critical('Exception sending to arecibo: %s' % e)
 	else:
 		# Only log Server errors as ERROR, everything
 		# else is just an informative exception
 		if status < 500:
-			log.info("%s %s: %s" % (method, path, msg))
+			log.info('%s %s: %s' % (method, path, msg))
 		else:
-			log.error("%s %s: %s" % (method, path, msg))
+			log.error('%s %s: %s' % (method, path, msg))
 
 def set_user_class():
 
@@ -145,12 +145,12 @@ def set_user_class():
 	module_path = None
 
 	if botoweb.env:
-		module_path = botoweb.env.config.get("app", "user_class", False)
+		module_path = botoweb.env.config.get('app', 'user_class', False)
 
 	if module_path:
 		try:
-			path = ".".join(module_path.split(".")[:-1])
-			class_name = module_path.split(".")[-1]
+			path = '.'.join(module_path.split('.')[:-1])
+			class_name = module_path.split('.')[-1]
 			mod = __import__(path, fromlist=[class_name])
 			botoweb.user = getattr(mod, class_name)
 		except ImportError:
@@ -162,10 +162,10 @@ def set_cache():
 
 	import botoweb
 	servers = []
-	if env and env.config.has_section("cache"):
+	if env and env.config.has_section('cache'):
 		import memcache
 		for server in env.config['cache']['servers']:
-			servers.append("%s:%s" % (server['host'], server['port']))
+			servers.append('%s:%s' % (server['host'], server['port']))
 		botoweb.memc = memcache.Client(servers)
 	else:
 		botoweb.memc = None
