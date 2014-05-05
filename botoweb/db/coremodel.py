@@ -159,7 +159,7 @@ class Model(object):
 
 	def __init__(self, id=None, **kw):
 		self._loaded = False
-		self._validate = True
+		self._validate = False
 		# first try to initialize all properties to their default values
 		for prop in self.properties(hidden=False):
 			try:
@@ -177,6 +177,7 @@ class Model(object):
 					setattr(self, key, kw[key])
 				except Exception, e:
 					log.exception(e)
+		self._validate = True
 
 	def __repr__(self):
 		return '%s<%s>' % (self.__class__.__name__, self.id)
