@@ -60,7 +60,8 @@ class Property(object):
 			return None
 
 	def __set__(self, obj, value):
-		self.validate(value)
+		if obj._validate is not False:
+			self.validate(value)
 
 		# Fire off any on_set functions
 		try:

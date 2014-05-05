@@ -98,7 +98,10 @@ class DBHandler(RequestHandler):
 					page = True
 				response.write("<%sList>" % self.db_class.__name__)
 				for obj in objs:
-					response.write(xmlize.dumps(obj))
+					dataStr = xmlize.dumps(obj)
+					if '\x80' in dataStr or '\x1d' in dataStr:
+						dataStr.replace('\x80','').replace('\x1d','')
+					response.write(dataStr)
 				if page and objs.next_token:
 					if params.has_key("next_token"):
 						del(params['next_token'])
@@ -526,7 +529,7 @@ class DBHandler(RequestHandler):
 		except Exception, e:
 			raise BadRequest(str(e))
 		if type(val) in (str, unicode):
-			if format is None:
+			if format is None or format == 'txt':
 				response.content_type = "text/plain"
 			elif format == 'xml':
 				response.content_type = 'text/xml'
