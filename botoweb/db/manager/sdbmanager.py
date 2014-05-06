@@ -160,6 +160,7 @@ class SDBManager(Manager):
 			
 	def load_object(self, obj):
 		if not obj._loaded:
+			obj._validate = False
 			a = self.domain.get_attributes(obj.id,consistent_read=self.consistent)
 			if a.has_key('__type__'):
 				for prop in obj.properties(hidden=False):
@@ -171,6 +172,7 @@ class SDBManager(Manager):
 						except Exception, e:
 							log.exception(e)
 			obj._loaded = True
+			obj._validate = True
 		
 	def get_object(self, cls, id, a=None):
 		obj = None
