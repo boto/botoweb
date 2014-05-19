@@ -139,7 +139,7 @@ class Request(webob.Request):
 						user = getCachedUser(username)
 						if not user:
 							try:
-								user = botoweb.user.find(username=username,deleted=False).next()
+								user = botoweb.user.find(username=username).next()
 								addCachedUser(user)
 							except:
 								user = None
@@ -182,7 +182,7 @@ class Request(webob.Request):
 							user = getCachedUser(username)
 							if not user or not user.auth_token == unencoded_info:
 								try:
-									user = botoweb.user.find(username=username,deleted=False).next()
+									user = botoweb.user.find(username=username).next()
 									addCachedUser(user)
 								except:
 									user = None
@@ -202,7 +202,7 @@ class Request(webob.Request):
 						#  Try to get a user by OpenID identifier
 						if not user:
 							try:
-								user = botoweb.user.find(oid=identifier,deleted=False).next()
+								user = botoweb.user.find(oid=identifier).next()
 							except StopIteration:
 								user = None
 
@@ -212,7 +212,7 @@ class Request(webob.Request):
 						if not user and email and openID.startswith('https://www.google.com'):
 							log.info('Looking up user email: "%s"' % email)
 							try:
-								user = botoweb.user.find(email=email,deleted=False).next()
+								user = botoweb.user.find(email=email).next()
 							except StopIteration:
 								user = None
 
@@ -267,7 +267,7 @@ class Request(webob.Request):
 							auth_token = self.GET.get("auth_token")
 							if auth_token:
 								try:
-									user = botoweb.user.find(auth_token=auth_token,deleted=False).next()
+									user = botoweb.user.find(auth_token=auth_token).next()
 								except:
 									user = None
 								if user:
@@ -278,7 +278,7 @@ class Request(webob.Request):
 						#  Try to get a user by OpenID identifier
 						if not user:
 							try:
-								user = botoweb.user.find(oid=identifier,deleted=False).next()
+								user = botoweb.user.find(oid=identifier).next()
 							except:
 								user = None
 
@@ -286,7 +286,7 @@ class Request(webob.Request):
 						# via Email
 						if not user and email:
 							try:
-								user = botoweb.user.find(email=email,deleted=False).next()
+								user = botoweb.user.find(email=email).next()
 							except:
 								user = None
 
