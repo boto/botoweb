@@ -78,8 +78,11 @@ class User(DynamoModel):
 			self['id'] = str(uuid.uuid4())
 
 
+	def __unicode__(self):
+		return self.get('name', u'')
+
 	def __str__(self):
-		return self.name
+		return self.__unicode__().encode('utf-8')
 
 	def notify(self, subject, body='',**params):
 		"""Send notification to this user
