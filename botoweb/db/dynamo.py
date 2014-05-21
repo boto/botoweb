@@ -79,6 +79,16 @@ class DynamoModel(Item):
 			# so we should auto-set the table
 			return Item.__init__(self, self.get_table(), *args, **kwargs)
 
+	@classmethod
+	def get_lineage(cls):
+		l = [c.__name__ for c in cls.mro()]
+		l.reverse()
+		return '.'.join(l)
+
+	@classmethod
+	def kind(cls):
+		return cls.__name__
+
 	def __setitem__(self, key, value):
 		"""Overwrite the setter to automatically
 		convert types to DynamoDB supported types"""
