@@ -66,11 +66,8 @@ class User(Model):
 	deleted_at = property.DateTimeProperty(verbose_name="Deleted Date")
 	sys_modstamp = property.DateTimeProperty(auto_now=True)
 
-	def __unicode__(self):
-		return self.get('name', u'')
-
 	def __str__(self):
-		return self.__unicode__().encode('utf-8')
+		return self.name
 
 	def notify(self, subject, body='',**params):
 		"""Send notification to this user
