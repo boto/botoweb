@@ -1,4 +1,5 @@
 # Copyright (c) 2013 Chris Moyer http://coredumped.org/
+# Copyright (c) 2014 Saikat DebRoy
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
@@ -124,12 +125,15 @@ class DynamoDBManager(Manager):
 
 		# Set/delete all the properties
 		for property in obj.properties(hidden=False):
-			value = property.get_value_for_datastore(obj)
-			if value is not None:
-				value = self.encode_value(property, value)
-			if value == []:
-				value = None
-			if value == None:
+			delete_item = property.is_calculated
+			if not delete_item:
+				value = property.get_value_for_datastore(obj)
+				if value is not None:
+					value = self.encode_value(property, value)
+				if value == []:
+					value = None
+				delete_item = value == None
+			if delete_item:
 				if raw_item.has_key(property.name):
 					del(raw_item[property.name])
 			else:

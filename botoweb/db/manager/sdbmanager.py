@@ -1,5 +1,6 @@
 # Copyright (c) 2006,2007,2008 Mitch Garnaat http://garnaat.org/
 # Copyright (c) 2010-2013 Chris Moyer http://coredumped.org/
+# Copyright (c) 2014 Saikat DebRoy
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
@@ -329,6 +330,9 @@ class SDBManager(Manager):
 				 '__lineage__' : obj.get_lineage()}
 		del_attrs = []
 		for property in obj.properties(hidden=False):
+			if property.is_calculated:
+				del_attrs.append(property.name)
+				continue
 			value = property.get_value_for_datastore(obj)
 			if value is not None:
 				value = self.encode_value(property, value)
