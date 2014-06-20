@@ -1,4 +1,5 @@
 # Copyright (c) 2006,2007,2008 Mitch Garnaat http://garnaat.org/
+# Copyright (c) 2014 Saikat DebRoy
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
@@ -35,6 +36,7 @@ class Property(object):
 	type_name = ''
 	name = ''
 	verbose_name = ''
+	is_calculated = False
 
 	def __init__(self, verbose_name=None, name=None, default=None, required=False,
 				validator=None, choices=None, unique=False):
@@ -563,8 +565,9 @@ class _ReverseReferenceProperty(Property):
 		"""Not possible to set a new collection."""
 		raise ValueError, 'Virtual property is read-only'
 
-		
+
 class CalculatedProperty(Property):
+	is_calculated = True
 
 	def __init__(self, verbose_name=None, name=None, default=None,
 				required=False, validator=None, choices=None,
