@@ -79,6 +79,16 @@ class DynamoModel(Item):
 			# so we should auto-set the table
 			return Item.__init__(self, self.get_table(), *args, **kwargs)
 
+	@classmethod
+	def get_lineage(cls):
+		l = [c.__name__ for c in cls.mro()]
+		l.reverse()
+		return '.'.join(l)
+
+	@classmethod
+	def kind(cls):
+		return cls.__name__
+
 	def __setitem__(self, key, value):
 		"""Overwrite the setter to automatically
 		convert types to DynamoDB supported types"""
@@ -152,9 +162,9 @@ class DynamoModel(Item):
 	lookup = get_by_id
 
 	@classmethod
-	def query(cls, hash_key, range_key_condition=None,
+	def query(cls, hash_key=None, range_key_condition=None,
 				request_limit=None, consistent_read=False,
-				scan_index_forward=True):
+				scan_index_forward=True, **kwargs):
 		"""Query under a given hash_key
 
 		:type range_key_condition: dict
@@ -187,27 +197,51 @@ class DynamoModel(Item):
 
 		attempt = 0
 		last_error = None
-		while attempt < MAX_RETRIES:
-			try:
-				for item in  cls.get_table().query(hash_key=hash_key,
-					range_key_condition=range_key_condition,
-					request_limit=request_limit,
-					consistent_read=consistent_read,
-					scan_index_forward=scan_index_forward,item_class=cls):
-					yield item
-				return
-			except DynamoDBResponseError, e:
-				log.exception('Dynamo Response Error: %s' % e)
-				cls._table = None
-				attempt += 1
-				last_error = e
-				time.sleep(attempt**2)
-			except BotoServerError, e:
-				log.error('Boto Server Error: %s' % e)
-				cls._table = None
-				attempt += 1
-				last_error = e
-				time.sleep(attempt**2)
+		# Handle Keyword Searches
+		if kwargs:
+			from decimal import Decimal
+			from boto.dynamodb2.table import Table
+			tbl = Table(cls._table_name)
+			index_name = []
+			args = {}
+			for arg in kwargs:
+				index_name.append(arg)
+				args[arg + '__eq'] = kwargs[arg]
+			index_name.append('index')
+			index_name = '-'.join(index_name)
+			for item in tbl.query_2(index=index_name, **args):
+				# Convert some values out to simple Python values
+				data = {}
+				for attr_name in item.keys():
+					val = item[attr_name]
+					if isinstance(val, Decimal):
+						val = int(val)
+					if isinstance(val, set):
+						val = list(val)
+					data[attr_name] = val
+				yield cls.from_dict(data)
+		else:
+			while attempt < MAX_RETRIES:
+				try:
+					for item in  cls.get_table().query(hash_key=hash_key,
+						range_key_condition=range_key_condition,
+						request_limit=request_limit,
+						consistent_read=consistent_read,
+						scan_index_forward=scan_index_forward,item_class=cls):
+						yield item
+					return
+				except DynamoDBResponseError, e:
+					log.exception('Dynamo Response Error: %s' % e)
+					cls._table = None
+					attempt += 1
+					last_error = e
+					time.sleep(attempt**2)
+				except BotoServerError, e:
+					log.error('Boto Server Error: %s' % e)
+					cls._table = None
+					attempt += 1
+					last_error = e
+					time.sleep(attempt**2)
 		if last_error:
 			raise last_error
 
@@ -331,6 +365,13 @@ class DynamoModel(Item):
 				log.exception('Could not decode %s: %s', prop.data_type, ret)
 
 		return ret
+
+	def __setattr__(self, name, val):
+		prop = self.find_property(name)
+		if prop:
+			self[name] = val
+		else:
+			Item.__setattr__(self, name, val)
 
 	def get_id(self):
 		if self._range_key_name:

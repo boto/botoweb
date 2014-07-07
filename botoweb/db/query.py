@@ -1,3 +1,4 @@
+# Copyright (c) 2014 Chris Moyer <cmoyer@newstex.com>
 # Copyright (c) 2006,2007,2008 Mitch Garnaat http://garnaat.org/
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,7 +21,9 @@
 # IN THE SOFTWARE.
 
 class Query(object):
+	'''Lazy loading Query resource, which lets us filter results'''
 	__local_iter__ = None
+
 	def __init__(self, model_class, limit=None, next_token=None, manager=None):
 		self.model_class = model_class
 		self.limit = limit
@@ -48,8 +51,8 @@ class Query(object):
 		return self
 
 	def fetch(self, limit, offset=0):
-		"""Not currently fully supported, but we can use this
-		to allow them to set a limit in a chainable method"""
+		'''Not currently fully supported, but we can use this
+		to allow them to set a limit in a chainable method'''
 		self.limit = limit
 		self.offset = offset
 		return self
@@ -83,3 +86,41 @@ class Query(object):
 		self._next_token = token
 
 	next_token = property(get_next_token, set_next_token)
+
+class LocalQuery(Query):
+	'''Wrapper for a query that takes an iterator and then returns
+	filtered results'''
+
+	def __init__(self, iterator, model_class=None, limit=None, next_token=None):
+		self.limit = limit
+		self.filters = []
+		self.next_token = next_token
+		self.iterator = iterator
+		self.sort_by = None
+		self.model_class = model_class
+		self.rs = None
+		self.counter = None
+		self.items = None
+
+	def __iter__(self):
+		if self.items is None:
+			self.items = []
+			for item in self.iterator:
+				if self.matches(item):
+					self.items.append(item)
+					yield item
+		else:
+			for item in self.items:
+				yield item
+
+	def matches(self, item):
+		'''Check to make sure this item matches the filters'''
+		# TODO: Check the filters
+		return True
+
+	def count(self, quick=True):
+		if self.counter is None:
+			self.counter = 0
+			for item in iter(self):
+				self.counter += 1
+		return self.counter
