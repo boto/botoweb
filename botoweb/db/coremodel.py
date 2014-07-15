@@ -24,6 +24,8 @@ from botoweb.db.property import Property
 from botoweb.db.key import Key
 from botoweb.db.query import Query
 from decimal import Decimal
+from datetime import datetime, date
+import time
 import boto
 import logging
 log = logging.getLogger('botoweb.db.model')
@@ -292,6 +294,11 @@ class Model(object):
 					val = 0
 			elif isinstance(val, Model):
 				val = val.id
+			elif isinstance(val, datetime) or isinstance(val, date):
+				# Convert the datetime to a timestamp
+				val = int(time.mktime((val.year, val.month, val.day,
+						val.hour, val.minute, val.second,
+						-1, -1, -1)))
 			elif hasattr(val, 'isoformat'):
 				val = val.isoformat() + 'Z'
 			elif isinstance(val, Query):
@@ -353,7 +360,6 @@ class Model(object):
 
 	@classmethod
 	def _decode(cls, t, val, prop):
-		from datetime import datetime, date
 		if val is None:
 			return val
 		if isinstance(val, dict) and val.has_key('__id__'):
