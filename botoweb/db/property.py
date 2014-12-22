@@ -546,18 +546,7 @@ class _ReverseReferenceProperty(Property):
 		"""Fetches collection of model instances of this collection property."""
 		from botoweb.db.dynamo import DynamoModel
 		if model_instance is not None:
-			# Support DynamoDB Objects
-			if DynamoModel in self.__model.mro():
-				return self.__model.search(bq="%s:'%s'" % (self.__property, model_instance.id))
-			else:
-				query = Query(self.__model)
-				if type(self.__property) == list:
-					props = []
-					for prop in self.__property:
-						props.append("%s =" % prop)
-					return query.filter(props, model_instance)
-				else:
-					return query.filter(self.__property + ' =', model_instance)
+			return self.__model.match_reference_property(self.__property, model_instance)
 		else:
 			return self
 

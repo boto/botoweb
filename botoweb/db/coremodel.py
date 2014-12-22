@@ -110,6 +110,23 @@ class Model(object):
 
 	@classmethod
 	def all(cls, limit=None, next_token=None):
+	def match_reference_property(cls, reference_property, model_instance):
+		'''
+		:param reference_property: Name (or list of names) of the reference property to match
+		:type reference_property: str or list
+		:param model_instance: Model instance to match to reference property
+		:type model_instance: :class:`~.Model`
+		:return: An iterator with the matched instances of this class
+		:rtype: :class:`~botoweb.db.query.Query`
+		'''
+		query = Query(cls)
+		if isinstance(reference_property, basestring):
+			return query.filter(reference_property + ' =', model_instance)
+		else:
+			props = ['%s =' % prop for prop in reference_property]
+			return query.filter(props, model_instance)
+
+	@classmethod
 		return cls.find(limit=limit, next_token=next_token)
 
 	@classmethod

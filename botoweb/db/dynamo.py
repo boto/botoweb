@@ -248,6 +248,16 @@ class DynamoModel(Item):
 	find = query
 
 	@classmethod
+	def match_reference_property(cls, reference_property, model_instance):
+		'''
+		:param str reference_property: Name of the reference property to match
+		:param model_instance: Model instance to match to reference property
+		:type model_instance: :class:`.Model`
+		:return: A generator with the matched instances of this class
+		'''
+		return cls.search(bq='%s:\'%s\'' % (reference_property, model_instance.id))
+
+	@classmethod
 	def all(cls, request_limit=None):
 		"""Uses Scan to return all of this type of object"""
 		return DynamoQuery(cls, request_limit=request_limit)
