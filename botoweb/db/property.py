@@ -653,6 +653,61 @@ class MapProperty(Property):
 	type_name = 'Map'
 
 	def __init__(self, item_type=str, verbose_name=None, name=None, default=None, **kwds):
+class SetProperty(Property):
+
+	data_type = set
+	type_name = 'Set'
+
+	def __init__(self, item_type, verbose_name=None, name=None, default=None, **kwds):
+		if default is None:
+			default = set()
+		self.item_type = item_type
+		Property.__init__(self, verbose_name, name, default=default, required=True, **kwds)
+
+	def validate(self, value):
+		if self.validator:
+			self.validator(value)
+		if value is not None:
+			if not isinstance(value, set):
+				value = set(value)
+
+		if self.item_type in (int, long):
+			item_type = (int, long)
+		elif self.item_type in (str, unicode):
+			item_type = (str, unicode)
+		else:
+			item_type = self.item_type
+
+		for item in value:
+			if not isinstance(item, item_type):
+				if item_type == (int, long):
+					raise ValueError('Items in the %s list must all be integers.' % self.name)
+				else:
+					raise ValueError('Items in the %s list must all be %s instances, got a %s instead' %
+									(self.name, self.item_type.__name__, type(item)))
+		return value
+
+	def empty(self, value):
+		return value is None
+
+	def default_value(self):
+		return set(super(SetProperty, self).default_value())
+
+	def __set__(self, obj, value):
+		'''Override the set method to allow them to set the property to an instance of the item_type instead of requiring a list to be passed in'''
+		if self.item_type in (int, long):
+			item_type = (int, long)
+		elif self.item_type in (str, unicode):
+			item_type = (str, unicode)
+		else:
+			item_type = self.item_type
+		if isinstance(value, item_type):
+			value = set(value)
+		elif value is None:  # Override to allow them to set this to 'None' to remove everything
+			value = set()
+		return super(SetProperty, self).__set__(obj, value)
+
+
 		if default is None:
 			default = {}
 		self.item_type = item_type
