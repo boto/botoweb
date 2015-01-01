@@ -408,6 +408,11 @@ class Model(object):
 			if not isinstance(val, list) and not isinstance(val, set):
 				val = [val]
 			val = [cls._decode(prop.item_type, v, prop) for v in val]
+		elif isinstance(t, tuple):
+			# Support for JSON multi-types
+			import json
+			if(val):
+				val = json.loads(val)
 		elif t not in (str, unicode, int):
 			val = t(val)
 		return val
