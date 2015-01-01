@@ -746,3 +746,26 @@ class MapProperty(Property):
 
 	def default_value(self):
 		return {}
+
+
+class JSONProperty(Property):
+
+	data_type = (dict, list, str, unicode, int, long, float, type(None))
+	type_name = 'JSON'
+
+	def __init__(self, verbose_name=None, name=None, default=None, **kwds):
+		Property.__init__(self, verbose_name, name, default=default, required=True, **kwds)
+
+	def validate(self, value):
+		import json
+		try:
+			json.dumps(value)
+		except Exception as e:
+			raise ValueError('%s in %s JSONProperty' % (str(e), self.name))
+		return value
+
+	def empty(self, value):
+		return value is None
+
+	def default_value(self):
+		return None
