@@ -748,6 +748,38 @@ class MapProperty(Property):
 		return {}
 
 
+class JSON(object):
+	def __init__(self, value):
+		if isinstance(value, JSON):
+			self.value = value.value
+		else:
+			self.set(value)
+
+	def set(self, value):
+		import json
+		try:
+			json.dumps(value)
+		except Exception as e:
+			raise ValueError('%s in %s JSONProperty' % (str(e), self.name))
+		self.value = value
+
+	def __eq__(self, other):
+		return self.value == other.value
+
+	def __ne__(self, other):
+		return self.value != other.value
+
+	def __str__(self):
+		return str(self.value)
+
+	def __unicode__(self):
+		return unicode(self.value)
+
+	def __len__(self):
+		# Note: this fails if self.value is a number
+		return len(self.value)
+
+
 class JSONProperty(Property):
 
 	data_type = (dict, list, str, unicode, int, long, float, type(None))
