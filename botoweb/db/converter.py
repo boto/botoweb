@@ -1,4 +1,5 @@
 # Copyright (c) 2013 Chris Moyer http://coredumped.org/
+# Copyright (c) 2014 Saikat DebRoy
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
@@ -14,7 +15,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
 # ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
@@ -22,7 +23,7 @@ import boto.sdb
 from botoweb.db.key import Key
 from botoweb.db.coremodel import Model
 from botoweb.db.blob import Blob
-from botoweb.db.property import ListProperty, MapProperty
+from botoweb.db.property import ListProperty, MapProperty, SetProperty, JSON, JSONProperty
 from datetime import datetime, date, time
 from botoweb.exceptions import TimeDecodeError
 from botoweb import ISO8601
@@ -54,6 +55,7 @@ class Converter(object):
 						time : (self.encode_time, self.decode_time),
 						Blob: (self.encode_blob, self.decode_blob),
 						str: (self.encode_string, self.decode_string),
+						JSON: (self.encode_json_item, self.decode_json_item),
 					}
 
 	def encode(self, item_type, value):
@@ -74,9 +76,9 @@ class Converter(object):
 		return value
 
 	def encode_list(self, prop, value):
-		if value in (None, []):
+		if value in (None, [], set()):
 			return []
-		if not isinstance(value, list):
+		if not isinstance(value, (list, set)):
 			# This is a little trick to avoid encoding when it's just a single value,
 			# since that most likely means it's from a query
 			item_type = getattr(prop, 'item_type')
@@ -106,11 +108,25 @@ class Converter(object):
 				new_value.append('%s:%s' % (urllib.quote(key), encoded_value))
 		return new_value
 
+	def encode_json(self, prop, value):
+		if value is None:
+			return None
+		if isinstance(value, JSON):
+			value = value.value
+		if isinstance(value, dict):
+			return self.encode_map(prop, value)
+		elif isinstance(value, list):
+			return self.encode_list(prop, value)
+		else:
+			return self.encode_json_item(value)
+
 	def encode_prop(self, prop, value):
-		if isinstance(prop, ListProperty):
+		if isinstance(prop, (ListProperty, SetProperty)):
 			return self.encode_list(prop, value)
 		elif isinstance(prop, MapProperty):
 			return self.encode_map(prop, value)
+		elif isinstance(prop, JSONProperty):
+			return self.encode_json(prop, value)
 		else:
 			return self.encode(prop.data_type, value)
 
@@ -129,6 +145,8 @@ class Converter(object):
 						k = v
 					dec_val[k] = v
 			value = dec_val.values()
+		if issubclass(prop.data_type, set):
+			value = prop.data_type(value)
 		return value
 
 	def decode_map(self, prop, value):
@@ -154,13 +172,62 @@ class Converter(object):
 			value = self.decode(item_type, value)
 		return (key, value)
 
+	def decode_json(self, prop, value):
+		if isinstance(value, (set, list)):
+			if not value:
+				return value
+			value = self.decode_map(prop, value)
+			if all(isinstance(k, (int, long)) for k in value):
+				if min(value.iterkeys()) == 0 and max(value.iterkeys()) == len(value) - 1:
+					# The keys are all distinct, the minimum is 0 and max is len(value) - 1
+					# So, keys == range(0, len(value)) and so, value must be a list
+					value = [value[k] for k in xrange(len(value))]
+		else:
+			value = self.decode_json_item(value)
+		return value
+
 	def decode_prop(self, prop, value):
-		if isinstance(prop, ListProperty):
+		if isinstance(prop, (ListProperty, SetProperty)):
 			return self.decode_list(prop, value)
 		elif isinstance(prop, MapProperty):
 			return self.decode_map(prop, value)
+		elif isinstance(prop, JSONProperty):
+			return self.decode_json(prop, value)
 		else:
 			return self.decode(prop.data_type, value)
+
+	def encode_json_item(self, value):
+		if value is None:
+			return None
+		if isinstance(value, JSON):
+			value = value.value
+		if isinstance(value, int):
+			return self.encode_int(value)
+		elif isinstance(value, long):
+			return self.encode_long(value)
+		elif isinstance(value, basestring):
+			return self.encode_string(value)
+		else:
+			import json
+
+			return json.dumps(value)
+
+	def decode_json_item(self, value):
+		if isinstance(value, basestring):
+			import json
+
+			try:
+				parsed_value = json.loads(value)
+			except ValueError:
+				value = self.decode_string(value)
+			else:
+				if isinstance(parsed_value, int):
+					value = self.decode_int(value)
+				elif isinstance(parsed_value, long):
+					value = self.decode_long(value)
+				else:
+					value = parsed_value
+		return value
 
 	def encode_int(self, value):
 		value = int(value)
@@ -362,4 +429,3 @@ class StringConverter(Converter):
 		if isinstance(value, str) or isinstance(value, unicode):
 			return value
 		return value.isoformat()
-
