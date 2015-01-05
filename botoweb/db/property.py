@@ -783,6 +783,7 @@ class JSON(object):
 class JSONProperty(Property):
 
 	data_type = JSON
+	item_type = JSON
 	type_name = 'JSON'
 
 	def __init__(self, verbose_name=None, name=None, default=None, required=False,
