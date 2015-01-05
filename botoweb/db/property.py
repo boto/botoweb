@@ -782,22 +782,49 @@ class JSON(object):
 
 class JSONProperty(Property):
 
-	data_type = (dict, list, str, unicode, int, long, float, type(None))
+	data_type = JSON
 	type_name = 'JSON'
 
-	def __init__(self, verbose_name=None, name=None, default=None, **kwds):
-		Property.__init__(self, verbose_name, name, default=default, required=True, **kwds)
+	def __init__(self, verbose_name=None, name=None, default=None, required=False,
+				validator=None, choices=None, unique=False):
+		default = self.make_value_from_datastore(default)
+		super(JSONProperty, self).__init__(verbose_name=verbose_name, name=name,
+													  default=default, required=required, validator=validator,
+													  choices=choices, unique=unique)
 
-	def validate(self, value):
-		import json
-		try:
-			json.dumps(value)
-		except Exception as e:
-			raise ValueError('%s in %s JSONProperty' % (str(e), self.name))
+	def make_value_from_datastore(self, value):
+		if value is not None:
+			value = self.data_type(value)
 		return value
 
-	def empty(self, value):
-		return value is None
+	def get_value_for_datastore(self, model_instance):
+		value = super(JSONProperty, self).get_value_for_datastore(model_instance)
+		if isinstance(value, self.data_type):
+			value = value.value
+		return value
 
-	def default_value(self):
-		return None
+	def __set__(self, obj, value):
+		if not (value is None or isinstance(value, self.data_type)):
+			value = self.data_type(value)
+		super(JSONProperty, self).__set__(obj, value)
+
+	def __get__(self, obj, objtype):
+		return super(JSONProperty, self).__get__(self, obj, objtype)
+
+	def default_validator(self, value):
+		if value is None or value == self.default_value():
+			return
+		if not isinstance(value, self.data_type):
+			raise TypeError('Validation Error, %s.%s expecting %s, got %s' % (self.model_class.__name__, self.name, self.data_type, type(value)))
+
+	def empty(self, value):
+		return not value
+
+	def get_choices(self):
+		if callable(self.choices):
+			choices = self.choices()
+		else:
+			choices = self.choices
+		if choices:
+			choices = [self.make_value_from_datastore(c) for c in choices]
+		return choices
