@@ -23,7 +23,7 @@ import boto.sdb
 from botoweb.db.key import Key
 from botoweb.db.coremodel import Model
 from botoweb.db.blob import Blob
-from botoweb.db.property import ListProperty, MapProperty, JSON, JSONProperty
+from botoweb.db.property import ListProperty, MapProperty, SetProperty, JSON, JSONProperty
 from datetime import datetime, date, time
 from botoweb.exceptions import TimeDecodeError
 from botoweb import ISO8601
@@ -76,9 +76,9 @@ class Converter(object):
 		return value
 
 	def encode_list(self, prop, value):
-		if value in (None, []):
+		if value in (None, [], set()):
 			return []
-		if not isinstance(value, list):
+		if not isinstance(value, (list, set)):
 			# This is a little trick to avoid encoding when it's just a single value,
 			# since that most likely means it's from a query
 			item_type = getattr(prop, 'item_type')
@@ -121,7 +121,7 @@ class Converter(object):
 			return self.encode_json_item(value)
 
 	def encode_prop(self, prop, value):
-		if isinstance(prop, ListProperty):
+		if isinstance(prop, (ListProperty, SetProperty)):
 			return self.encode_list(prop, value)
 		elif isinstance(prop, MapProperty):
 			return self.encode_map(prop, value)
@@ -145,6 +145,8 @@ class Converter(object):
 						k = v
 					dec_val[k] = v
 			value = dec_val.values()
+		if issubclass(prop.data_type, set):
+			value = prop.data_type(value)
 		return value
 
 	def decode_map(self, prop, value):
@@ -185,7 +187,7 @@ class Converter(object):
 		return value
 
 	def decode_prop(self, prop, value):
-		if isinstance(prop, ListProperty):
+		if isinstance(prop, (ListProperty, SetProperty)):
 			return self.decode_list(prop, value)
 		elif isinstance(prop, MapProperty):
 			return self.decode_map(prop, value)
