@@ -20,7 +20,7 @@
 # IN THE SOFTWARE.
 
 from botoweb.db.manager import get_manager
-from botoweb.db.property import Property
+from botoweb.db.property import Property, JSON
 from botoweb.db.key import Key
 from botoweb.db.query import Query
 from decimal import Decimal
@@ -344,6 +344,8 @@ class Model(object):
 						else:
 							rv[k] = str(val[k])
 				val = rv
+			elif isinstance(val, JSON):
+				val = val.value
 			else:
 				# Fall back to encoding as a string
 				try:
