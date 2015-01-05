@@ -764,10 +764,10 @@ class JSON(object):
 		self.value = value
 
 	def __eq__(self, other):
-		return self.value == other.value
+		return other is not None and self.value == other.value
 
 	def __ne__(self, other):
-		return self.value != other.value
+		return other is None or self.value != other.value
 
 	def __str__(self):
 		return str(self.value)
