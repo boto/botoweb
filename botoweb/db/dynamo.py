@@ -14,7 +14,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
 # ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
@@ -23,7 +23,6 @@
 # Description: DynamoDB related objects.
 # This is a lighter weight ORM for DynamoDB
 
-import ssl
 import json
 import boto
 import time
@@ -38,12 +37,13 @@ log = logging.getLogger('botoweb.db.dynamo')
 
 MAX_RETRIES = 10
 
+
 class DynamoModel(Item):
-	"""DynamoDB Model.
+	'''DynamoDB Model.
 	This is just a wrapper around
 	boto.dynamodb.item.Item
-	"""
-	_manager = None # SDB Model Compatibility
+	'''
+	_manager = None  # SDB Model Compatibility
 	_table = None
 	_table_name = None
 	_properties = None
@@ -53,7 +53,7 @@ class DynamoModel(Item):
 	_cs_document_endpoint = None
 
 	def __init__(self, *args, **kwargs):
-		"""Create a new DynamoDB model
+		'''Create a new DynamoDB model
 		This supports both:
 		>>> DynamoModel(table, 'hash_key', 'range_key', attrs)
 		>>> DynamoModel('hash_key', 'range_key')
@@ -64,7 +64,7 @@ class DynamoModel(Item):
 		>>> DynamoModel(table, hash_key='hash_key', range_key='range_key')
 
 		This could be coming from Layer2, or it could be just called
-		directly by us."""
+		directly by us.'''
 		if len(args) > 0:
 			first_arg = args[0]
 		else:
@@ -90,13 +90,13 @@ class DynamoModel(Item):
 		return cls.__name__
 
 	def __setitem__(self, key, value):
-		"""Overwrite the setter to automatically
-		convert types to DynamoDB supported types"""
+		'''Overwrite the setter to automatically
+		convert types to DynamoDB supported types'''
 		return Item.__setitem__(self, key, self.convert(key, value))
 
 	def convert(self, key, value):
-		"""Convert the value, this is called from __setitem__ but also called
-		recursively when Lists are passed in"""
+		'''Convert the value, this is called from __setitem__ but also called
+		recursively when Lists are passed in'''
 		from botoweb.db.model import Model
 		from datetime import datetime
 		# Allow null or empty values
@@ -114,10 +114,10 @@ class DynamoModel(Item):
 		elif isinstance(value, Model):
 			value = value.id
 		return value
-	
+
 	@classmethod
 	def get_table(cls):
-		"""Get the table object for the given class"""
+		'''Get the table object for the given class'''
 		if cls._table is None:
 			conn = boto.connect_dynamodb()
 			tbl_name = cls._table_name
@@ -129,7 +129,7 @@ class DynamoModel(Item):
 
 	@classmethod
 	def get_by_id(cls, hash_key, range_key=None, consistent_read=False):
-		"""Get this type of item by a given ID"""
+		'''Get this type of item by a given ID'''
 		attempt = 0
 		last_error = None
 		while attempt < MAX_RETRIES:
@@ -147,14 +147,14 @@ class DynamoModel(Item):
 				log.exception('Could not retrieve item')
 				cls._table = None
 				attempt += 1
-				time.sleep(attempt**2)
+				time.sleep(attempt ** 2)
 				last_error = e
 			except BotoServerError, e:
 				log.error('Boto Server Error: %s' % e)
 				cls._table = None
 				attempt += 1
 				last_error = e
-				time.sleep(attempt**2)
+				time.sleep(attempt ** 2)
 
 		if last_error:
 			raise e
@@ -165,7 +165,7 @@ class DynamoModel(Item):
 	def query(cls, hash_key=None, range_key_condition=None,
 				request_limit=None, consistent_read=False,
 				scan_index_forward=True, **kwargs):
-		"""Query under a given hash_key
+		'''Query under a given hash_key
 
 		:type range_key_condition: dict
 		:param range_key_condition: A dict where the key is either
@@ -193,7 +193,7 @@ class DynamoModel(Item):
 		:type scan_index_forward: bool
 		:param scan_index_forward: Specified forward or backward
 			traversal of the index.  Default is forward (True).
-		"""
+		'''
 
 		attempt = 0
 		last_error = None
@@ -223,11 +223,11 @@ class DynamoModel(Item):
 		else:
 			while attempt < MAX_RETRIES:
 				try:
-					for item in  cls.get_table().query(hash_key=hash_key,
+					for item in cls.get_table().query(hash_key=hash_key,
 						range_key_condition=range_key_condition,
 						request_limit=request_limit,
 						consistent_read=consistent_read,
-						scan_index_forward=scan_index_forward,item_class=cls):
+						scan_index_forward=scan_index_forward, item_class=cls):
 						yield item
 					return
 				except DynamoDBResponseError, e:
@@ -235,26 +235,36 @@ class DynamoModel(Item):
 					cls._table = None
 					attempt += 1
 					last_error = e
-					time.sleep(attempt**2)
+					time.sleep(attempt ** 2)
 				except BotoServerError, e:
 					log.error('Boto Server Error: %s' % e)
 					cls._table = None
 					attempt += 1
 					last_error = e
-					time.sleep(attempt**2)
+					time.sleep(attempt ** 2)
 		if last_error:
 			raise last_error
 
 	find = query
 
 	@classmethod
+	def match_reference_property(cls, reference_property, model_instance):
+		'''
+		:param str reference_property: Name of the reference property to match
+		:param model_instance: Model instance to match to reference property
+		:type model_instance: :class:`.Model`
+		:return: A generator with the matched instances of this class
+		'''
+		return cls.search(bq='%s:\'%s\'' % (reference_property, model_instance.id))
+
+	@classmethod
 	def all(cls, request_limit=None):
-		"""Uses Scan to return all of this type of object"""
+		'''Uses Scan to return all of this type of object'''
 		return DynamoQuery(cls, request_limit=request_limit)
 
 	@classmethod
 	def search(cls, q=None, bq=None, rank=None, start=0, **kwargs):
-		"""Search using CloudSearch. This requires a _cs_search_endpoint property to be set
+		'''Search using CloudSearch. This requires a _cs_search_endpoint property to be set
 		:param q: The optional TEXT search query
 		:type q: str
 		:param bq: The optional BOOLEAN search query
@@ -263,7 +273,7 @@ class DynamoModel(Item):
 		:type rank: str
 		:param start: The optional start point to begin the search
 		:type start: int
-		:param: Other KW args are supported and used as direct matches in the Boolean Query"""
+		:param: Other KW args are supported and used as direct matches in the Boolean Query'''
 		from boto.cloudsearch.search import SearchConnection
 		if not cls._cs_search_endpoint:
 			raise NotImplemented('No CloudSearch Domain Set')
@@ -295,10 +305,9 @@ class DynamoModel(Item):
 		conn = SearchConnection(endpoint=cls._cs_search_endpoint)
 		return BatchItemFetcher(conn.search(**args), cls)
 
-
 	@classmethod
 	def properties(cls, hidden=True):
-		"""Returns a list of property objects, for compatibility with SDB Model objects"""
+		'''Returns a list of property objects, for compatibility with SDB Model objects'''
 		if not cls._prop_cache:
 			cls._prop_cache = []
 			cursor = cls
@@ -380,7 +389,7 @@ class DynamoModel(Item):
 			return self[self._hash_key_name]
 
 	def set_id(self, val):
-		"""Allows for setting the ID"""
+		'''Allows for setting the ID'''
 		if self._range_key_name:
 			(self[self._hash_key_name], self[self._range_key_name]) = val.split('/', 1)
 		else:
@@ -395,7 +404,7 @@ class DynamoModel(Item):
 		return json.dumps(self, cls=SetEncoder)
 
 	def to_dict(self, recursive=True, include_hidden=True):
-		"""Returns a copy of this item, converting all sets into lists"""
+		'''Returns a copy of this item, converting all sets into lists'''
 
 		d = {}
 		for key, value in self.items():
@@ -414,17 +423,17 @@ class DynamoModel(Item):
 
 	@classmethod
 	def from_dict(cls, data):
-		"""Takes a normal dict, and returns this object"""
+		'''Takes a normal dict, and returns this object'''
 		table = cls.get_table()
-		assert(data.has_key(table.schema.hash_key_name)), 'Missing %s' % table.schema.hash_key_name
+		assert(table.schema.hash_key_name in data), 'Missing %s' % table.schema.hash_key_name
 		if table.schema.range_key_name:
-			assert(data.has_key(table.schema.range_key_name)), 'Missing %s' % table.schema.range_key_name
+			assert(table.schema.range_key_name in data), 'Missing %s' % table.schema.range_key_name
 		return cls(attrs=data)
 
 	def put_attributes(self, attrs, expected_value=None, return_values=None):
-		"""Put multiple attributes, really just calls
-		put_attribute for each key/value pair, then 
-		calls save"""
+		'''Put multiple attributes, really just calls
+		put_attribute for each key/value pair, then
+		calls save'''
 		updates = self._updates
 		self._updates = {}
 		for key, val in attrs.items():
@@ -437,15 +446,15 @@ class DynamoModel(Item):
 	# to auto-set some properties
 	#
 	def on_save_or_update(self):
-		"""Automatically set properties, to be called
-		from put() and save()"""
+		'''Automatically set properties, to be called
+		from put() and save()'''
 		if not self.has_key('created_at'):
 			self['created_at'] = int(time.time())
 		self['modified_at'] = int(time.time())
 
 	def after_save_or_update(self):
-		"""Automatically called *after* any save or update
-		has been performed"""
+		'''Automatically called *after* any save or update
+		has been performed'''
 		pass
 
 	def put(self, *args, **kwargs):
@@ -463,7 +472,7 @@ class DynamoModel(Item):
 		self.after_save_or_update()
 
 	def save_to_cloudsearch(self, conn=None):
-		"""Save/Update this item in CloudSearch"""
+		'''Save/Update this item in CloudSearch'''
 		from boto.cloudsearch.document import DocumentServiceConnection
 		if conn is None:
 			conn = DocumentServiceConnection(endpoint=self._cs_document_endpoint)
@@ -474,16 +483,16 @@ class DynamoModel(Item):
 		conn.commit()
 
 	def get_sdf(self):
-		"""GET a SDF (Search Data Format) for use in CloudSearch"""
+		'''GET a SDF (Search Data Format) for use in CloudSearch'''
 		data = self.to_dict()
 		# Adds a "Model" field if one doesn't already exist
-		if not data.has_key('model'):
-			data['model'] =  self.__class__.__name__
+		if 'model' not in data:
+			data['model'] = self.__class__.__name__
 
 		# Remove all null values
 		for key in data.keys():
 			val = data[key]
-			if key.startswith('_') or val in (' ', '  ',  [''], [' '], ['  ']) or (not val and not isinstance(val, bool) and not isinstance(val, int)):
+			if key.startswith('_') or val in (' ', '  ', [''], [' '], ['  ']) or (not val and not isinstance(val, bool) and not isinstance(val, int)):
 				del(data[key])
 			elif isinstance(val, list) or isinstance(val, tuple):
 				val = list(set(val))
@@ -504,8 +513,8 @@ class DynamoModel(Item):
 		return data
 
 	def delete(self, *args, **kwargs):
-		"""Intercept the delete function to also remove this record from CloudSearch
-		if it is indexed"""
+		'''Intercept the delete function to also remove this record from CloudSearch
+		if it is indexed'''
 		if self._cs_document_endpoint:
 			from boto.cloudsearch.document import DocumentServiceConnection
 			conn = DocumentServiceConnection(endpoint=self._cs_document_endpoint)
@@ -516,20 +525,21 @@ class DynamoModel(Item):
 		return Item.delete(self, *args, **kwargs)
 
 
-
 from botoweb.db.query import Query
+
+
 class DynamoQuery(Query):
-	"""Query iterator for Dynamo-based objects"""
+	'''Query iterator for Dynamo-based objects'''
 
 	def __init__(self, *args, **kwargs):
-		if kwargs.has_key('request_limit'):
+		if 'request_limit' in kwargs:
 			self.request_limit = kwargs['request_limit']
 			del(kwargs['request_limit'])
 		Query.__init__(self, *args, **kwargs)
 
 	def __iter__(self):
-		"""Override this to change how we query this
-		model"""
+		'''Override this to change how we query this
+		model'''
 		attempt = 0
 		last_error = None
 		while attempt < MAX_RETRIES:
@@ -546,20 +556,21 @@ class DynamoQuery(Query):
 			raise last_error
 
 	def count(self, quick=True):
-		"""Can't get counts from DynamoDB"""
+		'''Can't get counts from DynamoDB'''
 		return -1
 
 
 class SetEncoder(json.JSONEncoder):
-	"""Custom JSON encoder for converting sets to lists."""
+	'''Custom JSON encoder for converting sets to lists.'''
 
 	def default(self, obj):
 		if isinstance(obj, set):
 			obj = list(obj)
 		return json.JSONEncoder.default(self, obj)
 
+
 class BatchItemFetcher(object):
-	"""Fetches items in bulk, instead of individually"""
+	'''Fetches items in bulk, instead of individually'''
 
 	def __init__(self, items, model_class, count=-1, limit=None):
 		from boto.cloudsearch.search import SearchResults
@@ -588,7 +599,7 @@ class BatchItemFetcher(object):
 			for result in model_class.get_table().batch_get_item(self.items):
 				obj_id = result[model_class.get_table().schema.hash_key_name]
 				if model_class.get_table().schema.range_key_name:
-					obj_id =  '/'.join([obj_id, result[model_class.get_table().schema.range_key_name]])
+					obj_id = '/'.join([obj_id, result[model_class.get_table().schema.range_key_name]])
 				self.results[obj_id] = self.get_obj(result)
 
 	def __iter__(self):
@@ -597,13 +608,13 @@ class BatchItemFetcher(object):
 				item_id = '/'.join(item)
 			else:
 				item_id = item
-			if self.results.has_key(item_id):
+			if item_id in self.results:
 				yield self.results[item_id]
 			else:
 				yield self.model_class.lookup(item)
 
 	def get_obj(self, item):
-		"""Turns a DynamoDB result into an object"""
+		'''Turns a DynamoDB result into an object'''
 		item = dict(item)
 
 		# Convert sets back to lists
