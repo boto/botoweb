@@ -810,7 +810,7 @@ class JSONProperty(Property):
 		super(JSONProperty, self).__set__(obj, value)
 
 	def __get__(self, obj, objtype):
-		return super(JSONProperty, self).__get__(self, obj, objtype)
+		return super(JSONProperty, self).__get__(obj, objtype)
 
 	def default_validator(self, value):
 		if value is None or value == self.default_value():
