@@ -76,7 +76,7 @@ class XMLSerializer(object):
 
 		self.htmlparser = HTMLParser.HTMLParser()
 
-	def encode(self, prop_name, prop_value):
+	def encode(self, prop_name, prop_value, **params):
 		"""Encode this value to XML"""
 		if prop_value == None:
 			return None
@@ -104,12 +104,12 @@ class XMLSerializer(object):
 	def encode_int(self, prop_name, prop_value, **params):
 		return self.encode_default(prop_name, str(prop_value), "integer", **params)
 
-	def encode_list(self, prop_name, prop_value):
+	def encode_list(self, prop_name, prop_value, **params):
 		"""Encode a list by encoding each property individually"""
 		for val in prop_value:
 			self.encode(prop_name, val)
 
-	def encode_dict(self, prop_name, prop_value):
+	def encode_dict(self, prop_name, prop_value, **params):
 		"""Encode a dict by encoding each element individually with a name="" param"""
 		#TODO: make this support more then just strings
 		self.file.write("""<%s type="complexType">""" % prop_name)
@@ -154,16 +154,16 @@ class XMLSerializer(object):
 		params["id"] = prop_value
 		return self.encode_default(prop_name, "", "reference", **params)
 
-	def encode_query(self, prop_name, prop_value=None):
+	def encode_query(self, prop_name, prop_value=None, **params):
 		"""Encode a query, this is sent as a reference"""
 		#TODO: Fix this by somehow getting the ID into the href
 		self.file.write("""<%s type="reference" href="%s"/>""" % (prop_name, prop_name))
 
-	def encode_blob(self, prop_name, prop_value=None):
+	def encode_blob(self, prop_name, prop_value=None, **params):
 		"""Encode a blob, this is sent as a reference"""
 		self.file.write("""<%s type="blob" href="%s"/>""" % (prop_name, prop_name))
 
-	def encode_key(self, prop_name, prop_value=None):
+	def encode_key(self, prop_name, prop_value=None, **params):
 		"""Encode an S3Key, this is sent as a reference"""
 		self.file.write("""<%s type="s3key" href="%s"/>""" % (prop_name, prop_name))
 
