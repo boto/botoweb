@@ -20,7 +20,7 @@
 # IN THE SOFTWARE.
 
 from botoweb.db.manager import get_manager
-from botoweb.db.property import Property
+from botoweb.db.property import Property, JSON
 from botoweb.db.key import Key
 from botoweb.db.query import Query
 from decimal import Decimal
@@ -344,6 +344,8 @@ class Model(object):
 						else:
 							rv[k] = str(val[k])
 				val = rv
+			elif isinstance(val, JSON):
+				val = val.value
 			else:
 				# Fall back to encoding as a string
 				try:
@@ -408,11 +410,6 @@ class Model(object):
 			if not isinstance(val, list) and not isinstance(val, set):
 				val = [val]
 			val = [cls._decode(prop.item_type, v, prop) for v in val]
-		elif isinstance(t, tuple):
-			# Support for JSON multi-types
-			import json
-			if(val):
-				val = json.loads(val)
 		elif t not in (str, unicode, int):
 			val = t(val)
 		return val
