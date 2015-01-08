@@ -757,6 +757,11 @@ class JSON(object):
 
 	def set(self, value):
 		import json
+		if isinstance(value, unicode):
+			try:
+				value = json.loads(value)
+			except:
+				pass
 		try:
 			json.dumps(value)
 		except Exception as e:
@@ -779,6 +784,15 @@ class JSON(object):
 		# Note: this fails if self.value is a number
 		return len(self.value)
 
+	# Allow this object to be interacted with as a raw object
+	def __getattr__(self, name):
+		return getattr(self.value, name)
+
+	def __getitem__(self, name):
+		return self.value.__getitem__(name)
+
+	def __setitem__(self, name, value):
+		return self.value.__setitem__(name, value)
 
 class JSONProperty(Property):
 
