@@ -112,17 +112,72 @@ class Request(webob.Request):
 				vals[k] = self.POST[k]
 		return vals
 
+	def loginUsingGooglePlus(self):
+		# Google+ login
+		from httplib2 import Http
+		from oauth2client.client import OAuth2WebServerFlow
+		from apiclient.discovery import build
+
+		if not self.get('state') and self.get('state').startswith('googleplus'):
+			return
+
+		flow = OAuth2WebServerFlow(client_id=boto.config.get('GooglePlus', 'client_id'),
+											client_secret=boto.config('GooglePlus', 'client_secret'),
+											scope='email',
+											state='googleplus',
+											redirect_uri=boto.config('GooglePlus', 'redirect_uri'))
+		code = self.get('code')
+		if not code:
+			code = self.POST.get('code')
+		if not code:
+			from botoweb.exceptions import SeeOther
+			googleplus_url = flow.step1_get_authorize_url()
+			raise SeeOther(googleplus_url)
+
+		credentials = flow.step2_exchange(code)
+		http = credentials.authorize(Http())
+		service = build("plus", "v1", http=http)
+		email = service.people().get(userId='me').execute()['emails'][0]['value']
+
+		user = None
+		if email:
+			log.info('Looking up user email: "%s"' % email)
+			try:
+				user = botoweb.user.find(email=email, deleted=False).next()
+			except StopIteration:
+				log.warn("Unknown user using Google+ login: %s" % email)
+				botoweb.report("Unknown user using Google+ login: %s" % email, status=401, req=self, name="LoginFailure", priority=3)
+				user = None
+
+		if user:
+			log.info("Google+ login: %s as %s" % (email, user))
+			self._user = user
+
+		# Re-use an old auth-token if it's available
+		from datetime import datetime, timedelta
+		now = datetime.utcnow()
+		if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6) and user.auth_token.startswith(user.username):
+			bw_auth_token = user.auth_token
+		else:
+			# Set up an Auth Token
+			bw_auth_token = "%s:%s" % (user.username, uuid.uuid4().hex)
+			user.auth_token = bw_auth_token
+			user.put()
+			self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
+			addCachedUser(user)
+		return user
+
 	def getUser(self):
 		"""
 		Get the user from this request object
 		@return: User object, or None
 		@rtype: User or None
 		"""
-		# We only want to TRY to 
-		# authenticate them once, 
+		# We only want to TRY to
+		# authenticate them once,
 		# so we use "False" if they've
-		# already been attempted to be authed, 
-		# None if they haven't even been through 
+		# already been attempted to be authed,
+		# None if they haven't even been through
 		# this yet
 
 		if self._user == None:
@@ -146,7 +201,7 @@ class Request(webob.Request):
 						if user and user.password == password:
 							self._user = user
 							return self._user
-							
+
 				# ajax session authentication
 				session_key = self.cookies.get("session")
 				if session_key and botoweb.memc:
@@ -189,6 +244,9 @@ class Request(webob.Request):
 							if user and user.auth_token == unencoded_info:
 								self._user = user
 								return self._user
+
+				if self.loginUsingGooglePlus():
+					return self._uesr
 
 				# google federated login
 				openID = self.get("openid.op_endpoint")
@@ -237,7 +295,7 @@ class Request(webob.Request):
 							botoweb.report("Invalid OpenID: %s" % identifier, status=401, req=self, name="LoginFailure", priority=3)
 					else:
 						log.warn("An error occured trying to authenticate the user: %s" % openParams)
-				
+
 				# JanRain Authentication token
 				jr_auth_token = self.POST.get("token")
 				if jr_auth_token:
