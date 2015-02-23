@@ -118,53 +118,55 @@ class Request(webob.Request):
 		from oauth2client.client import OAuth2WebServerFlow
 		from apiclient.discovery import build
 
-		if not self.get('state') and self.get('state').startswith('googleplus'):
-			return
+		if not (self.get('state') and self.get('state').startswith('googleplus')):
+			return None
 
 		flow = OAuth2WebServerFlow(client_id=boto.config.get('GooglePlus', 'client_id'),
-											client_secret=boto.config('GooglePlus', 'client_secret'),
+											client_secret=boto.config.get('GooglePlus', 'client_secret'),
 											scope='email',
 											state='googleplus',
-											redirect_uri=boto.config('GooglePlus', 'redirect_uri'))
+											redirect_uri='postmessage')
+		flow.redirect_uri = 'postmessage'
 		code = self.get('code')
 		if not code:
-			code = self.POST.get('code')
-		if not code:
-			from botoweb.exceptions import SeeOther
-			googleplus_url = flow.step1_get_authorize_url()
-			raise SeeOther(googleplus_url)
-
-		credentials = flow.step2_exchange(code)
-		http = credentials.authorize(Http())
-		service = build("plus", "v1", http=http)
-		email = service.people().get(userId='me').execute()['emails'][0]['value']
+			return None
 
 		user = None
-		if email:
-			log.info('Looking up user email: "%s"' % email)
-			try:
-				user = botoweb.user.find(email=email, deleted=False).next()
-			except StopIteration:
-				log.warn("Unknown user using Google+ login: %s" % email)
-				botoweb.report("Unknown user using Google+ login: %s" % email, status=401, req=self, name="LoginFailure", priority=3)
-				user = None
+		try:
+			credentials = flow.step2_exchange(code)
+			http = credentials.authorize(Http())
+			service = build("plus", "v1", http=http)
+			profile = service.people().get(userId='me').execute()
+			log.info('Looking up user with profile %s', str(profile))
+			email = profile['emails'][0]['value']
 
-		if user:
-			log.info("Google+ login: %s as %s" % (email, user))
-			self._user = user
+			if email:
+				log.info('Looking up user email: "%s"' % email)
+				try:
+					user = botoweb.user.find(email=email, deleted=False).next()
+				except StopIteration:
+					log.warn("Unknown user using Google+ login: %s" % email)
+					botoweb.report("Unknown user using Google+ login: %s" % email, status=401, req=self, name="LoginFailure", priority=3)
+					user = None
 
-		# Re-use an old auth-token if it's available
-		from datetime import datetime, timedelta
-		now = datetime.utcnow()
-		if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6) and user.auth_token.startswith(user.username):
-			bw_auth_token = user.auth_token
-		else:
-			# Set up an Auth Token
-			bw_auth_token = "%s:%s" % (user.username, uuid.uuid4().hex)
-			user.auth_token = bw_auth_token
-			user.put()
-			self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
-			addCachedUser(user)
+			if user:
+				log.info("Google+ login: %s as %s" % (email, user))
+				self._user = user
+
+			# Re-use an old auth-token if it's available
+			from datetime import datetime, timedelta
+			now = datetime.utcnow()
+			if user.auth_token and (user.sys_modstamp - now) <= timedelta(hours=6) and user.auth_token.startswith(user.username):
+				bw_auth_token = user.auth_token
+			else:
+				# Set up an Auth Token
+				bw_auth_token = "%s:%s" % (user.username, uuid.uuid4().hex)
+				user.auth_token = bw_auth_token
+				user.put()
+				self.cookies['BW_AUTH_TOKEN'] = bw_auth_token
+				addCachedUser(user)
+		except:
+			log.exception('Exception while trying Google+ login flow')
 		return user
 
 	def getUser(self):
@@ -246,7 +248,7 @@ class Request(webob.Request):
 								return self._user
 
 				if self.loginUsingGooglePlus():
-					return self._uesr
+					return self._user
 
 				# google federated login
 				openID = self.get("openid.op_endpoint")
