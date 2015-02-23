@@ -16,7 +16,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
 # ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
@@ -39,7 +39,7 @@ setup(name = "botoweb",
 		license = 'MIT',
 		scripts = ['tools/botoweb', 'tools/botoweb_client', 'tools/bw_client_upload'],
 		platforms = 'Posix; MacOS X; Windows',
-		classifiers = [ 
+		classifiers = [
 			'Development Status :: 3 - Alpha',
 			'Intended Audience :: Developers',
 			'License :: OSI Approved :: MIT License',
@@ -55,5 +55,9 @@ setup(name = "botoweb",
 			"boto",
 			"lxml",
 			"pytz",
+			# The next three are required to handle Google+ login
+			"httplib2",
+			"urllib3",
+			"google_api_python_client",
 		],
 	)
