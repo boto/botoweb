@@ -131,7 +131,6 @@ class DynamoModel(Item):
 	def get_by_id(cls, hash_key, range_key=None, consistent_read=False):
 		'''Get this type of item by a given ID'''
 		attempt = 0
-		last_error = None
 		while attempt < MAX_RETRIES:
 			table = cls.get_table()
 			try:
@@ -147,17 +146,18 @@ class DynamoModel(Item):
 				log.exception('Could not retrieve item')
 				cls._table = None
 				attempt += 1
+				if attempt == MAX_RETRIES:
+					raise
 				time.sleep(attempt ** 2)
-				last_error = e
 			except BotoServerError, e:
 				log.error('Boto Server Error: %s' % e)
 				cls._table = None
 				attempt += 1
-				last_error = e
+				if attempt == MAX_RETRIES:
+					raise
 				time.sleep(attempt ** 2)
-
-		if last_error:
-			raise e
+		# Should not reach here
+		assert attempt < MAX_RETRIES, 'get_by_id should have raised an error after %s errors' % MAX_RETRIES
 
 	lookup = get_by_id
 
