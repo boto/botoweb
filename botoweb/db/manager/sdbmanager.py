@@ -16,7 +16,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
 # ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+# SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
@@ -100,7 +100,7 @@ class SDBConverter(StringConverter):
 class SDBManager(Manager):
 	"""SimpleDB Manager"""
 	_converter_class = SDBConverter
-	
+
 	def __init__(self, cls, db_name, db_user, db_passwd,
 				 db_host, db_port, db_table, ddl_dir, enable_ssl, consistent=None):
 		Manager.__init__(self, cls, db_name, db_user, db_passwd,
@@ -156,7 +156,7 @@ class SDBManager(Manager):
 		except:
 			self.bucket = s3.create_bucket(bucket_name)
 		return self.bucket
-			
+
 	def load_object(self, obj):
 		if not obj._loaded:
 			obj._validate = False
@@ -172,7 +172,7 @@ class SDBManager(Manager):
 							log.exception(e)
 			obj._loaded = True
 			obj._validate = True
-		
+
 	def get_object(self, cls, id, a=None):
 		obj = None
 		if not a:
@@ -193,7 +193,7 @@ class SDBManager(Manager):
 				s = '(%s) class %s.%s not found' % (id, a['__module__'], a['__type__'])
 				log.info('sdbmanager: %s' % s)
 		return obj
-		
+
 	def query(self, query):
 		query_str = "select * from `%s` %s" % (self.domain.name, self._build_filter_part(query.model_class, query.filters, query.sort_by, query.select))
 		if query.limit:
@@ -400,7 +400,6 @@ class SDBManager(Manager):
 			return a[name]
 		else:
 			return None
-	
+
 	def get_raw_item(self, obj):
 		return self.domain.get_item(obj.id)
-		
