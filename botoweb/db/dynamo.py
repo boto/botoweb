@@ -142,6 +142,8 @@ class DynamoModel(Item):
 				)
 			except exceptions.DynamoDBKeyNotFoundError:
 				return None
+			except exceptions.DynamoDBValidationError:
+				raise
 			except DynamoDBResponseError, e:
 				log.exception('Could not retrieve item')
 				cls._table = None
